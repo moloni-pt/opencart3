@@ -1,0 +1,29 @@
+.htaccess
+/config.php
+admin/config.php
+
+download/
+image/data/
+image/cache/
+system/cache/
+system/logs/
+
+system/storage/
+
+# vQmod log files
+vqmod/logs/*
+# vQmod cache files
+vqmod/vqcache/*
+vqmod/checked.cache
+vqmod/mods.cache
+
+image/
+storage/
+system/
+catalog/
+admin/
+
+# Don't ignore Moloni files 
+!/admin/controller/extension/module/moloni.php
+!/admin/model/extension/module/moloni/*
+!/admin/language/en-gb/extension/module/moloni.php
