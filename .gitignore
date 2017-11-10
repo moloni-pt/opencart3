@@ -1,4 +1,7 @@
 .htaccess
+.htaccess.txt
+index.php
+php.ini
 /config.php
 admin/config.php
 
