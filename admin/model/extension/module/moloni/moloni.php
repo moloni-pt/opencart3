@@ -8,7 +8,7 @@
 class ModelExtensionModuleMoloniMoloni extends Model
 {
 
-    public $teste = "1";
+    public $teste = "12";
     private $libraries = array(
         "connection" => "connection.class.php"
     );
