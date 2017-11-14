@@ -5,3 +5,4 @@
 *.jpg binary
 *.c         eol=lf
 *.php       eol=lf
+core.autocrlf = true
