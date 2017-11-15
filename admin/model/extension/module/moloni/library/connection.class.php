@@ -43,23 +43,24 @@ class connection
         $return = false;
 
         if (!$this->access_token) {
-            $this->messages["title"] = "Access Token não definido";
+            $this->moloni->errors->throwError("Access token não definida", "A access token não foi definida ainda", "access_token");
             $return = false;
         } else {
             if (strtotime("-10 minutes") > $this->expire_date) {
                 if ($this->refresh_token) {
-                    if (strtotime("-10 minutes") > ($this->expire_date + strtotime("6 days"))) {
-                        $this->messages["title"] = "Refresh Token expirado";
+                    if (strtotime("+9 days") > (strtotime("1 days"))) {
+                        $this->moloni->errors->throwError("Refresh token expirou", "A refresh token já expirou " . ($this->expire_date + strtotime("6 days")), "refresh_token");
                         $return = false;
                     } else {
                         echo "Vamos fazer refresh";
                         $return = true;
                     }
                 } else {
-                    $this->messages["title"] = "Access Token expirado";
+                    $this->moloni->errors->throwError("Refresh token e falta", "O refresh token não está definido", "refresh_token");
                     $return = false;
                 }
             } else {
+                echo "Tudo bem";
                 $return = true;
             }
         }
@@ -72,22 +73,21 @@ class connection
 
     }
 
-    public function curl($url)
+    public function curl($url, $values = false)
     {
         $curl = curl_init();
         $url = $this->moloni_api_url . $url . "/?access_token=" . $this->access_token;
-        $my_values = array('company_id' => 5, 'product_id' => 534521);
 
         curl_setopt($con, CURLOPT_URL, $url);
         curl_setopt($con, CURLOPT_POST, true);
-        curl_setopt($con, CURLOPT_POSTFIELDS, http_build_query($my_values));
+        curl_setopt($con, CURLOPT_POSTFIELDS, $values ? http_build_query($my_values) : false);
         curl_setopt($con, CURLOPT_HEADER, false);
         curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
 
         $res_curl = curl_exec($con);
         curl_close($con);
 
-// análise do resultado
+        // análise do resultado
         $res_txt = json_decode($res_curl, true);
         if (!isset($res_txt['error'])) {
             echo 'Sucesso: ' . print_r($res_txt, true) . '';

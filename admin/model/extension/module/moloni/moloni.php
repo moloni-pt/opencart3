@@ -8,31 +8,47 @@
 class ModelExtensionModuleMoloniMoloni extends Model
 {
 
-    public $teste = "12";
+    public $logged = false;
+    public $connection;
+    public $erros;
     private $libraries = array(
-        "connection" => "connection.class.php"
+        "connection" => "connection.class.php",
+        "errors" => "errors.class.php"
     );
-    public $settings;
-    public $customer;
+
+    public function __construct()
+    {
+
+    }
+
+    public function __set($key, $value)
+    {
+        $this->{$key} = $value;
+    }
 
     public function loadLibrary()
     {
-        echo "<br>" . __CLASS__ . __FUNCTION__ . "<br>";
         foreach ($this->libraries as $name => $library) {
-            require_once("library/" . $library);
-            $class = 'moloni\\' . $name;
-            $this->{$name} = new $class($this);
+            try {
+                require_once("library/" . $library);
+                $class = 'moloni\\' . $name;
+                $this->{$name} = new $class($this);
+            } catch (Exception $e) {
+                echo 'Caught exception: ', $e->getMessage(), "\n";
+            }
         }
 
+
         $this->connection->access_token = "1a0c8b3449be466a03fa3329c5b2875b66fcc8ea";
-        $this->connection->expire_date = strtotime("-80 minutes");
         $this->connection->refresh_token = "d45d98d93fd5b319efd36d5dedefc18283f670f4";
+        $this->connection->expire_date = strtotime("-80 minutes");
 
         $status = $this->connection->start();
         if ($status) {
-            echo "Yey";
+            $this->logged = true;
+            echo "yey";
         } else {
-            echo $this->connection->messages['title'];
+            print_r($this->errors->getError());
         }
     }
 }
