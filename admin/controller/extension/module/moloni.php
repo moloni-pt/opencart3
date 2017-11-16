@@ -41,11 +41,12 @@ class ControllerExtensionModuleMoloni extends Controller
     public function index()
     {
 
-        $this->install->teste();
-
         $this->moloni->loadLibrary();
 
-        echo "2Teste";
+        echo '<br>';
+        echo '<br>';
+
+        print_r($this->moloni->lib("errors"));
     }
 
     public function install()
@@ -70,47 +71,34 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function injectAdminMenuItem($eventRoute, &$data)
     {
-
-        if (!$this->user->hasPermission('access', 'moloni/home')) {
+        if ($this->user->hasPermission('access', 'extension/module/moloni')) {
             $moloni[] = array(
                 'name' => $this->language->get('Home'),
-                'href' => $this->url->link('moloni/home', 'user_token=' . $this->session->data['user_token'], true),
+                'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true),
                 'children' => array()
             );
-        }
 
-
-
-        if (!$this->user->hasPermission('access', 'moloni/documents')) {
             $moloni[] = array(
                 'name' => $this->language->get('Documents'),
-                'href' => $this->url->link('moloni/home', 'user_token=' . $this->session->data['user_token'], true),
+                'href' => $this->url->link('extension/module/moloni', array("page" => "documents", 'user_token' => $this->session->data['user_token']), true),
                 'children' => array()
             );
-        }
-
-
-
-        if (!$this->user->hasPermission('access', 'moloni/settings')) {
 
             $moloni[] = array(
                 'name' => $this->language->get('Settings'),
-                'href' => $this->url->link('moloni/home', 'user_token=' . $this->session->data['user_token'], true),
+                'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true),
                 'children' => array()
             );
-        }
 
-
-
-        if ($moloni) {
-
-            array_splice($data['menus'], 5, 0, array(array(
-                    'id' => 'menu-moloni',
-                    'icon' => 'fa-file-text',
-                    'name' => $this->language->get('Moloni'),
-                    'href' => '',
-                    'children' => $moloni
-            )));
+            if ($moloni) {
+                array_splice($data['menus'], 5, 0, array(array(
+                        'id' => 'menu-moloni',
+                        'icon' => 'fa-file-text',
+                        'name' => $this->language->get('Moloni'),
+                        'href' => '',
+                        'children' => $moloni
+                )));
+            }
         }
     }
 }

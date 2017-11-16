@@ -41,22 +41,23 @@ class connection
     private function checkValidateToken()
     {
         $return = false;
-
+        echo "<pre>";
+        print_r($this->moloni);
         if (!$this->access_token) {
-            $this->moloni->errors->throwError("Access token não definida", "A access token não foi definida ainda", "access_token");
+            $this->moloni->lib('errors')->throwError("Access token não definida", "A access token não foi definida ainda", "access_token");
             $return = false;
         } else {
             if (strtotime("-10 minutes") > $this->expire_date) {
                 if ($this->refresh_token) {
                     if (strtotime("+9 days") > (strtotime("1 days"))) {
-                        $this->moloni->errors->throwError("Refresh token expirou", "A refresh token já expirou " . ($this->expire_date + strtotime("6 days")), "refresh_token");
+                        $this->moloni->lib('errors')->throwError("Refresh token expirou", "A refresh token já expirou " . ($this->expire_date + strtotime("6 days")), "refresh_token");
                         $return = false;
                     } else {
                         echo "Vamos fazer refresh";
                         $return = true;
                     }
                 } else {
-                    $this->moloni->errors->throwError("Refresh token e falta", "O refresh token não está definido", "refresh_token");
+                    $this->moloni->lib('errors')->throwError("Refresh token e falta", "O refresh token não está definido", "refresh_token");
                     $return = false;
                 }
             } else {
