@@ -8,7 +8,11 @@
 class moloni
 {
 
-    public $libClass = array();
+    public $access_token;
+    public $refresh_token;
+    public $expire_date;
+    public $company_id = false;
+    public $logged = false;
     private $libraries = array(
         "connection" => "connection.class.php",
         "errors" => "errors.class.php"
@@ -16,52 +20,27 @@ class moloni
 
     public function __construct()
     {
-
+        $this->loadLibraries();
+        return true;
     }
 
-    public function __set($key, $value)
-    {
-
-        $this->{$key} = $value;
-    }
-
-    public function lib($key)
-    {
-        return (isset($this->libClass[$key]) ? $this->libClass[$key] : null);
-    }
-
-    public function __call($name, $arguments)
-    {
-        return (isset($this->libClass[$name]) ? $this->libClass[$name] : null);
-    }
-
-    public function __get($name)
-    {
-        return (isset($this->libClass[$name]) ? $this->libClass[$name] : null);
-    }
-
-    public function loadLibrary()
+    public function loadLibraries()
     {
         foreach ($this->libraries as $name => $library) {
             try {
                 require_once("moloni/" . $library);
                 $class = 'moloni\\' . $name;
-                $this->libClass[$name] = new $class($this);
+                $this->{$name} = new $class($this);
             } catch (Exception $e) {
                 echo 'Caught exception: ', $e->getMessage(), "\n";
             }
         }
+    }
 
-        $this->lib('connection')->access_token = "1a0c8b3449be466a03fa3329c5b2875b66fcc8ea";
-        $this->lib('connection')->refresh_token = "d45d98d93fd5b319efd36d5dedefc18283f670f4";
-        $this->lib('connection')->expire_date = strtotime("-80 minutes");
-
-        $status = $this->lib('connection')->start();
-        if ($status) {
+    public function verifyTokens()
+    {
+        if ($this->connection->start()) {
             $this->logged = true;
-            echo "yey";
-        } else {
-            print_r($this->lib('errors')->getError());
         }
     }
 
