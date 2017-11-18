@@ -8,8 +8,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private $moduleData_module = 'errorlogmanager_module';
     private $modulePathBase = 'extension/module/moloni/';
     public $modelsRequired = array(
-        "install" => "model_extension_module_moloni_install",
-        "moloni" => "model_extension_module_moloni_moloni"
+        "install" => "model_extension_module_moloni_install"
     );
     private $modulePath = 'extension/module/moloni';
     private $eventGroup = 'moloni';
@@ -28,11 +27,8 @@ class ControllerExtensionModuleMoloni extends Controller
     {
 
         if (isset($this->modelsRequired) && is_array($this->modelsRequired)) {
-
             foreach ($this->modelsRequired as $name => $model) {
-
                 $this->load->model($this->modulePathBase . $name);
-
                 $this->{$name} = $this->{$model};
             }
         }
@@ -40,13 +36,11 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function index()
     {
+        echo "Teste";
 
-        $this->moloni->loadLibrary();
+        $this->load->library("moloni");
 
-        echo '<br>';
-        echo '<br>';
-
-        print_r($this->moloni->lib("errors"));
+        $this->moloni->teste();
     }
 
     public function install()
