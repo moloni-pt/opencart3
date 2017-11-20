@@ -15,13 +15,25 @@ class moloni
     public $logged = false;
     private $libraries = array(
         "connection" => "connection.class.php",
-        "errors" => "errors.class.php"
+        "errors" => "errors.class.php",
+        "entities" => "entities.class.php"
     );
 
     public function __construct()
     {
         $this->loadLibraries();
         return true;
+    }
+
+    public function __call($name, $args)
+    {
+        if (!$this->{$name}) {
+            require_once("moloni/" . $name . ".class.php");
+            $class = 'moloni\\' . $name;
+            $this->{$name} = new $class($this);
+        }
+
+        return ($this->{$name});
     }
 
     public function loadLibraries()
