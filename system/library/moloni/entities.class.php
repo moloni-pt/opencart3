@@ -10,7 +10,10 @@ class entities
 {
 
     private $libraries = array(
-        "customers" => "customers.class.php"
+        "customers" => "customers.class.php",
+        "alternate" => "alternate.class.php",
+        "suppliers" => "suppliers.class.php",
+        "salesmen" => "salesmen.class.php"
     );
 
     function __construct(\moloni $moloni)
@@ -25,13 +28,9 @@ class entities
     public function loadLibraries()
     {
         foreach ($this->libraries as $name => $library) {
-            try {
-                require_once("entities/" . $library);
-                $class = 'moloni\\' . $name;
-                $this->{$name} = new $class($this->moloni);
-            } catch (Exception $e) {
-                echo 'Caught exception: ', $e->getMessage(), "\n";
-            }
+            require_once("entities/" . $library);
+            $class = 'moloni\\' . $name;
+            $this->{$name} = new $class($this->moloni);
         }
     }
 }

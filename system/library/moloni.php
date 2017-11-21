@@ -25,17 +25,6 @@ class moloni
         return true;
     }
 
-    public function __call($name, $args)
-    {
-        if (!$this->{$name}) {
-            require_once("moloni/" . $name . ".class.php");
-            $class = 'moloni\\' . $name;
-            $this->{$name} = new $class($this);
-        }
-
-        return ($this->{$name});
-    }
-
     public function loadLibraries()
     {
         foreach ($this->libraries as $name => $library) {
