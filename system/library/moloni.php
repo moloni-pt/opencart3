@@ -8,13 +8,14 @@
 class moloni
 {
 
+    public $namespace = "moloni\\";
     public $access_token;
     public $refresh_token;
     public $expire_date;
     public $company_id = false;
     public $logged = false;
     private $libs = array(
-        "entities" => "moloni/entities.class.php"
+        "customers" => "customers.class.php",
     );
     private $dependencies = array(
         "connection" => "connection.class.php",
@@ -29,38 +30,23 @@ class moloni
 
     public function __get($name)
     {
-        echo $name;
         if (!isset($this->{$name})) {
-            require($this->libs[$name]);
-            $class = 'moloni\\' . $name;
-            $this->{$name} = new $class($this);
+            $this->load("moloni/classes/" . $this->libs[$name], $name, $this->namespace . $name);
         }
-        return $this->{$name}($args);
-    }
-
-    public function __call($name, $args)
-    {
-        echo __CLASS__;
-        if (method_exists($this, $name)) {
-            return $this->{$name}($args);
-        } else {
-            require($this->libs[$name]);
-        }
+        return $this->{$name};
     }
 
     public function loadDependencies()
     {
-        foreach ($this->dependencies as $name => $library) {
+        foreach ($this->dependencies as $name => $depend) {
             try {
-                require_once("moloni/" . $library);
-                $class = 'moloni\\' . $name;
-                $this->{$name} = new $class($this);
+                $this->load("moloni/dependencies/" . $depend, $name, $this->namespace . $name);
             } catch (Exception $e) {
                 echo 'Caught exception: ', $e->getMessage(), "\n";
             }
         }
 
-        $this->entities();
+        $this->customers->count();
     }
 
     public function verifyTokens()
@@ -70,8 +56,9 @@ class moloni
         }
     }
 
-    public function teste()
+    private function load($path, $name, $class_name)
     {
-        echo "teste";
+        require_once($path);
+        $this->{$name} = new $class_name($this);
     }
 }
