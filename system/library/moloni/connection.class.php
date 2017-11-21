@@ -62,6 +62,11 @@ class connection
         return $return;
     }
 
+    public function testing()
+    {
+        echo "12";
+    }
+
     private function tokenRefresh()
     {
 

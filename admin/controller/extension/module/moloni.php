@@ -48,8 +48,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->moloni->refresh_token = !empty($tokens['refresh_token']) ? $tokens['refresh_token'] : false;
         $this->moloni->expire_date = !empty($tokens['expire_date']) ? $tokens['expire_date'] : "";
 
-        $this->moloni->entities->test();
-        $this->moloni->entities("123")->test();
+        print_r(get_class_methods($this->moloni));
+
         $this->moloni->verifyTokens();
         if ($this->moloni->logged) {
             if ($this->moloni->company_id) {
