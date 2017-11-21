@@ -12,6 +12,7 @@ class customers
     public function __construct(\moloni $moloni)
     {
         $this->moloni = $moloni;
+        echo "Cheguei";
     }
 
     public function count()

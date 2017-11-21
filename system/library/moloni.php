@@ -13,21 +13,44 @@ class moloni
     public $expire_date;
     public $company_id = false;
     public $logged = false;
-    private $libraries = array(
+    private $libs = array(
+        "entities" => "moloni/entities.class.php"
+    );
+    private $dependencies = array(
         "connection" => "connection.class.php",
         "errors" => "errors.class.php",
-        "entities" => "entities.class.php"
     );
 
     public function __construct()
     {
-        $this->loadLibraries();
+        $this->loadDependencies();
         return true;
     }
 
-    public function loadLibraries()
+    public function __get($name)
     {
-        foreach ($this->libraries as $name => $library) {
+        echo $name;
+        if (!isset($this->{$name})) {
+            require($this->libs[$name]);
+            $class = 'moloni\\' . $name;
+            $this->{$name} = new $class($this);
+        }
+        return $this->{$name}($args);
+    }
+
+    public function __call($name, $args)
+    {
+        echo __CLASS__;
+        if (method_exists($this, $name)) {
+            return $this->{$name}($args);
+        } else {
+            require($this->libs[$name]);
+        }
+    }
+
+    public function loadDependencies()
+    {
+        foreach ($this->dependencies as $name => $library) {
             try {
                 require_once("moloni/" . $library);
                 $class = 'moloni\\' . $name;
@@ -36,6 +59,8 @@ class moloni
                 echo 'Caught exception: ', $e->getMessage(), "\n";
             }
         }
+
+        $this->entities();
     }
 
     public function verifyTokens()

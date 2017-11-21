@@ -9,8 +9,8 @@ namespace moloni;
 class entities
 {
 
-    private $libraries = array(
-        "customers" => "customers.class.php",
+    private $libs = array(
+        "customers" => "entities/customers.class.php",
         "alternate" => "alternate.class.php",
         "suppliers" => "suppliers.class.php",
         "salesmen" => "salesmen.class.php"
@@ -21,8 +21,18 @@ class entities
         $this->moloni = $moloni;
         echo __CLASS__;
 
-        $this->loadLibraries();
         return true;
+    }
+
+    public function __get($name)
+    {
+        echo $name;
+        if (!isset($this->{$name})) {
+            require($this->libs[$name]);
+            $class = 'moloni\\' . $name;
+            $this->{$name} = new $class($this->moloni);
+        }
+        return $this->{$name};
     }
 
     public function loadLibraries()
