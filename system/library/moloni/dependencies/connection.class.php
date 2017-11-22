@@ -79,7 +79,7 @@ class connection
 
         curl_setopt($con, CURLOPT_URL, $url);
         curl_setopt($con, CURLOPT_POST, true);
-        curl_setopt($con, CURLOPT_POSTFIELDS, $values ? http_build_query($my_values) : false);
+        curl_setopt($con, CURLOPT_POSTFIELDS, $values ? http_build_query($values) : false);
         curl_setopt($con, CURLOPT_HEADER, false);
         curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
 
