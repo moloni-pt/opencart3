@@ -40,17 +40,29 @@ class ControllerExtensionModuleMoloni extends Controller
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
 
-        $tokens = $this->ocdb->qGetMoloniTokens();
-
         $this->load->library("moloni");
 
+        if ($_GET['page'] == "login" && isset($_POST["username"]) && isset($_POST["password"])) {
+            $this->moloni->username = $_POST["username"];
+            $this->moloni->password = $_POST["password"];
+        }
+
+        $tokens = $this->ocdb->qGetMoloniTokens();
+        $this->moloni->client_id = "devapi";
+        $this->moloni->client_secret = "53937d4a8c5889e58fe7f105369d9519a713bf43";
         $this->moloni->access_token = !empty($tokens['access_token']) ? $tokens['access_token'] : false;
         $this->moloni->refresh_token = !empty($tokens['refresh_token']) ? $tokens['refresh_token'] : false;
         $this->moloni->expire_date = !empty($tokens['expire_date']) ? $tokens['expire_date'] : "";
 
-        print_r(get_class_methods($this->moloni));
-
         $this->moloni->verifyTokens();
+        if ($this->moloni->updated_tokens) {
+            if ($tokens) {
+                $tokens = $this->ocdb->qUpdateMoloniTokens($this->moloni->access_token, $this->moloni->refresh_token, $this->moloni->expire_date);
+            } else {
+                $tokens = $this->ocdb->qInsertMoloniTokens($this->moloni->access_token, $this->moloni->refresh_token, $this->moloni->expire_date);
+            }
+        }
+
         if ($this->moloni->logged) {
             if ($this->moloni->company_id) {
                 switch ($_GET['page']) {
@@ -79,11 +91,19 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $data));
     }
 
+    private function handleLogin()
+    {
+
+    }
+
     private function createBreadcrumbs()
     {
         switch ($this->page) {
             case "login":
                 $breadcrumbs[] = array("text" => "Login", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
+                break;
+            case "companies":
+                $breadcrumbs[] = array("text" => "Empresas", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
                 break;
             default :
                 return array(array("href" => "extension/module/moloni", "text" => "login"));

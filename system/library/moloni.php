@@ -9,9 +9,14 @@ class moloni
 {
 
     public $namespace = "moloni\\";
-    public $access_token;
-    public $refresh_token;
-    public $expire_date;
+    public $updated_tokens = false;
+    public $access_token = false;
+    public $refresh_token = false;
+    public $expire_date = false;
+    public $username = false;
+    public $password = false;
+    public $client_secret = false;
+    public $client_id = false;
     public $company_id = false;
     public $logged = false;
     private $libs = array(
