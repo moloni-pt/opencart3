@@ -6,17 +6,12 @@
  */
 namespace moloni;
 
-class customers
+class account
 {
 
     public function __construct(\moloni $moloni)
     {
         $this->moloni = $moloni;
-    }
-
-    public function count()
-    {
-        echo "test";
-        $this->moloni->connection->testing();
+        echo "Cheguei";
     }
 }

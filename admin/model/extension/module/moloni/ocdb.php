@@ -14,4 +14,16 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
         return $query->row;
     }
+
+    public function qInsertMoloniTokens($access_token, $refresh_token, $expire_date)
+    {
+        $query = $this->db->query("INSERT INTO `" . DB_PREFIX . "moloni`(access_token, refresh_token, expire_date) VALUES('" . $access_token . "', '" . $refresh_token . "', '" . $expire_date . "')");
+        return $this->qGetMoloniTokens;
+    }
+
+    public function qUpdateMoloniTokens($access_token, $refresh_token, $expire_date)
+    {
+        $query = $this->db->query("UPDATE `" . DB_PREFIX . "moloni` SET access_token = '" . $access_token . "', $refresh_token = '" . $refresh_token . "', expire_date = '" . $expire_date . "'");
+        return $this->qGetMoloniTokens;
+    }
 }

@@ -8,34 +8,50 @@
 class moloni
 {
 
-    public $access_token;
-    public $refresh_token;
-    public $expire_date;
+    public $namespace = "moloni\\";
+    public $updated_tokens = false;
+    public $access_token = false;
+    public $refresh_token = false;
+    public $expire_date = false;
+    public $username = false;
+    public $password = false;
+    public $client_secret = false;
+    public $client_id = false;
     public $company_id = false;
     public $logged = false;
-    private $libraries = array(
+    private $libs = array(
+        "customers" => "customers.class.php",
+    );
+    private $dependencies = array(
         "connection" => "connection.class.php",
         "errors" => "errors.class.php",
-        "entities" => "entities.class.php"
     );
 
     public function __construct()
     {
-        $this->loadLibraries();
+        $this->loadDependencies();
         return true;
     }
 
-    public function loadLibraries()
+    public function __get($name)
     {
-        foreach ($this->libraries as $name => $library) {
+        if (!isset($this->{$name})) {
+            $this->load("moloni/classes/" . $this->libs[$name], $name, $this->namespace . $name);
+        }
+        return $this->{$name};
+    }
+
+    public function loadDependencies()
+    {
+        foreach ($this->dependencies as $name => $depend) {
             try {
-                require_once("moloni/" . $library);
-                $class = 'moloni\\' . $name;
-                $this->{$name} = new $class($this);
+                $this->load("moloni/dependencies/" . $depend, $name, $this->namespace . $name);
             } catch (Exception $e) {
                 echo 'Caught exception: ', $e->getMessage(), "\n";
             }
         }
+
+        $this->customers->count();
     }
 
     public function verifyTokens()
@@ -45,8 +61,9 @@ class moloni
         }
     }
 
-    public function teste()
+    private function load($path, $name, $class_name)
     {
-        echo "teste";
+        require_once($path);
+        $this->{$name} = new $class_name($this);
     }
 }

@@ -9,7 +9,7 @@ namespace moloni;
 class connection
 {
 
-    public $moloni_api_url = "https://api.moloni.com/v1/";
+    public $moloni_api_url = "https://api.moloni.pt/v1/";
     public $messages;
 
     function __construct(\moloni $moloni)
@@ -39,7 +39,11 @@ class connection
     {
         $return = false;
         if (!$this->moloni->access_token) {
-            $return = false;
+            if ($this->moloni->username && $this->moloni->password) {
+                return $this->loginHandler();
+            } else {
+                $return = false;
+            }
         } else {
             if (strtotime("-10 minutes") > $this->moloni->expire_date) {
                 if ($this->moloni->refresh_token) {
@@ -62,37 +66,45 @@ class connection
         return $return;
     }
 
-    public function testing()
+    public function loginHandler()
     {
-        echo "12";
+        $login = $this->curl("grant/?grant_type=password"
+            . "&client_id=" . $this->moloni->client_id
+            . "&client_secret=" . $this->moloni->client_secret
+            . "&username=" . $this->moloni->username
+            . "&password=" . $this->moloni->password);
+        if ($login && isset($login["access_token"]) && isset($login["refresh_token"])) {
+            $this->moloni->updated_tokens = true;
+            $this->moloni->access_token = $login['access_token'];
+            $this->moloni->refresh_token = $login['refresh_token'];
+            $this->moloni->expire_date = strtotime("+50 minutes");
+            return true;
+        } else {
+            $this->moloni->errors->throwError("Dados incorrectos", "Os dados de login que inseriu não correspondem a uma conta Moloni. <a href='https://moloni.pt/' target='_BLANK'>Registar</a>", "login");
+            return false;
+        }
     }
 
-    private function tokenRefresh()
+    public function tokenRefresh()
     {
 
     }
 
-    public function curl($url, $values = false)
+    public function curl($action, $values = false)
     {
-        $curl = curl_init();
-        $url = $this->moloni_api_url . $url . "/?access_token=" . $this->access_token;
+        $con = curl_init();
+        $url = $this->moloni_api_url . $action . ($this->moloni->access_token ? "/?access_token=" . $this->moloni->access_token : "");
 
         curl_setopt($con, CURLOPT_URL, $url);
         curl_setopt($con, CURLOPT_POST, true);
-        curl_setopt($con, CURLOPT_POSTFIELDS, $values ? http_build_query($my_values) : false);
+        curl_setopt($con, CURLOPT_POSTFIELDS, $values ? http_build_query($values) : false);
         curl_setopt($con, CURLOPT_HEADER, false);
         curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
 
-        $res_curl = curl_exec($con);
+        $result_json = curl_exec($con);
         curl_close($con);
 
-        // análise do resultado
-        $res_txt = json_decode($res_curl, true);
-        if (!isset($res_txt['error'])) {
-            echo 'Sucesso: ' . print_r($res_txt, true) . '';
-        } else {
-            echo 'Houston, we\'ve got a Problem!';
-            echo 'Erro: ' . print_r($res_txt, true) . '';
-        }
+        $result_array = json_decode($result_json, true);
+        return $result_array;
     }
 }

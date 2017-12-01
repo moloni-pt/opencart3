@@ -6,7 +6,7 @@
  */
 namespace moloni;
 
-class alternate
+class suppliers
 {
 
     public function __construct(\moloni $moloni)
