@@ -38,20 +38,19 @@ class connection
     private function checkValidateToken()
     {
         $return = false;
-        if (!$this->moloni->access_token) {
-            if ($this->moloni->username && $this->moloni->password) {
-                return $this->loginHandler();
-            } else {
-                $return = false;
-            }
+        if ($this->moloni->username && $this->moloni->password) {
+            return $this->loginHandler();
+        } elseif (!$this->moloni->access_token) {
+            $return = false;
         } else {
-            if (strtotime("-10 minutes") > $this->moloni->expire_date) {
+            if (strtotime("-50 minutes") < $this->moloni->expire_date) {
                 if ($this->moloni->refresh_token) {
-                    if (strtotime("+9 days") > (strtotime("1 days"))) {
+                    if (strtotime("+9 days") < $this->moloni->expire_date) {
                         $this->moloni->errors->throwError("Refresh token expirou", "A refresh token já expirou " . date('Y-m-d H:i:s', ($this->moloni->expire_date)), "refresh_token");
                         $return = false;
                     } else {
                         echo "Vamos fazer refresh";
+                        echo "Aqui se a referesh token não der, vamos mandar para o login, porque as tokens são inválidas";
                         $return = true;
                     }
                 } else {
@@ -68,11 +67,12 @@ class connection
 
     public function loginHandler()
     {
-        $login = $this->curl("grant/?grant_type=password"
+        $url = "grant/?grant_type=password"
             . "&client_id=" . $this->moloni->client_id
             . "&client_secret=" . $this->moloni->client_secret
             . "&username=" . $this->moloni->username
-            . "&password=" . $this->moloni->password);
+            . "&password=" . $this->moloni->password;
+        $login = $this->curl($url);
         if ($login && isset($login["access_token"]) && isset($login["refresh_token"])) {
             $this->moloni->updated_tokens = true;
             $this->moloni->access_token = $login['access_token'];
@@ -93,8 +93,7 @@ class connection
     public function curl($action, $values = false)
     {
         $con = curl_init();
-        $url = $this->moloni_api_url . $action . ($this->moloni->access_token ? "/?access_token=" . $this->moloni->access_token : "");
-
+        $url = $this->moloni_api_url . $action . ($this->moloni->logged ? "/?access_token=" . $this->moloni->access_token : "");
         curl_setopt($con, CURLOPT_URL, $url);
         curl_setopt($con, CURLOPT_POST, true);
         curl_setopt($con, CURLOPT_POSTFIELDS, $values ? http_build_query($values) : false);
@@ -105,6 +104,10 @@ class connection
         curl_close($con);
 
         $result_array = json_decode($result_json, true);
+        if (isset($result_array['error_description']) && $result_array['error_description'] == 'Invalid access token.') {
+            $this->moloni->errors->throwError("Access token errada", "Access token inválida", "login");
+            return false;
+        }
         return $result_array;
     }
 }
