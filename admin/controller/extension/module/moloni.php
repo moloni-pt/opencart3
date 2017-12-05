@@ -78,6 +78,8 @@ class ControllerExtensionModuleMoloni extends Controller
                         break;
                 }
             } else {
+                $data['companies'] = $this->moloni->companies->getAll();
+                print_r($data['companies']);
                 $this->page = "companies";
             }
         } else {
@@ -106,9 +108,11 @@ class ControllerExtensionModuleMoloni extends Controller
                 $breadcrumbs[] = array("text" => "Empresas", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
                 break;
             default :
-                return array(array("href" => "extension/module/moloni", "text" => "login"));
+                $breadcrumbs[] = (array("href" => "extension/module/moloni", "text" => "login"));
                 break;
         }
+
+        return $breadcrumbs;
     }
 
     public function install()

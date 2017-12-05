@@ -21,6 +21,7 @@ class moloni
     public $logged = false;
     private $libs = array(
         "customers" => "customers.class.php",
+        "companies" => "companies.class.php",
     );
     private $dependencies = array(
         "connection" => "connection.class.php",
