@@ -17,8 +17,8 @@ class ModelExtensionModuleMoloniInstall extends Model
         $this->db->query("
 			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "moloni` (
                     `id` int(2) NOT NULL AUTO_INCREMENT,
-                    `access_token` varchar(30)  NOT NULL,
-                    `refresh_token` varchar(30)  NOT NULL,
+                    `access_token` varchar(200)  NOT NULL,
+                    `refresh_token` varchar(200)  NOT NULL,
                     `company_id` int(10) NOT NULL,
                     `expire_date` varchar(15)  NOT NULL,
                     `login_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

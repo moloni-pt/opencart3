@@ -43,14 +43,13 @@ class connection
         } elseif (!$this->moloni->access_token) {
             $return = false;
         } else {
-            if (strtotime("-50 minutes") < $this->moloni->expire_date) {
+            if (strtotime("now") > $this->moloni->expire_date) {
                 if ($this->moloni->refresh_token) {
-                    if (strtotime("+9 days") < $this->moloni->expire_date) {
-                        $this->moloni->errors->throwError("Refresh token expirou", "A refresh token já expirou " . date('Y-m-d H:i:s', ($this->moloni->expire_date)), "refresh_token");
+                    if (strtotime("now") > strtotime("+5 days", $this->moloni->expire_date)) {
+                        $this->moloni->errors->throwError("Refresh token expirou", "A refresh token já expirou " . date('Y-m-d H:i:s', strtotime("+6 days", $this->moloni->expire_date)), "refresh_token");
                         $return = false;
                     } else {
-                        echo "Vamos fazer refresh";
-                        echo "Aqui se a referesh token não der, vamos mandar para o login, porque as tokens são inválidas";
+                        $this->refreshHandler();
                         $return = true;
                     }
                 } else {
@@ -72,7 +71,7 @@ class connection
             . "&client_secret=" . $this->moloni->client_secret
             . "&username=" . $this->moloni->username
             . "&password=" . $this->moloni->password;
-        $login = $this->curl($url);
+        $login = $this->curl($url, null);
         if ($login && isset($login["access_token"]) && isset($login["refresh_token"])) {
             $this->moloni->updated_tokens = true;
             $this->moloni->access_token = $login['access_token'];
@@ -85,12 +84,27 @@ class connection
         }
     }
 
-    public function tokenRefresh()
+    public function refreshHandler()
     {
+        $url = "grant/?grant_type=refresh_token"
+            . "&client_id=" . $this->moloni->client_id
+            . "&client_secret=" . $this->moloni->client_secret
+            . "&refresh_token=" . $this->moloni->refresh_token;
 
+        $refresh = $this->curl($url, null);
+        if ($refresh && isset($refresh["access_token"]) && isset($refresh["refresh_token"])) {
+            $this->moloni->updated_tokens = true;
+            $this->moloni->access_token = $refresh['access_token'];
+            $this->moloni->refresh_token = $refresh['refresh_token'];
+            $this->moloni->expire_date = strtotime("+50 minutes");
+            return true;
+        } else {
+            $this->moloni->errors->throwError("Dados incorrectos", "Os dados de login que inseriu não correspondem a uma conta Moloni. <a href='https://moloni.pt/' target='_BLANK'>Registar</a>", "login");
+            return false;
+        }
     }
 
-    public function curl($action, $values = false)
+    public function curl($action, $values = false, $debug = false)
     {
         $con = curl_init();
         $url = $this->moloni_api_url . $action . ($this->moloni->logged ? "/?access_token=" . $this->moloni->access_token : "");
@@ -104,8 +118,16 @@ class connection
         curl_close($con);
 
         $result_array = json_decode($result_json, true);
-        if (isset($result_array['error_description']) && $result_array['error_description'] == 'Invalid access token.') {
+
+        $this->moloni->debug->addLog($url, $values, $result_array);
+
+        if (isset($result_array['error_description']) && strtolower($result_array['error_description']) == 'invalid access token.') {
             $this->moloni->errors->throwError("Access token errada", "Access token inválida", "login");
+            $this->moloni->logged = false;
+            $this->moloni->updated_tokens = true;
+            $this->moloni->access_token = "";
+            $this->moloni->refresh_token = "";
+            $this->moloni->expire_date = "";
             return false;
         }
         return $result_array;

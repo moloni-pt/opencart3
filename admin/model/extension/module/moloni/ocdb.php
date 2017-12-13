@@ -24,6 +24,7 @@ class ModelExtensionModuleMoloniOcdb extends Model
     public function qUpdateMoloniTokens($access_token, $refresh_token, $expire_date)
     {
         $query = $this->db->query("UPDATE `" . DB_PREFIX . "moloni` SET access_token = '" . $access_token . "', refresh_token = '" . $refresh_token . "', expire_date = '" . $expire_date . "'");
+        echo "UPDATE `" . DB_PREFIX . "moloni` SET access_token = '" . $access_token . "', refresh_token = '" . $refresh_token . "', expire_date = '" . $expire_date . "'";
         return $this->qGetMoloniTokens;
     }
 }
