@@ -16,9 +16,8 @@ class companies
 
     public function getAll()
     {
-        $result = $this->moloni->connection->curl("companies/getAll");
+        $result = $this->moloni->connection->curl("companies/getAll", null, true);
         if (is_array($result) && isset($result[0]['company_id'])) {
-            print_r($result);
             return $result;
         } else {
             $this->moloni->errors->throwError("Não tem empresas disponíveis", "Não tem empresas disponíveis para serem usadas", __CLASS__ . "/" . __FUNCTION__);

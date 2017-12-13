@@ -26,6 +26,7 @@ class moloni
     private $dependencies = array(
         "connection" => "connection.class.php",
         "errors" => "errors.class.php",
+        "debug" => "debug.class.php",
     );
 
     public function __construct()

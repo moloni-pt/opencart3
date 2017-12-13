@@ -13,17 +13,46 @@
     </div>
     <div class="container-fluid">
 
-        {% if error_warning %}
-            <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {% if debug_window %}
+            <div class='moloni-debug-holder'>
+                <div class="alert alert-info alert-dismissible" data-toggle="collapse" data-target="#moloni-debug-window" aria-expanded="false" aria-controls="collapseExample">
+                    <i class="fa fa-cog"></i> Consola de debug Moloni
+                </div>
+                <div id='moloni-debug-window' class="collapse moloni-debug-window">
+                    <div class='log-holder' id="log-holder" data-children=".log">
+                        {% for key, log in debug_window%}
+                            <div class="item">
+                                <a data-toggle="collapse" data-parent="#log-holder" href="#log{{key}}" aria-expanded="true" aria-controls="log{{key}}">
+                                    {{log.url}}
+                                </a>
+                                <div id="log{{key}}" class="collapse" role="tabpanel">
+                                    <p>
+                                    <pre class="col-lg-6">{{log.data_string.received}}</pre>
+                                    <pre class="col-lg-6">{{log.data_string.received}}</pre>
+                                    <div style='clear:both'></div>
+                                    </p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         {% endif %}
 
-        <br>
-        {% for company in companies%}
-            <div class="row">
-                <div class="col-lg-3 col-md-3 col-sm-6"><div class="tile tile-primary">
-                        <div class="tile-heading">Total Orders <span class="pull-right">
+        {% if error_warnings %}
+            {% for error in error_warnings%}
+                <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error.message }}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="row">
+            {% for company in companies%}
+
+                <div class="col-lg-3 col-md-3 col-sm-6">
+                    <div class="tile tile-primary">
+                        <div class="tile-heading">{{company.name}} <span class="pull-right">
                                 <i class="fa fa-caret-up"></i>
                                 50%</span></div>
                         <div class="tile-body"><i class="fa fa-shopping-cart"></i>
@@ -32,9 +61,11 @@
                         <div class="tile-footer"><a href="https://demo.opencart.com/admin/index.php?route=sale/order&amp;user_token=GyXRMz6dglbZKnZ9tO0rzR3X1EyXILlT">View more...</a></div>
                     </div>
                 </div>
-            </div>
-        {% endfor %}
+
+            {% endfor %}
+        </div>
     </div>
 
 </div>
+<link href="view/stylesheet/moloni/moloni-sheet.css" rel="stylesheet" />
 {{ footer }}

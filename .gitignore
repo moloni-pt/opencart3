@@ -132,7 +132,6 @@
 /admin/controller/extension/module/pp_braintree_button.php
 /admin/controller/extension/module/amazon_pay.php
 /admin/view/image/
-/admin/view/stylesheet/
 /admin/view/javascript/
 /admin/view/template/customer/
 /admin/view/template/design/
@@ -218,3 +217,7 @@
 /system/library/template.php
 /system/library/session.php
 /system/startup.php
+/admin/view/stylesheet/bootstrap.css
+/admin/view/stylesheet/sass/
+/admin/view/stylesheet/fonts/
+/admin/view/stylesheet/stylesheet.css

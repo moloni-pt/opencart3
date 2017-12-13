@@ -79,17 +79,16 @@ class ControllerExtensionModuleMoloni extends Controller
                 }
             } else {
                 $data['companies'] = $this->moloni->companies->getAll();
-                print_r($data['companies']);
                 $this->page = "companies";
             }
         } else {
-            $data['error_warning'] = $this->moloni->errors->getError("last")['message'];
             $data['login_form_url'] = $this->url->link('extension/module/moloni', array("page" => "login", 'user_token' => $this->session->data['user_token']), true);
             $this->page = "login";
         }
 
-
         $data['breadcrumbs'] = $this->createBreadcrumbs();
+        $data['debug_window'] = $this->moloni->debug->getLogs("all");
+        $data['error_warnings'] = $this->moloni->errors->getError("all");
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $data));
     }
 
