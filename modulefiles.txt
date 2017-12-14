@@ -1,0 +1,7 @@
+admin/controller/extension/module/moloni.php
+admin/view/template/module/moloni/companies.twig
+admin/view/template/module/moloni/debug.twig
+admin/view/template/module/moloni/home.twig
+admin/view/template/module/moloni/login.twig
+admin/model/extension/module/moloni/install.php
+admin/model/extension/module/moloni/ocdb.php
