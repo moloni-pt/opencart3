@@ -15,6 +15,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private $git_user = "nunong21";
     private $git_repo = "opencart3";
     private $git_branch = "master";
+    private $updated_files = false;
 
     public function __construct($registry)
     {
@@ -124,38 +125,20 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $settingsRaw = $this->curl("https://api.github.com/repos/" . $this->git_user . "/" . $this->git_repo . "/branches/" . $this->git_branch);
         $settings = json_decode($settingsRaw, true);
-        echo "<pre>";
-        print_r($settings);
 
         $treeRaw = $this->curl("https://api.github.com/repos/" . $this->git_user . "/" . $this->git_repo . "/git/trees/" . $settings['commit']['sha'] . "?recursive=1");
         $tree = json_decode($treeRaw, true);
-        print_r($tree);
         foreach ($tree['tree'] as $file) {
             if ($file['type'] == "blob") {
                 $raw = $this->curl("https://raw.githubusercontent.com/" . $this->git_user . "/" . $this->git_repo . "/" . $this->git_branch . "/" . $file['path']);
                 if ($raw) {
-                    file_put_contents(str_replace("/admin", "", DIR_APPLICATION) . $file['path'], $raw, LOCK_EX);
+                    $this->updated_files['true'][] = $path = str_replace("/admin", "", DIR_APPLICATION) . $file['path'];
+                    file_put_contents($path, $raw, LOCK_EX);
+                } else {
+                    $this->updated_files['false'] = str_replace("/admin", "", DIR_APPLICATION) . $file['path'];
                 }
             }
         }
-        /* $result = $this->getGithubFile("modulefiles");
-          #$files_list = array_filter(explode("\n", $result));
-          foreach ($files_list as $file) {
-          $raw = $this->getGithubFile($file);
-          file_put_contents(str_replace("/admin", "", DIR_APPLICATION) . $file, $raw, LOCK_EX);
-          } */
-    }
-
-    public function getGitSettings()
-    {
-
-    }
-
-    public function getGithubFile($file)
-    {
-        $result = $this->curl("https://raw.githubusercontent.com/nunong21/opencart3/" . $this->branch . "/" . $file);
-        $url = "https://raw.githubusercontent.com/nunong21/opencart3/" . $branch . "/" . $file;
-        return $result;
     }
 
     public function curl($url, $values = false)
@@ -174,6 +157,10 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $result = curl_exec($con);
         curl_close($con);
+
+        if (curl_error($con)) {
+            return false;
+        }
 
         return $result;
     }
