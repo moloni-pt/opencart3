@@ -31,7 +31,6 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function index()
     {
-
         $data = $this->load->language('extension/module/moloni');
 
         $data['heading_title'] = "Moloni";
@@ -92,11 +91,6 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $data));
     }
 
-    private function handleLogin()
-    {
-
-    }
-
     private function createBreadcrumbs()
     {
         switch ($this->page) {
@@ -112,6 +106,41 @@ class ControllerExtensionModuleMoloni extends Controller
         }
 
         return $breadcrumbs;
+    }
+
+    public function update($method = "github")
+    {
+        switch ($method) {
+            case "github":
+                $this->githubUpdate();
+                break;
+        }
+    }
+
+    public function githubUpdate()
+    {
+        $result = $this->getGithubFile("modulefiles");
+        $files_list = array_filter(explode("\n", $result));
+        foreach ($files_list as $file) {
+            $raw = $this->getGithubFile($file);
+            file_put_contents(str_replace("/admin", "", DIR_APPLICATION) . $file, $raw, LOCK_EX);
+        }
+    }
+
+    public function getGithubFile($file, $branch = "master")
+    {
+        $con = curl_init();
+        $url = "https://raw.githubusercontent.com/nunong21/opencart3/" . $branch . "/" . $file;
+        curl_setopt($con, CURLOPT_URL, $url);
+        curl_setopt($con, CURLOPT_HEADER, false);
+        curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($con, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($con, CURLOPT_SSL_VERIFYPEER, true);
+
+        $result = curl_exec($con);
+        curl_close($con);
+
+        return $result;
     }
 
     public function install()

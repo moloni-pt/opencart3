@@ -1,0 +1,23 @@
+<div class='moloni-debug-holder'>
+    <div class="alert alert-info alert-dismissible" data-toggle="collapse" data-target="#moloni-debug-window" aria-expanded="false" aria-controls="collapseExample">
+        <i class="fa fa-cog"></i> Consola de debug Moloni
+    </div>
+    <div id='moloni-debug-window' class="collapse moloni-debug-window">
+        <div class='log-holder' id="log-holder" data-children=".log">
+            {% for key, log in debug_window%}
+                <div class="item">
+                    <a data-toggle="collapse" data-parent="#log-holder" href="#log{{key}}" aria-expanded="true" aria-controls="log{{key}}">
+                        {{log.url}}
+                    </a>
+                    <div id="log{{key}}" class="collapse" role="tabpanel">
+                        <p>
+                        <pre class="col-lg-6">{{log.data_string.received}}</pre>
+                        <pre class="col-lg-6">{{log.data_string.sent}}</pre>
+                        <div style='clear:both'></div>
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
