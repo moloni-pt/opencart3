@@ -91,7 +91,11 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $data['breadcrumbs'] = $this->createBreadcrumbs();
         $data['debug_window'] = $this->moloni->debug->getLogs("all");
+        $data['update_result'] = $this->updated_files;
         $data['error_warnings'] = $this->moloni->errors->getError("all");
+        echo "<pre>";
+        print_r($data['update_result']);
+        echo "</pre>";
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $data));
     }
 
@@ -156,12 +160,12 @@ class ControllerExtensionModuleMoloni extends Controller
         curl_setopt($con, CURLOPT_SSL_VERIFYPEER, true);
 
         $result = curl_exec($con);
-        curl_close($con);
-
-        if (curl_error($con)) {
-            return false;
+        if (curl_errno($con)) {
+            echo $result;
+            $result = false;
         }
 
+        curl_close($con);
         return $result;
     }
 
