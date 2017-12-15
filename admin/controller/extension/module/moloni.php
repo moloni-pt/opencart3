@@ -130,18 +130,22 @@ class ControllerExtensionModuleMoloni extends Controller
         $settingsRaw = $this->curl("https://api.github.com/repos/" . $this->git_user . "/" . $this->git_repo . "/branches/" . $this->git_branch);
         $settings = json_decode($settingsRaw, true);
 
-        $treeRaw = $this->curl("https://api.github.com/repos/" . $this->git_user . "/" . $this->git_repo . "/git/trees/" . $settings['commit']['sha'] . "?recursive=1");
-        $tree = json_decode($treeRaw, true);
-        foreach ($tree['tree'] as $file) {
-            if ($file['type'] == "blob") {
-                $raw = $this->curl("https://raw.githubusercontent.com/" . $this->git_user . "/" . $this->git_repo . "/" . $this->git_branch . "/" . $file['path']);
-                if ($raw) {
-                    $this->updated_files['true'][] = $path = str_replace("/admin", "", DIR_APPLICATION) . $file['path'];
-                    file_put_contents($path, $raw, LOCK_EX);
-                } else {
-                    $this->updated_files['false'] = str_replace("/admin", "", DIR_APPLICATION) . $file['path'];
+        if (!isset($settings['commit'])) {
+            $treeRaw = $this->curl("https://api.github.com/repos/" . $this->git_user . "/" . $this->git_repo . "/git/trees/" . $settings['commit']['sha'] . "?recursive=1");
+            $tree = json_decode($treeRaw, true);
+            foreach ($tree['tree'] as $file) {
+                if ($file['type'] == "blob") {
+                    $raw = $this->curl("https://raw.githubusercontent.com/" . $this->git_user . "/" . $this->git_repo . "/" . $this->git_branch . "/" . $file['path']);
+                    if ($raw) {
+                        $this->updated_files['true'][] = $path = str_replace("/admin", "", DIR_APPLICATION) . $file['path'];
+                        file_put_contents($path, $raw, LOCK_EX);
+                    } else {
+                        $this->updated_files['false'] = str_replace("/admin", "", DIR_APPLICATION) . $file['path'];
+                    }
                 }
             }
+        } else {
+            $this->updated_files['false'] = $settings['message'];
         }
     }
 
@@ -158,6 +162,7 @@ class ControllerExtensionModuleMoloni extends Controller
         curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($con, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($con, CURLOPT_SSL_VERIFYPEER, true);
+        //curl_setopt($con, CURLOPT_USERPWD, "nunong21:A!bn142578");
 
         $result = curl_exec($con);
         if (curl_errno($con)) {
