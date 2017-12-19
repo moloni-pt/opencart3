@@ -16,6 +16,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private $git_repo = "opencart3";
     private $git_branch = "master";
     private $updated_files = false;
+    private $settings;
 
     public function __construct($registry)
     {
@@ -50,12 +51,19 @@ class ControllerExtensionModuleMoloni extends Controller
             $this->moloni->password = $_POST["password"];
         }
 
+        if ($_GET['page'] == "home" && isset($_GET["company_id"])) {
+            $company_id = (int) strip_tags($_GET["company_id"]);
+            $this->ocdb->qUpdateMoloniCompany($company_id);
+        }
+
         $tokens = $this->ocdb->qGetMoloniTokens();
         $this->moloni->client_id = "devapi";
         $this->moloni->client_secret = "53937d4a8c5889e58fe7f105369d9519a713bf43";
         $this->moloni->access_token = !empty($tokens['access_token']) ? $tokens['access_token'] : false;
         $this->moloni->refresh_token = !empty($tokens['refresh_token']) ? $tokens['refresh_token'] : false;
         $this->moloni->expire_date = !empty($tokens['expire_date']) ? $tokens['expire_date'] : "";
+        $this->moloni->company_id = !empty($tokens['company_id']) ? $tokens['company_id'] : false;
+
 
         $this->moloni->verifyTokens();
         if ($this->moloni->updated_tokens) {
@@ -65,12 +73,17 @@ class ControllerExtensionModuleMoloni extends Controller
                 $tokens = $this->ocdb->qInsertMoloniTokens($this->moloni->access_token, $this->moloni->refresh_token, $this->moloni->expire_date);
             }
         }
-        $this->update();
+
         if ($this->moloni->logged) {
             if ($this->moloni->company_id) {
                 switch ($_GET['page']) {
                     case "settings" :
-                        $this->page = "settings";
+                        if ($this->ocdb->getTotalStores() > 0 && !isset($_GET['store_id'])) {
+                            $data['content'] = $this->getStoreListData();
+                            $this->page = "store_list";
+                        } else {
+                            $this->page = "settings";
+                        }
                         break;
                     case "documents" :
                         $this->page = "documents";
@@ -82,10 +95,14 @@ class ControllerExtensionModuleMoloni extends Controller
                 }
             } else {
                 $data['companies'] = $this->moloni->companies->getAll();
+                foreach ($data['companies'] as &$company) {
+                    $company['select_url'] = $this->url->link('extension/module/moloni', array("page" => "home", 'company_id' => $company['company_id'], 'user_token' => $this->session->data['user_token']), true);
+                }
                 $this->page = "companies";
             }
         } else {
             $data['login_form_url'] = $this->url->link('extension/module/moloni', array("page" => "login", 'user_token' => $this->session->data['user_token']), true);
+
             $this->page = "login";
         }
 
@@ -93,9 +110,12 @@ class ControllerExtensionModuleMoloni extends Controller
         $data['debug_window'] = $this->moloni->debug->getLogs("all");
         $data['update_result'] = $this->updated_files;
         $data['error_warnings'] = $this->moloni->errors->getError("all");
-        echo "<pre>";
-        print_r($data['update_result']);
-        echo "</pre>";
+        /* echo "<pre>";
+          $this->update();
+          print_r($data['update_result']);
+          echo "</pre>"; */
+
+
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $data));
     }
 
@@ -108,15 +128,50 @@ class ControllerExtensionModuleMoloni extends Controller
             case "companies":
                 $breadcrumbs[] = array("text" => "Empresas", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
                 break;
+            case "home":
+                $breadcrumbs[] = array("text" => "Home", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Orders", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
+                break;
+            case "store_list":
+                $breadcrumbs[] = array("text" => "Settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Choose your store", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
+                break;
             default :
                 $breadcrumbs[] = (array("href" => "extension/module/moloni", "text" => "login"));
                 break;
         }
-
         return $breadcrumbs;
     }
 
-    public function update($method = "github")
+    public function getStoreListData()
+    {
+        $data = array();
+        $data['stores'][] = array(
+            'store_id' => 0,
+            'name' => $this->config->get('config_name') . $this->language->get('text_default'),
+            'url' => $this->config->get('config_secure') ? HTTPS_CATALOG : HTTP_CATALOG,
+            'edit' => $this->url->link('extension/module/moloni', array("page" => "settings", "store_id" => "0", 'user_token' => $this->session->data['user_token']), true)
+        );
+
+        $stores = $this->ocdb->getStores();
+        foreach ($stores as $store) {
+            $data['stores'][] = array(
+                'store_id' => $store['store_id'],
+                'name' => $store['name'],
+                'url' => $store['url'],
+                'edit' => $this->url->link('extension/module/moloni', array("page" => "settings", "store_id" => $store['store_id'], 'user_token' => $this->session->data['user_token']), true)
+            );
+        }
+
+        return $data;
+    }
+
+    public function getSettingsContent()
+    {
+
+    }
+
+    private function update($method = "github")
     {
         switch ($method) {
             case "github":
@@ -125,7 +180,7 @@ class ControllerExtensionModuleMoloni extends Controller
         }
     }
 
-    public function githubUpdate()
+    private function githubUpdate()
     {
         $settingsRaw = $this->curl("https://api.github.com/repos/" . $this->git_user . "/" . $this->git_repo . "/branches/" . $this->git_branch);
         $settings = json_decode($settingsRaw, true);
@@ -149,7 +204,7 @@ class ControllerExtensionModuleMoloni extends Controller
         }
     }
 
-    public function curl($url, $values = false)
+    private function curl($url, $values = false)
     {
         $con = curl_init();
         curl_setopt($con, CURLOPT_URL, $url);
@@ -173,6 +228,7 @@ class ControllerExtensionModuleMoloni extends Controller
         curl_close($con);
         return $result;
     }
+    /*     * ******* INSTAL FUNCTIONS *********** */
 
     public function install()
     {
