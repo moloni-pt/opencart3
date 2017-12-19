@@ -129,12 +129,12 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $settingsRaw = $this->curl("https://api.github.com/repos/" . $this->git_user . "/" . $this->git_repo . "/branches/" . $this->git_branch);
         $settings = json_decode($settingsRaw, true);
-
-        if (!isset($settings['commit'])) {
+        if (isset($settings['commit'])) {
             $treeRaw = $this->curl("https://api.github.com/repos/" . $this->git_user . "/" . $this->git_repo . "/git/trees/" . $settings['commit']['sha'] . "?recursive=1");
             $tree = json_decode($treeRaw, true);
             foreach ($tree['tree'] as $file) {
-                if ($file['type'] == "blob") {
+                $file_info = pathinfo($file['path']);
+                if ($file['type'] == "blob" && isset($file_info['extension']) && in_array($file_info['extension'], array("php", "twigg", "css"))) {
                     $raw = $this->curl("https://raw.githubusercontent.com/" . $this->git_user . "/" . $this->git_repo . "/" . $this->git_branch . "/" . $file['path']);
                     if ($raw) {
                         $this->updated_files['true'][] = $path = str_replace("/admin", "", DIR_APPLICATION) . $file['path'];
