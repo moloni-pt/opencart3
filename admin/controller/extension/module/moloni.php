@@ -16,6 +16,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private $git_repo = "opencart3";
     private $git_branch = "master";
     private $updated_files = false;
+    private $store_id = "0";
     private $settings;
 
     public function __construct($registry)
@@ -38,17 +39,29 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $data = $this->load->language('extension/module/moloni');
 
-        $data['heading_title'] = "Moloni";
-
+        /* Load templates URLS */
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
+        $data['url'] = $this->getTemplateUrls();
 
+
+        /* Load Moloni Library */
         $this->load->library("moloni");
+
+
+        /* Logical operations by order */
+        if (isset($_POST["store_id"]) || isset($_GET["store_id"])) {
+            $this->store_id = $_REQUEST["store_id"];
+        }
 
         if ($_GET['page'] == "login" && isset($_POST["username"]) && isset($_POST["password"])) {
             $this->moloni->username = $_POST["username"];
             $this->moloni->password = $_POST["password"];
+        }
+
+        if ($_GET['page'] == "home" && isset($_GET["action"]) && $_GET["action"] == 'logout') {
+            $this->ocdb->qDeleteMoloniTokens();
         }
 
         if ($_GET['page'] == "home" && isset($_GET["company_id"])) {
@@ -56,6 +69,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $this->ocdb->qUpdateMoloniCompany($company_id);
         }
 
+        /* Get tokens from DB and start Moloni connection */
         $tokens = $this->ocdb->qGetMoloniTokens();
         $this->moloni->client_id = "devapi";
         $this->moloni->client_secret = "53937d4a8c5889e58fe7f105369d9519a713bf43";
@@ -64,7 +78,17 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->moloni->expire_date = !empty($tokens['expire_date']) ? $tokens['expire_date'] : "";
         $this->moloni->company_id = !empty($tokens['company_id']) ? $tokens['company_id'] : false;
 
+        /* Save settings from the settings form */
+        if ($_GET['page'] == "settings" && isset($_POST["store_id"]) && is_array($_POST['moloni'])) {
+            $this->saveSettings($_POST['moloni'], $this->store_id);
+        }
 
+        /* Get and set moloni settings */
+        $this->setMoloniSettings();
+        $data['options'] = $this->settings;
+        print_r($data['options']);
+
+        /* Moloni verification */
         $this->moloni->verifyTokens();
         if ($this->moloni->updated_tokens) {
             if ($tokens) {
@@ -74,6 +98,7 @@ class ControllerExtensionModuleMoloni extends Controller
             }
         }
 
+        /* Page selector */
         if ($this->moloni->logged) {
             if ($this->moloni->company_id) {
                 switch ($_GET['page']) {
@@ -82,6 +107,7 @@ class ControllerExtensionModuleMoloni extends Controller
                             $data['content'] = $this->getStoreListData();
                             $this->page = "store_list";
                         } else {
+                            $data['content'] = $this->getSettingsData();
                             $this->page = "settings";
                         }
                         break;
@@ -101,8 +127,6 @@ class ControllerExtensionModuleMoloni extends Controller
                 $this->page = "companies";
             }
         } else {
-            $data['login_form_url'] = $this->url->link('extension/module/moloni', array("page" => "login", 'user_token' => $this->session->data['user_token']), true);
-
             $this->page = "login";
         }
 
@@ -110,13 +134,19 @@ class ControllerExtensionModuleMoloni extends Controller
         $data['debug_window'] = $this->moloni->debug->getLogs("all");
         $data['update_result'] = $this->updated_files;
         $data['error_warnings'] = $this->moloni->errors->getError("all");
-        /* echo "<pre>";
-          $this->update();
-          print_r($data['update_result']);
-          echo "</pre>"; */
-
+        /* $this->update(); */
 
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $data));
+    }
+
+    private function getTemplateUrls()
+    {
+        $url = array();
+        $url['login']['form'] = $this->url->link('extension/module/moloni', array("page" => "login", 'user_token' => $this->session->data['user_token']), true);
+        $url['logout'] = $this->url->link('extension/module/moloni', array("page" => "home", "action" => "logout", 'user_token' => $this->session->data['user_token']), true);
+        $url['settings']['save'] = $this->url->link('extension/module/moloni', array("page" => "settings", "store_id" => (isset($_GET['store_id']) ? $_GET['store_id'] : 0), "action" => "save", 'user_token' => $this->session->data['user_token']), true);
+        $url['settings']['cancel'] = $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true);
+        return $url;
     }
 
     private function createBreadcrumbs()
@@ -135,6 +165,11 @@ class ControllerExtensionModuleMoloni extends Controller
             case "store_list":
                 $breadcrumbs[] = array("text" => "Settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
                 $breadcrumbs[] = array("text" => "Choose your store", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
+                break;
+            case "settings":
+                $breadcrumbs[] = array("text" => "Settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Stores", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Edit store settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", "store_id" => (isset($_GET['store_id']) ? $_GET['store_id'] : 0), 'user_token' => $this->session->data['user_token']), true));
                 break;
             default :
                 $breadcrumbs[] = (array("href" => "extension/module/moloni", "text" => "login"));
@@ -166,9 +201,37 @@ class ControllerExtensionModuleMoloni extends Controller
         return $data;
     }
 
-    public function getSettingsContent()
+    public function getSettingsData()
     {
+        $data = array();
+        $data['store_id'] = isset($_GET['store_id']) ? $_GET['store_id'] : 0;
+        $data['settings_values']['document_sets'] = $this->moloni->document_sets->getAll();
 
+        return $data;
+    }
+
+    private function setMoloniSettings()
+    {
+        $this->settings = array();
+        $settings = $this->ocdb->getMoloniSettings($this->moloni->company_id, $this->store_id);
+        print_r($settings);
+        foreach ($settings as $setting) {
+            $this->settings[$setting["label"]] = $setting["value"];
+        }
+    }
+
+    private function saveSettings($settings, $store_id = 0)
+    {
+        if (is_array($settings)) {
+            foreach ($settings as $name => $value) {
+                $exists = $this->ocdb->qExistsSetting($name, $store_id, $this->moloni->company_id);
+                if ($exists) {
+                    $this->ocdb->qUpdateMoloniSetting($name, $store_id, $this->moloni->company_id, $value);
+                } else {
+                    $this->ocdb->qInsertMoloniSetting($name, $store_id, $this->moloni->company_id, $value);
+                }
+            }
+        }
     }
 
     private function update($method = "github")

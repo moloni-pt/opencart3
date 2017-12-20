@@ -19,10 +19,11 @@ class moloni
     public $client_id = false;
     public $company_id = false;
     public $logged = false;
-    private $libs = array(
-        "customers" => "customers.class.php",
-        "companies" => "companies.class.php",
-    );
+    /* private $libs = array(
+      "customers" => "customers.class.php",
+      "companies" => "companies.class.php",
+      "document_sets" => "document_sets.class.php",
+      ); */
     private $dependencies = array(
         "connection" => "connection.class.php",
         "errors" => "errors.class.php",
@@ -38,7 +39,7 @@ class moloni
     public function __get($name)
     {
         if (!isset($this->{$name})) {
-            $this->load("moloni/classes/" . $this->libs[$name], $name, $this->namespace . $name);
+            $this->load("moloni/classes/" . $name . ".class.php", $name, $this->namespace . $name);
         }
         return $this->{$name};
     }

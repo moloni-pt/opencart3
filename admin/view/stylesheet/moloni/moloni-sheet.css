@@ -44,3 +44,51 @@ pre{
 .logo-img{
     max-width: 100%;
 }
+
+.moloni-tile{
+    height: 260px;
+    background-color: #ffffff;
+    border: solid 2px #dddddd;
+    border-radius: 10px;
+}
+
+.moloni-tile .login-button{
+    background-color: #55A8F2;
+    width: 200px;
+    bottom: 40px;
+    position: absolute;
+    padding: 8px;
+    color: white;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+
+.moloni-tile .login-body{
+    align-content: center;
+    text-align: center;
+    padding-top: 25px;
+}
+
+.moloni-tile .login-image{
+    max-height: 100px;
+    max-width: 230px;
+}
+
+.moloni-tile .login-title{
+    color: #55a8f2;
+    text-transform: uppercase;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 30px;
+}
+
+.moloni-tile .login-details{
+    font-size: 12px;
+    color: darkgrey;
+    margin-top: 2px;
+}

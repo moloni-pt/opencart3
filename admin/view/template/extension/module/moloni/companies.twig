@@ -28,21 +28,38 @@
         <div class="row">
             {% for company in companies%}
                 <div class="col-lg-3 col-md-3 col-sm-6">
-                    <div class="tile tile-primary">
-                        <div class="tile-heading">{{company.name}} <span class="pull-right">
-                                <i class="fa fa-caret-up"></i>
-                                50%</span>
+                    <div class="moloni-tile moloni-tile-primary">
+
+                        <div class="login-body">
+                            <img class="login-image" src="https://www.moloni.pt/_imagens/?macro=imgAC_iconeEmpresa_s1&img={{company.image}}">
+                            <div class="login-title">{{company.name}}</div>
+                            <div class="login-details">{{company.email}}<br>{{company.vat}}</div>
                         </div>
-                        <div class="tile-body">
-                            <img class="logo-img" src="https://www.moloni.pt/_imagens/?macro=imgAC_iconeEmpresa_s1&img={{company.image}}">
-                        </div>
-                        <div class="tile-footer">
-                            <a href="{{company.select_url}}">> Seleccionar empresa <</a>
-                        </div>
+
+                        <a href="{{company.select_url}}">
+                            <div class="login-button">
+                                Seleccionar empresa
+                            </div>
+                        </a>
                     </div>
                 </div>
             {% endfor %}
         </div>
+        <!-- <div class="col-lg-3 col-md-3 col-sm-6">
+                     <div class="moloni-tile moloni-tile-primary">
+                         <div class="moloni-tile-heading">
+        <span class="pull-right">
+            <i class="fa fa-caret-up"></i>
+            50%</span>
+    </div>
+    <div class="tile-body">
+        <img class="logo-img" src="https://www.moloni.pt/_imagens/?macro=imgAC_iconeEmpresa_s1&img=">
+    </div>
+    <div class="tile-footer">
+        <a href="">> Seleccionar empresa <</a>
+    </div>
+</div>
+</div>*/ -->
     </div>
 
 </div>
