@@ -36,27 +36,93 @@
                 <form action="{{ url.settings.save }}" method="post" enctype="multipart/form-data" id="moloni-store-settings" class="form-horizontal">
                     <input type='hidden' name='store_id' value='{{content.store_id}}'>
                     <ul class="nav nav-tabs">
-                        <li class="active"><a href="#tab-general" data-toggle="tab">{{ tab_general }}</a></li>
-                        <li><a href="#tab-store" data-toggle="tab">{{ tab_store }}</a></li>
-                        <li><a href="#tab-local" data-toggle="tab">{{ tab_local }}</a></li>
-                        <li><a href="#tab-option" data-toggle="tab">{{ tab_option }}</a></li>
-                        <li><a href="#tab-image" data-toggle="tab">{{ tab_image }}</a></li>
-                        <li><a href="#tab-server" data-toggle="tab">{{ tab_server }}</a></li>
+                        <li class="active"><a href="#tab-document" data-toggle="tab">Document</a></li>
+                        <li><a href="#tab-products" data-toggle="tab">Artigos</a></li>
                     </ul>
+
                     <div class="tab-content">
-                        <div class="tab-pane active" id="tab-general">
+                        <div class="tab-pane active" id="tab-document">
+                            <fieldset>
+                                <legend>{{label.document_settings}}</legend>
+                                <div class="form-group required">
+                                    <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.document_set|escape('html') }}">{{ label.document_set }}</span></label>
+                                    <div class="col-sm-10">
+                                        <select name="moloni[document_set_id]" id="input-document-set" class="form-control">
+                                            {% for document_set in content.settings_values.document_sets %}
+                                                <option value="{{ document_set.document_set_id }}" {{ document_set.document_set_id == options.document_set_id ? 'selected="selected"' : ""}}>{{ document_set.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group required">
+                                    <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.document_type|escape('html') }}">{{ label.document_type }}</span></label>
+                                    <div class="col-sm-10">
+                                        <select name="moloni[document_type]" id="input-document-type" class="form-control">
+                                            {% for document_type in content.settings_values.document_types %}
+                                                <option value="{{ document_type.name }}" {{ document_type.name == options.document_type ? 'selected="selected"' : ""}}>{{ label[document_type.name] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group required">
+                                    <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.document_status|escape('html') }}">{{ label.document_status }}</span></label>
+                                    <div class="col-sm-10">
+                                        <select name="moloni[document_status]" id="input-document-type" class="form-control">
+                                            {% for id, document_status in content.settings_values.document_status %}
+                                                <option value="{{ id }}" {{ id == options.document_status ? 'selected="selected"' : ""}}>{{ label[document_status] }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <fieldset>
+                                <legend>{{label.shipping}}</legend>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.shipping_details|escape('html') }}">{{label.shipping_details}}</span></label>
+                                    <div class="col-sm-10">
+                                        <label class="radio-inline"><input type="radio" name="moloni[shipping_details]" value="1" {{ options.shipping_details == "1" ? 'checked="checked"' : ""}}>
+                                            {{label.yes}}
+                                        </label>
+                                        <label class="radio-inline"><input type="radio" name="moloni[shipping_details]" value="0" {{ options.shipping_details == "0" ? 'checked="checked"' : ""}}>
+                                            {{label.no}}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.shipping_document|escape('html') }}">{{label.shipping_document}}</span></label>
+                                    <div class="col-sm-10">
+                                        <label class="radio-inline"><input type="radio" name="moloni[shipping_document]" value="1" {{ options.shipping_document == "1" ? 'checked="checked"' : ""}}>
+                                            {{label.yes}}
+                                        </label>
+                                        <label class="radio-inline"><input type="radio" name="moloni[shipping_document]" value="0" {{ options.shipping_document == "0" ? 'checked="checked"' : ""}}>
+                                            {{label.no}}
+                                        </label>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+
+                        <div class="tab-pane" id="tab-products">
                             <div class="form-group required">
                                 <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.document_set|escape('html') }}">{{ settings.document_set }}</span></label>
                                 <div class="col-sm-10">
-                                    <select name="moloni[document_set_id]" id="input-document-set" class="form-control">
-                                        {% for document_set in content.settings_values.document_sets %}
-                                            <option value="{{ document_set.document_set_id }}" {{ document_set.document_set_id == options.document_set_id ? 'selected="selected"' : ""}}>{{ document_set.name }}</option>
-                                        {% endfor %}
+                                    <select name="moloni[documentTest]" id="input-document-set" class="form-control">
+
                                     </select>
                                 </div>
                             </div>
                         </div>
+
+
                     </div>
+
+
+
+
                 </form>
             </div>
         </div>
