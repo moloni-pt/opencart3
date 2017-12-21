@@ -25,25 +25,26 @@
             {% endfor %}
         {% endif %}
 
-        <div class="row">
-            {% for company in companies%}
-                <div class="col-lg-3 col-md-3 col-sm-6">
-                    <div class="moloni-tile moloni-tile-primary">
+        <div class="row"><center>
+                {% for company in companies%}
+                    <div class="moloni-tile-wrapper">
+                        <div class="moloni-tile moloni-tile-primary">
 
-                        <div class="login-body">
-                            <img class="login-image" src="https://www.moloni.pt/_imagens/?macro=imgAC_iconeEmpresa_s1&img={{company.image}}">
-                            <div class="login-title">{{company.name}}</div>
-                            <div class="login-details">{{company.email}}<br>{{company.vat}}</div>
-                        </div>
-
-                        <a href="{{company.select_url}}">
-                            <div class="login-button">
-                                Seleccionar empresa
+                            <div class="login-body">
+                                <img class="login-image" src="https://www.moloni.pt/_imagens/?macro=imgAC_iconeEmpresa_s1&img={{company.image}}">
+                                <div class="login-title">{{company.name}}</div>
+                                <div class="login-details">{{company.email}}<br>{{company.vat}}</div>
                             </div>
-                        </a>
+
+                            <a href="{{company.select_url}}">
+                                <div class="login-button">
+                                    Seleccionar empresa
+                                </div>
+                            </a>
+                        </div>
                     </div>
-                </div>
-            {% endfor %}
+                {% endfor %}
+            </center>
         </div>
         <!-- <div class="col-lg-3 col-md-3 col-sm-6">
                      <div class="moloni-tile moloni-tile-primary">

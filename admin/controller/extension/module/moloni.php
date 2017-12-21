@@ -18,6 +18,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private $updated_files = false;
     private $store_id = "0";
     private $settings;
+    private $document_type;
 
     public function __construct($registry)
     {
@@ -35,6 +36,11 @@ class ControllerExtensionModuleMoloni extends Controller
         }
     }
 
+    public function settings()
+    {
+        $data = $this->load->language('extension/module/moloni');
+    }
+
     public function index()
     {
         $data = $this->load->language('extension/module/moloni');
@@ -45,10 +51,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $data['footer'] = $this->load->controller('common/footer');
         $data['url'] = $this->getTemplateUrls();
 
-
         /* Load Moloni Library */
         $this->load->library("moloni");
-
 
         /* Logical operations by order */
         if (isset($_POST["store_id"]) || isset($_GET["store_id"])) {
@@ -86,7 +90,6 @@ class ControllerExtensionModuleMoloni extends Controller
         /* Get and set moloni settings */
         $this->setMoloniSettings();
         $data['options'] = $this->settings;
-        print_r($data['options']);
 
         /* Moloni verification */
         $this->moloni->verifyTokens();
@@ -101,6 +104,9 @@ class ControllerExtensionModuleMoloni extends Controller
         /* Page selector */
         if ($this->moloni->logged) {
             if ($this->moloni->company_id) {
+
+                $this->getDocumentTypes();
+
                 switch ($_GET['page']) {
                     case "settings" :
                         if ($this->ocdb->getTotalStores() > 0 && !isset($_GET['store_id'])) {
@@ -206,15 +212,30 @@ class ControllerExtensionModuleMoloni extends Controller
         $data = array();
         $data['store_id'] = isset($_GET['store_id']) ? $_GET['store_id'] : 0;
         $data['settings_values']['document_sets'] = $this->moloni->document_sets->getAll();
+        $data['settings_values']['document_types'] = $this->document_type;
+        $data['settings_values']['document_status'] = array("0" => "draft", "1" => "closed");
+
 
         return $data;
+    }
+
+    private function getDocumentTypes()
+    {
+        $this->document_type["invoices"] = array("name" => "invoices", "url" => "Faturas");
+        $this->document_type["invoiceReceipts"] = array("name" => "invoiceReceipts", "url" => "FaturasRecibo");
+        $this->document_type["simplifiedInvoices"] = array("name" => "simplifiedInvoices", "url" => "FaturaSimplificada");
+        $this->document_type["billsOfLading"] = array("name" => "billsOfLading", "url" => "GuiasTransporte");
+        $this->document_type["deliveryNotes"] = array("name" => "deliveryNotes", "url" => "NotasEncomenda");
+        $this->document_type["internalDocuments"] = array("name" => "internalDocuments", "url" => "DocumentosInternos");
+        $this->document_type["estimates"] = array("name" => "estimates", "url" => "Orcamentos");
+
+        return $this->document_type;
     }
 
     private function setMoloniSettings()
     {
         $this->settings = array();
         $settings = $this->ocdb->getMoloniSettings($this->moloni->company_id, $this->store_id);
-        print_r($settings);
         foreach ($settings as $setting) {
             $this->settings[$setting["label"]] = $setting["value"];
         }

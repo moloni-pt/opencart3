@@ -81,6 +81,7 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
     public function qUpdateMoloniSetting($label, $store_id, $company_id, $value)
     {
+        $this->cache->delete("moloni_settings" . $company_id . $store_id);
         $sql = "UPDATE `" . DB_PREFIX . "moloni_settings` SET value = '" . $value . "' WHERE label LIKE '" . $label . "' AND store_id = '" . $store_id . "' AND company_id = '" . $company_id . "'";
         $this->db->query($sql);
         return true;
@@ -88,6 +89,7 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
     public function qInsertMoloniSetting($label, $store_id, $company_id, $value)
     {
+        $this->cache->delete("moloni_settings" . $company_id . $store_id);
         $sql = "INSERT INTO `" . DB_PREFIX . "moloni_settings`(label, store_id, company_id, value) VALUES('" . $label . "', '" . $store_id . "', '" . $company_id . "', '" . $value . "')";
         $this->db->query($sql);
         return true;

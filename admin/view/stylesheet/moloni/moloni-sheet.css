@@ -45,6 +45,15 @@ pre{
     max-width: 100%;
 }
 
+.moloni-tile-wrapper{
+    position: relative;
+    min-height: 1px;
+    padding-left: 15px;
+    padding-right: 15px;
+    float: left;
+    width: 320px;
+}
+
 .moloni-tile{
     height: 260px;
     background-color: #ffffff;
@@ -53,19 +62,22 @@ pre{
 }
 
 .moloni-tile .login-button{
-    background-color: #55A8F2;
-    width: 200px;
-    bottom: 40px;
+    /*background-color: #55A8F2;*/
+    background-color: #2E3A47;
     position: absolute;
     padding: 8px;
     color: white;
-    border-radius: 20px;
     font-size: 14px;
     font-weight: 600;
     text-align: center;
     text-transform: uppercase;
     left: 50%;
     transform: translate(-50%, 0);
+    bottom: 0;
+    border-radius: 0px 0px 10px 10px;
+    width: 290px;
+    height: 46px;
+    padding: 13px;
 }
 
 .moloni-tile .login-body{
@@ -80,7 +92,7 @@ pre{
 }
 
 .moloni-tile .login-title{
-    color: #55a8f2;
+    color: #2E3A47;
     text-transform: uppercase;
     font-size: 16px;
     font-weight: 600;
