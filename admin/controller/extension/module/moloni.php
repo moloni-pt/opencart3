@@ -19,11 +19,54 @@ class ControllerExtensionModuleMoloni extends Controller
     private $store_id = "0";
     private $settings;
     private $document_type;
+    public $data;
 
     public function __construct($registry)
     {
         parent::__construct($registry);
         $this->__modelHandler();
+
+        $this->load->library("moloni");
+        $this->data = $this->load->language('extension/module/moloni');
+
+        $this->store_id = isset($this->request->get["store_id"]) ? $this->request->get["store_id"] : 0;
+
+        if (isset($this->request->post["username"]) && isset($this->request->post["password"])) {
+            $this->moloni->username = $_POST["username"];
+            $this->moloni->password = $_POST["password"];
+        }
+
+        if (isset($this->request->get["action"]) && $this->request->get["action"] == 'logout') {
+            $this->ocdb->qDeleteMoloniTokens();
+        }
+
+        if (isset($this->request->get["company_id"])) {
+            $this->ocdb->qUpdateMoloniCompany($this->request->get["company_id"]);
+        }
+
+        $tokens = $this->ocdb->qGetMoloniTokens();
+        $this->moloni->client_id = "devapi";
+        $this->moloni->client_secret = "53937d4a8c5889e58fe7f105369d9519a713bf43";
+        $this->moloni->access_token = !empty($tokens['access_token']) ? $tokens['access_token'] : false;
+        $this->moloni->refresh_token = !empty($tokens['refresh_token']) ? $tokens['refresh_token'] : false;
+        $this->moloni->expire_date = !empty($tokens['expire_date']) ? $tokens['expire_date'] : "";
+        $this->moloni->company_id = !empty($tokens['company_id']) ? $tokens['company_id'] : false;
+
+        $this->moloni->verifyTokens();
+        if ($this->moloni->updated_tokens) {
+            if ($tokens) {
+                $tokens = $this->ocdb->qUpdateMoloniTokens($this->moloni->access_token, $this->moloni->refresh_token, $this->moloni->expire_date);
+            } else {
+                $tokens = $this->ocdb->qInsertMoloniTokens($this->moloni->access_token, $this->moloni->refresh_token, $this->moloni->expire_date);
+            }
+        }
+
+        /* Save settings from the settings form */
+        if (isset($this->request->post["store_id"]) && is_array($this->request->post['moloni'])) {
+            $this->setSettings($_POST['moloni'], $this->store_id);
+        }
+
+        $this->data['options'] = $this->setMoloniSettings();
     }
 
     public function __modelHandler()
@@ -36,122 +79,71 @@ class ControllerExtensionModuleMoloni extends Controller
         }
     }
 
-    public function settings()
-    {
-        $data = $this->load->language('extension/module/moloni');
-    }
-
     public function index()
     {
-        $data = $this->load->language('extension/module/moloni');
-
-        /* Load templates URLS */
-        $data['header'] = $this->load->controller('common/header');
-        $data['column_left'] = $this->load->controller('common/column_left');
-        $data['footer'] = $this->load->controller('common/footer');
-        $data['url'] = $this->getTemplateUrls();
-
-        /* Load Moloni Library */
-        $this->load->library("moloni");
-
-        /* Logical operations by order */
-        if (isset($_POST["store_id"]) || isset($_GET["store_id"])) {
-            $this->store_id = $_REQUEST["store_id"];
+        /* Page selector */
+        if ($this->allowed()) {
+            $this->page = "home";
         }
 
-        if ($_GET['page'] == "login" && isset($_POST["username"]) && isset($_POST["password"])) {
-            $this->moloni->username = $_POST["username"];
-            $this->moloni->password = $_POST["password"];
-        }
+        $this->loadDefaults();
+        $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+    }
 
-        if ($_GET['page'] == "home" && isset($_GET["action"]) && $_GET["action"] == 'logout') {
-            $this->ocdb->qDeleteMoloniTokens();
-        }
+    public function settings()
+    {
+        if ($this->allowed()) {
 
-        if ($_GET['page'] == "home" && isset($_GET["company_id"])) {
-            $company_id = (int) strip_tags($_GET["company_id"]);
-            $this->ocdb->qUpdateMoloniCompany($company_id);
-        }
-
-        /* Get tokens from DB and start Moloni connection */
-        $tokens = $this->ocdb->qGetMoloniTokens();
-        $this->moloni->client_id = "devapi";
-        $this->moloni->client_secret = "53937d4a8c5889e58fe7f105369d9519a713bf43";
-        $this->moloni->access_token = !empty($tokens['access_token']) ? $tokens['access_token'] : false;
-        $this->moloni->refresh_token = !empty($tokens['refresh_token']) ? $tokens['refresh_token'] : false;
-        $this->moloni->expire_date = !empty($tokens['expire_date']) ? $tokens['expire_date'] : "";
-        $this->moloni->company_id = !empty($tokens['company_id']) ? $tokens['company_id'] : false;
-
-        /* Save settings from the settings form */
-        if ($_GET['page'] == "settings" && isset($_POST["store_id"]) && is_array($_POST['moloni'])) {
-            $this->saveSettings($_POST['moloni'], $this->store_id);
-        }
-
-        /* Get and set moloni settings */
-        $this->setMoloniSettings();
-        $data['options'] = $this->settings;
-
-        /* Moloni verification */
-        $this->moloni->verifyTokens();
-        if ($this->moloni->updated_tokens) {
-            if ($tokens) {
-                $tokens = $this->ocdb->qUpdateMoloniTokens($this->moloni->access_token, $this->moloni->refresh_token, $this->moloni->expire_date);
+            if ($this->ocdb->getTotalStores() > 0 && !isset($this->request->get['store_id'])) {
+                $this->data['content'] = $this->getStoreListData();
+                $this->page = "store_list";
             } else {
-                $tokens = $this->ocdb->qInsertMoloniTokens($this->moloni->access_token, $this->moloni->refresh_token, $this->moloni->expire_date);
+                $this->data['content'] = $this->getSettingsData();
+                $this->page = "settings";
             }
         }
 
-        /* Page selector */
+        $this->loadDefaults();
+        $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+    }
+
+    private function allowed()
+    {
         if ($this->moloni->logged) {
             if ($this->moloni->company_id) {
-
-                $this->getDocumentTypes();
-
-                switch ($_GET['page']) {
-                    case "settings" :
-                        if ($this->ocdb->getTotalStores() > 0 && !isset($_GET['store_id'])) {
-                            $data['content'] = $this->getStoreListData();
-                            $this->page = "store_list";
-                        } else {
-                            $data['content'] = $this->getSettingsData();
-                            $this->page = "settings";
-                        }
-                        break;
-                    case "documents" :
-                        $this->page = "documents";
-                        break;
-                    case "home" :
-                    default:
-                        $this->page = "home";
-                        break;
-                }
+                return true;
             } else {
-                $data['companies'] = $this->moloni->companies->getAll();
-                foreach ($data['companies'] as &$company) {
-                    $company['select_url'] = $this->url->link('extension/module/moloni', array("page" => "home", 'company_id' => $company['company_id'], 'user_token' => $this->session->data['user_token']), true);
-                }
+                $this->getCompaniesAll();
                 $this->page = "companies";
             }
         } else {
             $this->page = "login";
         }
-
-        $data['breadcrumbs'] = $this->createBreadcrumbs();
-        $data['debug_window'] = $this->moloni->debug->getLogs("all");
-        $data['update_result'] = $this->updated_files;
-        $data['error_warnings'] = $this->moloni->errors->getError("all");
-        /* $this->update(); */
-
-        $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $data));
     }
 
-    private function getTemplateUrls()
+    private function loadDefaults()
+    {
+
+        $this->data['header'] = $this->load->controller('common/header');
+        $this->data['column_left'] = $this->load->controller('common/column_left');
+        $this->data['footer'] = $this->load->controller('common/footer');
+
+        $this->data['url'] = $this->defaultTemplateUrls();
+        $this->data['breadcrumbs'] = $this->createBreadcrumbs();
+        $this->data['document_types'] = $this->getDocumentTypes();
+
+        $this->data['debug_window'] = $this->moloni->debug->getLogs("all");
+        $this->data['error_warnings'] = $this->moloni->errors->getError("all");
+        $this->data['update_result'] = $this->updated_files;
+    }
+
+    private function defaultTemplateUrls()
     {
         $url = array();
-        $url['login']['form'] = $this->url->link('extension/module/moloni', array("page" => "login", 'user_token' => $this->session->data['user_token']), true);
-        $url['logout'] = $this->url->link('extension/module/moloni', array("page" => "home", "action" => "logout", 'user_token' => $this->session->data['user_token']), true);
-        $url['settings']['save'] = $this->url->link('extension/module/moloni', array("page" => "settings", "store_id" => (isset($_GET['store_id']) ? $_GET['store_id'] : 0), "action" => "save", 'user_token' => $this->session->data['user_token']), true);
-        $url['settings']['cancel'] = $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true);
+        $url['login']['form'] = $this->url->link('extension/module/moloni', array('user_token' => $this->session->data['user_token']), true);
+        $url['logout'] = $this->url->link('extension/module/moloni', array("action" => "logout", 'user_token' => $this->session->data['user_token']), true);
+        $url['settings']['save'] = $this->url->link('extension/module/moloni/settings', array("store_id" => (isset($_GET['store_id']) ? $_GET['store_id'] : 0), "action" => "save", 'user_token' => $this->session->data['user_token']), true);
+        $url['settings']['cancel'] = $this->url->link('extension/module/moloni/settings', array('user_token' => $this->session->data['user_token']), true);
         return $url;
     }
 
@@ -184,39 +176,12 @@ class ControllerExtensionModuleMoloni extends Controller
         return $breadcrumbs;
     }
 
-    public function getStoreListData()
+    private function getCompaniesAll()
     {
-        $data = array();
-        $data['stores'][] = array(
-            'store_id' => 0,
-            'name' => $this->config->get('config_name') . $this->language->get('text_default'),
-            'url' => $this->config->get('config_secure') ? HTTPS_CATALOG : HTTP_CATALOG,
-            'edit' => $this->url->link('extension/module/moloni', array("page" => "settings", "store_id" => "0", 'user_token' => $this->session->data['user_token']), true)
-        );
-
-        $stores = $this->ocdb->getStores();
-        foreach ($stores as $store) {
-            $data['stores'][] = array(
-                'store_id' => $store['store_id'],
-                'name' => $store['name'],
-                'url' => $store['url'],
-                'edit' => $this->url->link('extension/module/moloni', array("page" => "settings", "store_id" => $store['store_id'], 'user_token' => $this->session->data['user_token']), true)
-            );
+        $this->data['companies'] = $this->moloni->companies->getAll();
+        foreach ($this->data['companies'] as &$company) {
+            $company['select_url'] = $this->url->link('extension/module/moloni', array('company_id' => $company['company_id'], 'user_token' => $this->session->data['user_token']), true);
         }
-
-        return $data;
-    }
-
-    public function getSettingsData()
-    {
-        $data = array();
-        $data['store_id'] = isset($_GET['store_id']) ? $_GET['store_id'] : 0;
-        $data['settings_values']['document_sets'] = $this->moloni->document_sets->getAll();
-        $data['settings_values']['document_types'] = $this->document_type;
-        $data['settings_values']['document_status'] = array("0" => "draft", "1" => "closed");
-
-
-        return $data;
     }
 
     private function getDocumentTypes()
@@ -232,6 +197,40 @@ class ControllerExtensionModuleMoloni extends Controller
         return $this->document_type;
     }
 
+    private function getSettingsData()
+    {
+        $data = array();
+        $data['store_id'] = $this->store_id;
+        $data['settings_values']['document_sets'] = $this->moloni->document_sets->getAll();
+        $data['settings_values']['document_types'] = $this->getDocumentTypes();
+        $data['settings_values']['document_status'] = array("0" => "draft", "1" => "closed");
+
+        return $data;
+    }
+
+    private function getStoreListData()
+    {
+        $data = array();
+        $data['stores'][] = array(
+            'store_id' => 0,
+            'name' => $this->config->get('config_name') . $this->language->get('text_default'),
+            'url' => $this->config->get('config_secure') ? HTTPS_CATALOG : HTTP_CATALOG,
+            'edit' => $this->url->link('extension/module/moloni/settings', array("store_id" => "0", 'user_token' => $this->session->data['user_token']), true)
+        );
+
+        $stores = $this->ocdb->getStores();
+        foreach ($stores as $store) {
+            $data['stores'][] = array(
+                'store_id' => $store['store_id'],
+                'name' => $store['name'],
+                'url' => $store['url'],
+                'edit' => $this->url->link('extension/module/moloni/settings', array("store_id" => $store['store_id'], 'user_token' => $this->session->data['user_token']), true)
+            );
+        }
+
+        return $data;
+    }
+
     private function setMoloniSettings()
     {
         $this->settings = array();
@@ -239,9 +238,10 @@ class ControllerExtensionModuleMoloni extends Controller
         foreach ($settings as $setting) {
             $this->settings[$setting["label"]] = $setting["value"];
         }
+        return $this->settings;
     }
 
-    private function saveSettings($settings, $store_id = 0)
+    private function setSettings($settings, $store_id = 0)
     {
         if (is_array($settings)) {
             foreach ($settings as $name => $value) {
@@ -341,13 +341,13 @@ class ControllerExtensionModuleMoloni extends Controller
 
             $moloni[] = array(
                 'name' => $this->language->get('Documents'),
-                'href' => $this->url->link('extension/module/moloni', array("page" => "documents", 'user_token' => $this->session->data['user_token']), true),
+                'href' => $this->url->link('extension/module/moloni/documents', array("page" => "documents", 'user_token' => $this->session->data['user_token']), true),
                 'children' => array()
             );
 
             $moloni[] = array(
                 'name' => $this->language->get('Settings'),
-                'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true),
+                'href' => $this->url->link('extension/module/moloni/settings', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true),
                 'children' => array()
             );
 
