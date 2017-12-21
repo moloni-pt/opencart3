@@ -24,6 +24,8 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         parent::__construct($registry);
         $this->__modelHandler();
+
+        /*         * ***** POR AQUI AS COISAS COMUNS A TODAS AS PÁGINAS E INDIVIDUALIZAR AS FUNÇÕES ****** */
     }
 
     public function __modelHandler()
