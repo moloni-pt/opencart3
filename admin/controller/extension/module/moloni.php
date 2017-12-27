@@ -92,6 +92,8 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function settings()
     {
+        $this->data['column_left'] = $this->load->controller('common/column_left');
+
         if ($this->allowed()) {
 
             if ($this->ocdb->getTotalStores() > 0 && !isset($this->request->get['store_id'])) {
@@ -125,7 +127,6 @@ class ControllerExtensionModuleMoloni extends Controller
     {
 
         $this->data['header'] = $this->load->controller('common/header');
-        $this->data['column_left'] = $this->load->controller('common/column_left');
         $this->data['footer'] = $this->load->controller('common/footer');
 
         $this->data['url'] = $this->defaultTemplateUrls();
@@ -204,6 +205,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $data['settings_values']['document_sets'] = $this->moloni->document_sets->getAll();
         $data['settings_values']['document_types'] = $this->getDocumentTypes();
         $data['settings_values']['document_status'] = array("0" => "draft", "1" => "closed");
+
+        $data['settings_values']['products_taxes'] = $this->moloni->taxes->getAll();
 
         return $data;
     }

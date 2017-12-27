@@ -38,7 +38,7 @@ class moloni
 
     public function __get($name)
     {
-        if (!isset($this->{$name})) {
+        if (!isset($this->{$name}) && !isset($this->dependencies[$name])) {
             $this->load("moloni/classes/" . $name . ".class.php", $name, $this->namespace . $name);
         }
         return $this->{$name};
@@ -53,8 +53,6 @@ class moloni
                 echo 'Caught exception: ', $e->getMessage(), "\n";
             }
         }
-
-        $this->customers->count();
     }
 
     public function verifyTokens()
