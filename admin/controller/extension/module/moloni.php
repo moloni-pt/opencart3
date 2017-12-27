@@ -24,6 +24,10 @@ class ControllerExtensionModuleMoloni extends Controller
     public function __construct($registry)
     {
         parent::__construct($registry);
+    }
+
+    public function __start()
+    {
         $this->__modelHandler();
 
         $this->load->library("moloni");
@@ -81,19 +85,17 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function index()
     {
-        /* Page selector */
+        $this->__start();
         if ($this->allowed()) {
             $this->page = "home";
         }
-
         $this->loadDefaults();
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
     }
 
     public function settings()
     {
-        $this->data['column_left'] = $this->load->controller('common/column_left');
-
+        $this->__start();
         if ($this->allowed()) {
 
             if ($this->ocdb->getTotalStores() > 0 && !isset($this->request->get['store_id'])) {
@@ -128,6 +130,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $this->data['header'] = $this->load->controller('common/header');
         $this->data['footer'] = $this->load->controller('common/footer');
+        $this->data['column_left'] = $this->load->controller('common/column_left');
 
         $this->data['url'] = $this->defaultTemplateUrls();
         $this->data['breadcrumbs'] = $this->createBreadcrumbs();
@@ -207,6 +210,17 @@ class ControllerExtensionModuleMoloni extends Controller
         $data['settings_values']['document_status'] = array("0" => "draft", "1" => "closed");
 
         $data['settings_values']['products_taxes'] = $this->moloni->taxes->getAll();
+        $data['settings_values']['products_exemptions'] = $this->moloni->taxes->getExemptions();
+        $data['settings_values']['products_at_categories'] = array();
+        $data['settings_values']['products_at_categories'][] = array("code" => "M", "name" => "Mercadorias");
+        $data['settings_values']['products_at_categories'][] = array("code" => "P", "name" => "Matérias-primas, subsidiárias e de consumo");
+        $data['settings_values']['products_at_categories'][] = array("code" => "A", "name" => "Produtos acabados e intermédios");
+        $data['settings_values']['products_at_categories'][] = array("code" => "S", "name" => "Subprodutos, desperdícios e refugos");
+        $data['settings_values']['products_at_categories'][] = array("code" => "T", "name" => "Produtos e trabalhos em curso");
+
+        $this->load->model('localisation/order_status');
+
+        $data['settings_values']['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
         return $data;
     }
@@ -239,7 +253,14 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->settings = array();
         $settings = $this->ocdb->getMoloniSettings($this->moloni->company_id, $this->store_id);
         foreach ($settings as $setting) {
-            $this->settings[$setting["label"]] = $setting["value"];
+            switch ($setting['label']) {
+                case "order_statuses":
+                    $this->settings[$setting["label"]] = json_decode($setting["value"], true);
+                    break;
+                default:
+                    $this->settings[$setting["label"]] = $setting["value"];
+                    break;
+            }
         }
         return $this->settings;
     }
@@ -248,8 +269,12 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         if (is_array($settings)) {
             foreach ($settings as $name => $value) {
-                $exists = $this->ocdb->qExistsSetting($name, $store_id, $this->moloni->company_id);
-                if ($exists) {
+
+                if (is_array($value)) {
+                    $value = json_encode($value);
+                }
+
+                if ($this->ocdb->qExistsSetting($name, $store_id, $this->moloni->company_id)) {
                     $this->ocdb->qUpdateMoloniSetting($name, $store_id, $this->moloni->company_id, $value);
                 } else {
                     $this->ocdb->qInsertMoloniSetting($name, $store_id, $this->moloni->company_id, $value);

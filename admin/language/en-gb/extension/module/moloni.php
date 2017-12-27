@@ -23,6 +23,11 @@ $_['tooltip']['client_update'] = "Update the client details if already exists on
 $_['tooltip']['client_prefix'] = "Choose a prefir for the client reference. If you choose for example 'MOLONI', the client reference will start with MOLONI.";
 
 $_['tooltip']['products_tax'] = "If your prices already have taxes included, select the tax you used. If your taxes are correct in Opencart, we can use the correct taxes";
+$_['tooltip']['shipping_tax'] = "If your prices already have taxes included, select the tax you used. If your taxes are correct in Opencart, we can use the correct taxes";
+$_['tooltip']['products_tax_exemption'] = "Choose an exemption reason to be used only when a product does not have a tax associated.";
+$_['tooltip']['shipping_tax_exemption'] = "Choose an exemption reason to be used only when the shipping method does not have a tax associated.";
+$_['tooltip']['products_prefix'] = "Choose a prefir for the product reference. If you choose for example 'MOLONI', the product reference will start with MOLONI.";
+
 
 $_['label']['yes'] = "Yes";
 $_['label']['no'] = "No";
@@ -31,6 +36,8 @@ $_['label']['products'] = "Products";
 $_['label']['clients'] = "Clients";
 $_['label']['document_settings'] = "Document Settings";
 $_['label']['shipping'] = "Shipping";
+$_['label']['orders'] = "Orders";
+
 
 $_['label']['document_set'] = "Document set";
 $_['label']['document_type'] = "Document Type";
@@ -54,6 +61,13 @@ $_['label']['draft'] = "Draft";
 $_['label']['closed'] = "Closed";
 
 $_['label']['products_tax'] = "Products Tax";
+$_['label']['shipping_tax'] = "Shipping Tax";
+$_['label']['products_tax_exemption'] = "Tax exemption";
+$_['label']['shipping_tax_exemption'] = "Shipping tax exemption";
 $_['label']['let_opencart_decide'] = "Let opencart decide";
+$_['label']['products_prefix'] = "Ref. Prefix";
+$_['label']['products_at_category'] = "AT Category";
+
+$_['label']['order_status'] = "Order status";
 
 ?>

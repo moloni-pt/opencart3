@@ -25,4 +25,15 @@ class taxes
             return false;
         }
     }
+
+    public function getExemptions()
+    {
+        $result = $this->moloni->connection->curl("taxExemptions/getAll");
+        if (is_array($result) && isset($result[0]['code'])) {
+            return $result;
+        } else {
+            $this->moloni->errors->throwError("Não foram encontradas razões de isenção", "Não foram encontradas razões de isenção", __CLASS__ . "/" . __FUNCTION__);
+            return false;
+        }
+    }
 }
