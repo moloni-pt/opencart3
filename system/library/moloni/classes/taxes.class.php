@@ -6,7 +6,7 @@
  */
 namespace moloni;
 
-class suppliers
+class taxes
 {
 
     public function __construct(\moloni $moloni)
@@ -14,9 +14,15 @@ class suppliers
         $this->moloni = $moloni;
     }
 
-    public function count()
+    public function getAll()
     {
-        echo "test";
-        $this->moloni->connection->testing();
+        $values = array("company_id" => $this->moloni->company_id);
+        $result = $this->moloni->connection->curl("taxes/getAll", $values);
+        if (is_array($result) && isset($result[0]['tax_id'])) {
+            return $result;
+        } else {
+            $this->moloni->errors->throwError("Não tem taxas de IVA disponíveis", "Não tem taxas de IVA disponíveis para serem usadas", __CLASS__ . "/" . __FUNCTION__);
+            return false;
+        }
     }
 }

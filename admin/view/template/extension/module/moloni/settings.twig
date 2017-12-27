@@ -37,7 +37,7 @@
                     <input type='hidden' name='store_id' value='{{content.store_id}}'>
                     <ul class="nav nav-tabs">
                         <li class="active"><a href="#tab-document" data-toggle="tab">Document</a></li>
-                        <li><a href="#tab-products" data-toggle="tab">Artigos</a></li>
+                        <li><a href="#tab-products" data-toggle="tab">Products and clients</a></li>
                     </ul>
 
                     <div class="tab-content">
@@ -107,14 +107,54 @@
                         </div>
 
                         <div class="tab-pane" id="tab-products">
-                            <div class="form-group required">
-                                <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.document_set|escape('html') }}">{{ settings.document_set }}</span></label>
-                                <div class="col-sm-10">
-                                    <select name="moloni[documentTest]" id="input-document-set" class="form-control">
-
-                                    </select>
+                            <fieldset>
+                                <legend>{{label.clients}}</legend>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.client_update|escape('html') }}">{{label.client_update}}</span></label>
+                                    <div class="col-sm-10">
+                                        <label class="radio-inline"><input type="radio" name="moloni[client_update]" value="1" {{ options.client_update == "1" ? 'checked="checked"' : ""}}>
+                                            {{label.yes}}
+                                        </label>
+                                        <label class="radio-inline"><input type="radio" name="moloni[client_update]" value="0" {{ options.client_update == "0" ? 'checked="checked"' : ""}}>
+                                            {{label.no}}
+                                        </label>
+                                    </div>
                                 </div>
-                            </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.client_email|escape('html') }}">{{label.client_email}}</span></label>
+                                    <div class="col-sm-10">
+                                        <label class="radio-inline"><input type="radio" name="moloni[client_email]" value="1" {{ options.client_email == "1" ? 'checked="checked"' : ""}}>
+                                            {{label.yes}}
+                                        </label>
+                                        <label class="radio-inline"><input type="radio" name="moloni[client_email]" value="0" {{ options.client_email == "0" ? 'checked="checked"' : ""}}>
+                                            {{label.no}}
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.client_prefix|escape('html') }}">{{label.client_prefix}}</span></label>
+                                    <div class="col-sm-10">
+                                        <input type="text" name="moloni[client_prefix]" value="{{ options.client_prefix }}" id="input-name" class="form-control" />
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <fieldset>
+                                <legend>{{label.products}}</legend>
+
+                                <div class="form-group required">
+                                    <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.products_tax|escape('html') }}">{{ label.products_tax }}</span></label>
+                                    <div class="col-sm-10">
+                                        <select name="moloni[products_tax]" id="input-document-type" class="form-control">
+                                            <option value="0" {{ options.document_type == 0 ? 'selected="selected"' : ""}}>{{ label.let_opencart_decide }}</option>
+                                            {% for taxes in content.settings_values.products_taxes %}
+                                                <option value="{{ taxes.tax_id }}" {{ taxes.name == options.products_tax ? 'selected="selected"' : ""}}>{{ taxes.name }} ({{ taxes.fiscal_zone }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </fieldset>
                         </div>
 
 

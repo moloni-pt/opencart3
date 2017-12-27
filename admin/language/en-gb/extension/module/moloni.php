@@ -18,9 +18,17 @@ $_['tooltip']['document_status'] = "Choose the state of the document. Don't worr
 $_['tooltip']['shipping_details'] = "Include shipping details on the document. This must be configured on your store settings.";
 $_['tooltip']['shipping_document'] = "Create a Bill fo Landing alongside the document.";
 
+$_['tooltip']['client_email'] = "Send an email with the document download url to the client.";
+$_['tooltip']['client_update'] = "Update the client details if already exists one with the same VAT or Email.";
+$_['tooltip']['client_prefix'] = "Choose a prefir for the client reference. If you choose for example 'MOLONI', the client reference will start with MOLONI.";
+
+$_['tooltip']['products_tax'] = "If your prices already have taxes included, select the tax you used. If your taxes are correct in Opencart, we can use the correct taxes";
+
 $_['label']['yes'] = "Yes";
 $_['label']['no'] = "No";
 
+$_['label']['products'] = "Products";
+$_['label']['clients'] = "Clients";
 $_['label']['document_settings'] = "Document Settings";
 $_['label']['shipping'] = "Shipping";
 
@@ -38,7 +46,14 @@ $_['label']['deliveryNotes'] = "Delivery Notes";
 $_['label']['internalDocuments'] = "Internal Documents";
 $_['label']['estimates'] = "Estimates";
 
+$_['label']['client_update'] = "Update client";
+$_['label']['client_email'] = "Send email";
+$_['label']['client_prefix'] = "Ref. Prefix";
+
 $_['label']['draft'] = "Draft";
 $_['label']['closed'] = "Closed";
+
+$_['label']['products_tax'] = "Products Tax";
+$_['label']['let_opencart_decide'] = "Let opencart decide";
 
 ?>
