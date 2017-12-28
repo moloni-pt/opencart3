@@ -24,12 +24,11 @@ class ControllerExtensionModuleMoloni extends Controller
     public function __construct($registry)
     {
         parent::__construct($registry);
+        $this->__modelHandler();
     }
 
     public function __start()
     {
-        $this->__modelHandler();
-
         $this->load->library("moloni");
         $this->data = $this->load->language('extension/module/moloni');
 
@@ -348,6 +347,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $this->load->model("setting/event");
         $this->model_setting_event->addEvent($this->eventGroup, "admin/view/common/column_left/before", $this->modulePath . "/injectAdminMenuItem");
+        $this->model_setting_event->addEvent($this->eventGroup . "_invoice_button", "admin/view/sale/order_list/before", $this->modulePath . "/invoiceButtonCheck");
     }
 
     public function uninstall()
@@ -387,6 +387,24 @@ class ControllerExtensionModuleMoloni extends Controller
                         'href' => '',
                         'children' => $moloni
                 )));
+            }
+        }
+    }
+
+    public function invoiceButtonCheck($eventRoute, &$data)
+    {
+        $this->__start();
+
+        foreach ($data['orders'] as &$order) {
+            if (is_array($this->settings['order_statuses'])) {
+
+                $order_info = $this->ocdb->getOrderById($order['order_id']);
+                if (in_array($order_info['order_status_id'], $this->settings['order_statuses'])) {
+                    $moloni_url = $this->url->link('extension/module/moloni/invoice', array('order_id' => $order['order_id'], 'user_token' => $this->session->data['user_token']), true);
+                    $order['moloni_button'] = '<a href="' . $moloni_url . '" data-toggle="tooltip" title="' . $this->language->get('create_moloni_document') . '" class="btn btn-primary"><i class="fa fa-usd"></i></a>';
+                } else {
+                    $order['moloni_button'] = false;
+                }
             }
         }
     }

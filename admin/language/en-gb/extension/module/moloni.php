@@ -10,6 +10,7 @@ $_['login_password'] = 'Password';
 $_['login_register'] = 'Register a new moloni account';
 $_['login_login'] = 'Login';
 
+$_['create_moloni_document'] = "Send to moloni";
 
 
 $_['tooltip']['document_set'] = 'Select the document set you want to use for this store.';
