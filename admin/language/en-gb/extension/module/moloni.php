@@ -28,6 +28,8 @@ $_['tooltip']['products_tax_exemption'] = "Choose an exemption reason to be used
 $_['tooltip']['shipping_tax_exemption'] = "Choose an exemption reason to be used only when the shipping method does not have a tax associated.";
 $_['tooltip']['products_prefix'] = "Choose a prefir for the product reference. If you choose for example 'MOLONI', the product reference will start with MOLONI.";
 
+$_['tooltip']['order_auto'] = "Create a documento automatically when the order is set to paid.";
+
 
 $_['label']['yes'] = "Yes";
 $_['label']['no'] = "No";
@@ -68,6 +70,8 @@ $_['label']['let_opencart_decide'] = "Let opencart decide";
 $_['label']['products_prefix'] = "Ref. Prefix";
 $_['label']['products_at_category'] = "AT Category";
 
+$_['label']['order_since'] = "Show orders since";
+$_['label']['order_auto'] = "Create order when paid";
 $_['label']['order_status'] = "Order status";
 
 ?>

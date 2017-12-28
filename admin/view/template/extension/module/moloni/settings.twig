@@ -168,23 +168,23 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.shipping_tax|escape('html') }}">{{ label.shipping_tax }}</span></label>
+                                    <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.products_tax_exemption|escape('html') }}">{{ label.products_tax_exemption }}</span></label>
                                     <div class="col-sm-10">
-                                        <select name="moloni[shipping_tax]" id="input-document-type" class="form-control">
-                                            <option value="0" {{ options.shipping_tax == 0 ? 'selected="selected"' : ""}}>{{ label.let_opencart_decide }}</option>
-                                            {% for taxes in content.settings_values.products_taxes %}
-                                                <option value="{{ taxes.tax_id }}" {{ taxes.tax_id == options.shipping_tax ? 'selected="selected"' : ""}}>{{ taxes.name }} ({{ taxes.fiscal_zone }})</option>
+                                        <select name="moloni[products_tax_exemption]" id="input-document-type" class="form-control">
+                                            {% for exemption_reason in content.settings_values.products_exemptions %}
+                                                <option value="{{ exemption_reason.code }}" {{ exemption_reason.code == options.products_tax_exemption ? 'selected="selected"' : ""}}>{{ exemption_reason.name }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
                                 </div>
 
                                 <div class="form-group">
-                                    <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.products_tax_exemption|escape('html') }}">{{ label.products_tax_exemption }}</span></label>
+                                    <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.shipping_tax|escape('html') }}">{{ label.shipping_tax }}</span></label>
                                     <div class="col-sm-10">
-                                        <select name="moloni[products_tax_exemption]" id="input-document-type" class="form-control">
-                                            {% for exemption_reason in content.settings_values.products_exemptions %}
-                                                <option value="{{ exemption_reason.code }}" {{ exemption_reason.code == options.products_tax_exemption ? 'selected="selected"' : ""}}>{{ exemption_reason.name }}</option>
+                                        <select name="moloni[shipping_tax]" id="input-document-type" class="form-control">
+                                            <option value="0" {{ options.shipping_tax == 0 ? 'selected="selected"' : ""}}>{{ label.let_opencart_decide }}</option>
+                                            {% for taxes in content.settings_values.products_taxes %}
+                                                <option value="{{ taxes.tax_id }}" {{ taxes.tax_id == options.shipping_tax ? 'selected="selected"' : ""}}>{{ taxes.name }} ({{ taxes.fiscal_zone }})</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -215,10 +215,22 @@
                                 <legend>{{label.orders}}</legend>
 
                                 <div class="form-group">
-                                    <label class="col-sm-2 control-label" for="input-date-available">{{ entry_date_available }}</label>
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.order_auto|escape('html') }}">{{label.order_auto}}</span></label>
+                                    <div class="col-sm-10">
+                                        <label class="radio-inline"><input type="radio" name="moloni[order_auto]" value="1" {{ options.order_auto == "1" ? 'checked="checked"' : ""}}>
+                                            {{label.yes}}
+                                        </label>
+                                        <label class="radio-inline"><input type="radio" name="moloni[order_auto]" value="0" {{ options.order_auto == "0" ? 'checked="checked"' : ""}}>
+                                            {{label.no}}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label" for="input-date-available">{{ label.order_since }}</label>
                                     <div class="col-sm-3">
                                         <div class="input-group date">
-                                            <input type="text" name="date_available" value="{{ date_available }}" placeholder="{{ entry_date_available }}" data-date-format="YYYY-MM-DD" id="input-date-available" class="form-control" />
+                                            <input type="text" name="moloni[order_since]" value="{{ options.order_since }}" data-date-format="YYYY-MM-DD" id="input-date-available" class="form-control" />
                                             <span class="input-group-btn">
                                                 <button class="btn btn-default" type="button"><i class="fa fa-calendar"></i></button>
                                             </span>
