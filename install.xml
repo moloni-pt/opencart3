@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+	<code>moloni_invoice_button</code>
+    <name>Moloni - Create Invoice Button</name>
+    <version>1.0</version>
+    <author>Nuno Almeida</author>
+    <link>https://moloni.pt</link>
+    <file path="admin/view/template/sale/order_list.twig">
+        <operation>
+            <search trim="true"><![CDATA[
+            <button type="button" data-toggle="dropdown" class="btn btn-primary dropdown-toggle"><span class="caret"></span></button>
+            ]]></search>
+            <add position="before" trim="true"><![CDATA[
+            {{order.moloni_buttom}}
+            ]]></add>
+        </operation>
+    </file>  
+</modification>

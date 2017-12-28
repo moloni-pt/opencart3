@@ -94,4 +94,13 @@ class ModelExtensionModuleMoloniOcdb extends Model
         $this->db->query($sql);
         return true;
     }
+
+    public function getOrderById($order_id)
+    {
+        $sql = "SELECT * FROM " . DB_PREFIX . "order WHERE order_id = '" . $order_id . "'";
+        $query = $this->db->query($sql);
+        $result = $query->row;
+
+        return $result;
+    }
 }

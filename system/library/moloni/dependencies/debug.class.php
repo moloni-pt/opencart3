@@ -10,7 +10,7 @@ class debug
 {
 
     public $active = true;
-    private $debug_logs = false;
+    private $debug_logs = array();
 
     function __construct(\moloni $moloni)
     {
