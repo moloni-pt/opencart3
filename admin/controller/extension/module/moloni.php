@@ -89,6 +89,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $this->page = "home";
         }
         $this->loadDefaults();
+
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
     }
 
@@ -104,6 +105,17 @@ class ControllerExtensionModuleMoloni extends Controller
                 $this->data['content'] = $this->getSettingsData();
                 $this->page = "settings";
             }
+        }
+
+        $this->loadDefaults();
+        $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+    }
+
+    public function invoice()
+    {
+        $this->__start();
+        if ($this->allowed()) {
+            $this->page = "home";
         }
 
         $this->loadDefaults();
@@ -160,8 +172,8 @@ class ControllerExtensionModuleMoloni extends Controller
                 $breadcrumbs[] = array("text" => "Empresas", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
                 break;
             case "home":
-                $breadcrumbs[] = array("text" => "Home", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
-                $breadcrumbs[] = array("text" => "Orders", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Home", 'href' => $this->url->link('extension/module/moloni', array('user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Orders", 'href' => $this->url->link('extension/module/moloni', array('user_token' => $this->session->data['user_token']), true));
                 break;
             case "store_list":
                 $breadcrumbs[] = array("text" => "Settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
@@ -198,6 +210,11 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->document_type["estimates"] = array("name" => "estimates", "url" => "Orcamentos");
 
         return $this->document_type;
+    }
+
+    private function getIndexData()
+    {
+
     }
 
     private function getSettingsData()
