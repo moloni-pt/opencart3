@@ -21,12 +21,9 @@
         {% endif %}
 
         {% if error_warnings %}
-            {% for error in error_warnings%}
-                <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error.message }}
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                </div>
-            {% endfor %}
+            {% include "extension/module/moloni/errors.twig"  %}
         {% endif %}
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title"><i class="fa fa-pencil"></i>Editar configurações do plugin</h3>

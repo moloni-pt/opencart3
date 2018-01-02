@@ -69,7 +69,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $this->setSettings($_POST['moloni'], $this->store_id);
         }
 
-        $this->data['options'] = $this->setMoloniSettings();
+        $this->data['options'] = $this->settings = $this->getMoloniSettings();
     }
 
     public function __modelHandler()
@@ -87,9 +87,9 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->__start();
         if ($this->allowed()) {
             $this->page = "home";
+            $this->data['content'] = $this->getIndexData();
         }
         $this->loadDefaults();
-
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
     }
 
@@ -116,6 +116,13 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->__start();
         if ($this->allowed()) {
             $this->page = "home";
+
+            $order_id = $this->request->get["order_id"];
+            if ($order_id) {
+                $this->data['document'] = $this->createDocumentFromOrder($this->request->get["order_id"]);
+            }
+
+            $this->data['content'] = $this->getIndexData();
         }
 
         $this->loadDefaults();
@@ -133,6 +140,83 @@ class ControllerExtensionModuleMoloni extends Controller
             }
         } else {
             $this->page = "login";
+        }
+    }
+
+    private function createDocumentFromOrder($order_id)
+    {
+        $this->load->model('sale/order');
+        $order = $this->model_sale_order->getOrder($order_id);
+
+        $this->store_id = $order['store_id'];
+
+
+
+
+        $moloni_document = $this->ocdb->getDocumentFromOrderId($order_id);
+        if (!$moloni_document) {
+
+
+            $settings = $this->getMoloniSettings();
+            $company = $this->moloni->companies->getOne();
+            $oc_products = $this->model_sale_order->getOrderProducts($order_id);
+
+
+            echo "<pre>";
+            print_r($order);
+            print_r($settings);
+            print_r($company);
+            print_r($oc_products);
+            echo "</pre>";
+
+            // $customer = $this->moloniCustomerHandler($customer);
+            // $products = $this->moloniProductsHandler($)
+
+
+            $document = array();
+            $document["date"] = date("Y-m-d");
+            $document["expiration_date"] = date("Y-m-d");
+            $document["document_set_id"] = $settings['document_set_id'];
+
+            $document['customer_id'] = "12"; #$customer['customer_id'];
+            $document['alternate_address_id'] = (isset($customer['alternate_address_id']) ? $customer['alternate_address_id'] : "");
+
+            $document['our_reference'] = "#" . $order_id;
+            $document['your_reference'] = "#" . $order_id;
+
+            $document['financial_discount'] = "0";
+            $document['special_discount'] = "0";
+            $document['eac_id'] = "";
+
+            if ($company['currency_id'] == 1) {
+                if ($order['currency_code'] <> "EUR") {
+                    $document['exchange_currency_id'] = "0";
+                    $document['exchange_rate'] = "0";
+                }
+            } else {
+                $document['exchange_currency_id'] = "0";
+                $document['exchange_rate'] = "0";
+            }
+
+            if ($settings['shipping_details']) {
+                $document['delivery_method_id'] = "";
+                $document['delivery_datetime'] = "";
+
+                $document['delivery_departure_address'] = "";
+                $document['delivery_departure_city'] = "";
+                $document['delivery_departure_zip_code'] = "";
+                $document['delivery_departure_country'] = "";
+
+                $document['delivery_destination_address'] = "";
+                $document['delivery_destination_city'] = "";
+                $document['delivery_destination_zip_code'] = "";
+                $document['delivery_destination_country'] = "";
+            }
+
+            $document['notes'] = "";
+            $document['status'] = "0";
+        } else {
+            // @todo Trigger error when it has a document already
         }
     }
 
@@ -214,7 +298,10 @@ class ControllerExtensionModuleMoloni extends Controller
 
     private function getIndexData()
     {
+        $data['orders_list'] = array();
+        $data['orders_list'][0] = $this->ocdb->getOrdersAll($this->settings);
 
+        return $data;
     }
 
     private function getSettingsData()
@@ -252,33 +339,35 @@ class ControllerExtensionModuleMoloni extends Controller
         );
 
         $stores = $this->ocdb->getStores();
-        foreach ($stores as $store) {
-            $data['stores'][] = array(
-                'store_id' => $store['store_id'],
-                'name' => $store['name'],
-                'url' => $store['url'],
-                'edit' => $this->url->link('extension/module/moloni/settings', array("store_id" => $store['store_id'], 'user_token' => $this->session->data['user_token']), true)
-            );
+        if (count($stores) > 0) {
+            foreach ($stores as $store) {
+                $data['stores'][] = array(
+                    'store_id' => $store['store_id'],
+                    'name' => $store['name'],
+                    'url' => $store['url'],
+                    'edit' => $this->url->link('extension/module/moloni/settings', array("store_id" => $store['store_id'], 'user_token' => $this->session->data['user_token']), true)
+                );
+            }
         }
 
         return $data;
     }
 
-    private function setMoloniSettings()
+    private function getMoloniSettings()
     {
-        $this->settings = array();
-        $settings = $this->ocdb->getMoloniSettings($this->moloni->company_id, $this->store_id);
-        foreach ($settings as $setting) {
+        $settings = array();
+        $settings_list = $this->ocdb->getMoloniSettings($this->moloni->company_id, $this->store_id);
+        foreach ($settings_list as $setting) {
             switch ($setting['label']) {
                 case "order_statuses":
-                    $this->settings[$setting["label"]] = json_decode($setting["value"], true);
+                    $settings[$setting["label"]] = json_decode($setting["value"], true);
                     break;
                 default:
-                    $this->settings[$setting["label"]] = $setting["value"];
+                    $settings[$setting["label"]] = $setting["value"];
                     break;
             }
         }
-        return $this->settings;
+        return $settings;
     }
 
     private function setSettings($settings, $store_id = 0)

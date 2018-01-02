@@ -14,6 +14,18 @@ class companies
         $this->moloni = $moloni;
     }
 
+    public function getOne($company_id = false)
+    {
+        $values = array("company_id" => ($company_id ? $company_id : $this->moloni->company_id));
+        $result = $this->moloni->connection->curl("companies/getOne", $values);
+        if (is_array($result) && isset($result['company_id'])) {
+            return $result;
+        } else {
+            $this->moloni->errors->throwError("Não tem acesso à informação da empresa", "Não tem acesso à informação da empresa.", __CLASS__ . "/" . __FUNCTION__);
+            return false;
+        }
+    }
+
     public function getAll()
     {
         $result = $this->moloni->connection->curl("companies/getAll", null, true);

@@ -95,11 +95,58 @@ class ModelExtensionModuleMoloniOcdb extends Model
         return true;
     }
 
-    public function getOrderById($order_id)
+    public function getDocumentFromOrderId($order_id)
     {
-        $sql = "SELECT * FROM " . DB_PREFIX . "order WHERE order_id = '" . $order_id . "'";
+        $sql = "SELECT * FROM `" . DB_PREFIX . "moloni_documents` md WHERE md.order_id = '" . $order_id . "'";
         $query = $this->db->query($sql);
         $result = $query->row;
+
+        return $result;
+    }
+
+    public function getOrderById($order_id)
+    {
+        $sql = "SELECT * FROM " . DB_PREFIX . "order o LEFT JOIN `" . DB_PREFIX . "moloni_documents` MD ON o.order_id = MD.order_id WHERE o.order_id = '" . $order_id . "'";
+        $query = $this->db->query($sql);
+        $result = $query->row;
+
+        return $result;
+    }
+
+    public function getOrdersAll($options, $store = false, $order_ids = false)
+    {
+        $sql = "SELECT o.*, "
+            . "(SELECT os.name FROM " . DB_PREFIX . "order_status os WHERE os.order_status_id = o.order_status_id AND os.language_id = '" . (int) $this->config->get('config_language_id') . "') AS order_status "
+            . " FROM `" . DB_PREFIX . "order` o LEFT JOIN `" . DB_PREFIX . "moloni_documents` MD ON o.order_id = MD.order_id WHERE MD.invoice_id IS NULL";
+
+        if ($order_ids && count($order_ids) > 0) {
+            $sql .= " AND o.order_id IN (" . implode(',', $order_ids) . ")";
+        }
+
+        if (isset($options['order_statuses']) && count($options['order_statuses']) > 0) {
+            $sql .= " AND o.order_status_id IN (" . implode(',', $options['order_statuses']) . ")";
+        }
+
+        if (isset($options['order_since']) && !empty($options['order_since'])) {
+            $sql .= " AND o.date_added > '" . $options['order_since'] . "' ";
+        }
+
+        if ($store) {
+            $sql .= " AND o.store_id = '" . $store . "'";
+        }
+
+        $sql .= " ORDER BY o.order_id DESC";
+
+        $query = $this->db->query($sql);
+        $result = $query->rows;
+
+        foreach ($result as &$order) {
+            $order['order_status'] = $order['order_status'] ? $order['order_status'] : $this->language->get('text_missing');
+            $order['total_formated'] = $this->currency->format($order['total'], $order['currency_code'], $order['currency_value']);
+            $order['date_added'] = date($this->language->get('date_format_short'), strtotime($order['date_added']));
+
+            $order['moloni_create'] = $this->url->link('extension/module/moloni/invoice', 'user_token=' . $this->session->data['user_token'] . '&order_id=' . $order['order_id'], true);
+        }
 
         return $result;
     }

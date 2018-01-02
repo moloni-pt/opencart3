@@ -75,4 +75,12 @@ $_['label']['order_since'] = "Show orders since";
 $_['label']['order_auto'] = "Create order when paid";
 $_['label']['order_status'] = "Order status";
 
+$_['label']['order_table_customer_info'] = "Customer";
+$_['label']['order_table_order_status'] = "Status";
+$_['label']['order_table_store_name'] = "Store";
+$_['label']['order_table_order_date'] = "Date";
+$_['label']['order_table_order_total'] = "Total";
+$_['label']['order_table_order_actions'] = "Actions";
+$_['label']['order_table_number'] = "Number";
+
 ?>
