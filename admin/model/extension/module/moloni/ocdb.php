@@ -150,4 +150,16 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
         return $result;
     }
+
+    public function getCustomFieldsAll()
+    {
+        $sql = "SELECT cf.*, "
+            . "(SELECT cfd.name FROM " . DB_PREFIX . "custom_field_description cfd WHERE cfd.custom_field_id = cf.custom_field_id AND cfd.language_id = '" . (int) $this->config->get('config_language_id') . "') AS name "
+            . " FROM `" . DB_PREFIX . "custom_field` cf";
+
+        $query = $this->db->query($sql);
+        $result = $query->rows;
+
+        return $result;
+    }
 }

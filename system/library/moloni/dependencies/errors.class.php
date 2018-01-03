@@ -52,7 +52,8 @@ class errors
     private function translateMessage($string)
     {
         switch ($string) {
-            case "" :
+            case "1 name" :
+                $string = "Campo nome não pode estar em branco";
                 break;
         }
 

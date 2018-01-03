@@ -150,33 +150,28 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $this->store_id = $order['store_id'];
 
-
-
-
         $moloni_document = $this->ocdb->getDocumentFromOrderId($order_id);
         if (!$moloni_document) {
 
-
-            $settings = $this->getMoloniSettings();
-            $company = $this->moloni->companies->getOne();
+            $this->settings = $this->getMoloniSettings();
+            $this->company = $this->moloni->companies->getOne();
             $oc_products = $this->model_sale_order->getOrderProducts($order_id);
 
 
-            echo "<pre>";
-            print_r($order);
-            print_r($settings);
-            print_r($company);
-            print_r($oc_products);
-            echo "</pre>";
+            /* echo "<pre>";
+              print_r($order);
+              print_r($settings);
+              print_r($company);
+              print_r($oc_products);
+              echo "</pre>"; */
 
-            // $customer = $this->moloniCustomerHandler($customer);
+            $customer = $this->moloniCustomerHandler($order);
             // $products = $this->moloniProductsHandler($)
-
 
             $document = array();
             $document["date"] = date("Y-m-d");
             $document["expiration_date"] = date("Y-m-d");
-            $document["document_set_id"] = $settings['document_set_id'];
+            $document["document_set_id"] = $this->settings['document_set_id'];
 
             $document['customer_id'] = "12"; #$customer['customer_id'];
             $document['alternate_address_id'] = (isset($customer['alternate_address_id']) ? $customer['alternate_address_id'] : "");
@@ -188,7 +183,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $document['special_discount'] = "0";
             $document['eac_id'] = "";
 
-            if ($company['currency_id'] == 1) {
+            if ($this->company['currency_id'] == 1) {
                 if ($order['currency_code'] <> "EUR") {
                     $document['exchange_currency_id'] = "0";
                     $document['exchange_rate'] = "0";
@@ -198,7 +193,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $document['exchange_rate'] = "0";
             }
 
-            if ($settings['shipping_details']) {
+            if ($this->settings['shipping_details']) {
                 $document['delivery_method_id'] = "";
                 $document['delivery_datetime'] = "";
 
@@ -218,6 +213,74 @@ class ControllerExtensionModuleMoloni extends Controller
         } else {
             // @todo Trigger error when it has a document already
         }
+    }
+
+    private function moloniCustomerHandler($order)
+    {
+        echo "<pre>";
+        print_r($order);
+        echo "</pre>";
+        $moloni_customer_exists = false;
+
+        $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
+        $order['vat_number'] = str_ireplace("pt", "", $order['vat_number']);
+
+        $order['payment_entity'] = (!empty($order['payment_company']) ? $order['payment_company'] : $order['payment_firstname'] . " " . $order['payment_lastname']);
+
+        if (in_array($order['vat_number'], array("999999990"))) {
+            $moloni_customer_search = $this->moloni->customers->getBySearch($order['payment_entity'], true);
+            foreach ($moloni_customer_search as $result) {
+                print_r($result);
+                if ($result['email'] == $order['email'] && $result['vat'] == $order['vat_number']) {
+                    $moloni_customer_exists = $result;
+                }
+            }
+        } else {
+            $moloni_customer_exists_aux = $this->moloni->customers->getByVat($order['vat_number'], true);
+            $moloni_customer_exists = $moloni_customer_exists_aux[0];
+        }
+
+        $moloni_customer["name"] = $order['payment_entity'];
+        $moloni_customer["address"] = empty($order['payment_address_1']) ? "Desconhecido" : $order['payment_address_1'];
+        $moloni_customer["address"] .= empty($order['payment_address_2']) ? "" : " " . $order['payment_address_2'];
+        $moloni_customer["zip_code"] = $order['payment_iso_code_2'] == 'PT' ? $this->toolValidateZipCode($order['payment_postcode']) : $order['payment_postcode'];
+        $moloni_customer["city"] = empty($order['payment_city']) ? "Desconhecida" : $order['payment_city'];
+
+        $moloni_customer["contact_name"] = $order['payment_firstname'] . " " . $order['payment_lastname'];
+        $moloni_customer["contact_email"] = filter_var($order['email'], FILTER_VALIDATE_EMAIL) ? $order['email'] : "";
+        $moloni_customer["contact_phone"] = trim($order['telephone']);
+
+        $moloni_customer["email"] = filter_var($order['email'], FILTER_VALIDATE_EMAIL) ? $order['email'] : "";
+        $moloni_customer["phone"] = $order['telephone'];
+        $moloni_customer["website"] = "";
+        $moloni_customer["fax"] = "";
+
+        $moloni_customer["maturity_date_id"] = ""; # isto vai ter que ter uma setting
+        $moloni_customer["payment_method_id"] = $this->toolPaymentMethodHandler($order['payment_method']);
+        $moloni_customer["delivery_method_id"] = $this->toolDeliveryMethodHandler($order['shipping_method']);
+
+        $moloni_customer["country_id"] = "";
+        $moloni_customer["language_id"] = "";
+
+        $moloni_customer["notes"] = "";
+        $moloni_customer["salesman_id"] = "";
+        $moloni_customer["payment_day"] = "";
+        $moloni_customer["discount"] = "0";
+        $moloni_customer["credit_limit"] = "0";
+        $moloni_customer["field_notes"] = "";
+
+        if ($moloni_customer_exists) {
+            if ($this->settings['client_update'] == "1") {
+                $moloni_customer['customer_id'] = $moloni_customer_exists['customer_id'];
+            } else {
+                return $moloni_customer['customer_id'];
+            }
+        } else {
+
+        }
+        echo "<pre>";
+        print_r($moloni_customer);
+        echo "</pre>";
     }
 
     private function loadDefaults()
@@ -320,6 +383,9 @@ class ControllerExtensionModuleMoloni extends Controller
         $data['settings_values']['products_at_categories'][] = array("code" => "A", "name" => "Produtos acabados e intermédios");
         $data['settings_values']['products_at_categories'][] = array("code" => "S", "name" => "Subprodutos, desperdícios e refugos");
         $data['settings_values']['products_at_categories'][] = array("code" => "T", "name" => "Produtos e trabalhos em curso");
+
+        $data['settings_values']['client_vat_custom_fields'][] = array("custom_field_id" => "0", "name" => "Use final consumer");
+        $data['settings_values']['client_vat_custom_fields'] = array_merge($data['settings_values']['client_vat_custom_fields'], $this->ocdb->getCustomFieldsAll());
 
         $this->load->model('localisation/order_status');
 
@@ -513,5 +579,77 @@ class ControllerExtensionModuleMoloni extends Controller
                 }
             }
         }
+    }
+
+    public function toolPaymentMethodHandler($name, $methods = false)
+    {
+        if (!$methods) {
+            $methods = $this->moloni->payment_methods->getAll();
+        }
+
+        foreach ($methods as $payment) {
+            if (strcasecmp($name, $payment['name']) == 0) {
+                return $payment['payment_method_id'];
+            }
+        }
+
+        $return = $this->moloni->payment_methods->insert(array("name" => $name));
+        return isset($return['payment_method_id']) ? $return['payment_method_id'] : false;
+    }
+
+    public function toolDeliveryMethodHandler($name, $methods = false)
+    {
+        if (!$methods) {
+            $methods = $this->moloni->delivery_methods->getAll();
+        }
+
+        foreach ($methods as $delivery) {
+            if (strcasecmp($name, $delivery['name']) == 0) {
+                return $delivery['delivery_method_id'];
+            }
+        }
+
+        $return = $this->moloni->delivery_methods->insert(array("name" => $name));
+        return isset($return['delivery_method_id']) ? $return['delivery_method_id'] : false;
+    }
+
+    public function toolValidateZipCode($zip_code)
+    {
+        $zip_code = trim(str_replace(" ", "", $zip_code));
+        $zip_code = preg_replace("/[^0-9]/", "", $zip_code);
+
+        if (strlen($zip_code) == 7) {
+            $zip_code = $zip_code[0] . $zip_code[1] . $zip_code[2] . $zip_code[3] . "-" . $zip_code[4] . $zip_code[5] . $zip_code[6];
+        }
+
+        if (strlen($zip_code) == 6) {
+            $zip_code = $zip_code[0] . $zip_code[1] . $zip_code[2] . $zip_code[3] . "-" . $zip_code[4] . $zip_code[5] . "0";
+        }
+
+        if (strlen($zip_code) == 5) {
+            $zip_code = $zip_code[0] . $zip_code[1] . $zip_code[2] . $zip_code[3] . "-" . $zip_code[4] . "00";
+        }
+
+        if (strlen($zip_code) == 4) {
+            $zip_code = $zip_code . "-" . "000";
+        }
+
+        if (strlen($zip_code) == 3) {
+            $zip_code = $zip_code . "0-" . "000";
+        }
+
+        if (strlen($zip_code) == 2) {
+            $zip_code = $zip_code . "00-" . "000";
+        }
+
+        if (strlen($zip_code) == 1) {
+            $zip_code = $zip_code . "000-" . "000";
+        }
+
+        if (strlen($zip_code) == 0) {
+            $zip_code = "1000-100";
+        }
+
+        return (preg_match("/[0-9]{4}\-[0-9]{3}/", $zip_code)) ? $zip_code : "1000-100";
     }
 }

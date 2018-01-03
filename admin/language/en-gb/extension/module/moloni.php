@@ -22,6 +22,7 @@ $_['tooltip']['shipping_document'] = "Create a Bill fo Landing alongside the doc
 $_['tooltip']['client_email'] = "Send an email with the document download url to the client.";
 $_['tooltip']['client_update'] = "Update the client details if already exists one with the same VAT or Email.";
 $_['tooltip']['client_prefix'] = "Choose a prefir for the client reference. If you choose for example 'MOLONI', the client reference will start with MOLONI.";
+$_['tooltip']['client_vat'] = "Choose the custom field you want to use as VAT number";
 
 $_['tooltip']['products_tax'] = "If your prices already have taxes included, select the tax you used. If your taxes are correct in Opencart, we can use the correct taxes";
 $_['tooltip']['shipping_tax'] = "If your prices already have taxes included, select the tax you used. If your taxes are correct in Opencart, we can use the correct taxes";
@@ -59,6 +60,7 @@ $_['label']['estimates'] = "Estimates";
 $_['label']['client_update'] = "Update client";
 $_['label']['client_email'] = "Send email";
 $_['label']['client_prefix'] = "Ref. Prefix";
+$_['label']['client_vat'] = "Vat field";
 
 $_['label']['draft'] = "Draft";
 $_['label']['closed'] = "Closed";
