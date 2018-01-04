@@ -55,6 +55,14 @@ class errors
             case "1 name" :
                 $string = "Campo nome não pode estar em branco";
                 break;
+
+            case "1 number" :
+                $string = "Campo number não pode estar em branco";
+                break;
+
+            case "2 maturity_date_id 1 0" :
+                $string = "Defina um prazo de vencimento nas configurações do plugin";
+                break;
         }
 
         return $string;

@@ -155,8 +155,9 @@ class ControllerExtensionModuleMoloni extends Controller
 
             $this->settings = $this->getMoloniSettings();
             $this->company = $this->moloni->companies->getOne();
-            $oc_products = $this->model_sale_order->getOrderProducts($order_id);
+            $this->countries = $this->moloni->countries->getAll();
 
+            $oc_products = $this->model_sale_order->getOrderProducts($order_id);
 
             /* echo "<pre>";
               print_r($order);
@@ -166,6 +167,9 @@ class ControllerExtensionModuleMoloni extends Controller
               echo "</pre>"; */
 
             $customer = $this->moloniCustomerHandler($order);
+            foreach ($oc_products as $product) {
+                $products[] = $this->moloniProductHandler($product);
+            }
             // $products = $this->moloniProductsHandler($)
 
             $document = array();
@@ -173,8 +177,10 @@ class ControllerExtensionModuleMoloni extends Controller
             $document["expiration_date"] = date("Y-m-d");
             $document["document_set_id"] = $this->settings['document_set_id'];
 
-            $document['customer_id'] = "12"; #$customer['customer_id'];
+            $document['customer_id'] = $customer;
             $document['alternate_address_id'] = (isset($customer['alternate_address_id']) ? $customer['alternate_address_id'] : "");
+
+            $document['products'] = $products;
 
             $document['our_reference'] = "#" . $order_id;
             $document['your_reference'] = "#" . $order_id;
@@ -210,6 +216,11 @@ class ControllerExtensionModuleMoloni extends Controller
 
             $document['notes'] = "";
             $document['status'] = "0";
+
+            echo "<pre>";
+            print_r($order);
+            print_r($document);
+            echo "</pre>";
         } else {
             // @todo Trigger error when it has a document already
         }
@@ -217,9 +228,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
     private function moloniCustomerHandler($order)
     {
-        echo "<pre>";
-        print_r($order);
-        echo "</pre>";
+
         $moloni_customer_exists = false;
 
         $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
@@ -230,7 +239,6 @@ class ControllerExtensionModuleMoloni extends Controller
         if (in_array($order['vat_number'], array("999999990"))) {
             $moloni_customer_search = $this->moloni->customers->getBySearch($order['payment_entity'], true);
             foreach ($moloni_customer_search as $result) {
-                print_r($result);
                 if ($result['email'] == $order['email'] && $result['vat'] == $order['vat_number']) {
                     $moloni_customer_exists = $result;
                 }
@@ -255,12 +263,14 @@ class ControllerExtensionModuleMoloni extends Controller
         $moloni_customer["website"] = "";
         $moloni_customer["fax"] = "";
 
-        $moloni_customer["maturity_date_id"] = ""; # isto vai ter que ter uma setting
+        $moloni_customer["maturity_date_id"] = $this->settings['maturity_date'];
         $moloni_customer["payment_method_id"] = $this->toolPaymentMethodHandler($order['payment_method']);
         $moloni_customer["delivery_method_id"] = $this->toolDeliveryMethodHandler($order['shipping_method']);
 
-        $moloni_customer["country_id"] = "";
-        $moloni_customer["language_id"] = "";
+        $moloni_customer["country_id"] = $this->toolCountryHandler($order['payment_iso_code_2']);
+        $moloni_customer["language_id"] = $moloni_customer["country_id"] == "1" ? 1 : 2;
+
+        $moloni_customer['copies'] = $this->company['copies'];
 
         $moloni_customer["notes"] = "";
         $moloni_customer["salesman_id"] = "";
@@ -272,15 +282,23 @@ class ControllerExtensionModuleMoloni extends Controller
         if ($moloni_customer_exists) {
             if ($this->settings['client_update'] == "1") {
                 $moloni_customer['customer_id'] = $moloni_customer_exists['customer_id'];
+                $result = $this->moloni->customers->update($moloni_customer);
+                $customer_id = isset($result['customer_id']) ? $result['customer_id'] : false;
             } else {
-                return $moloni_customer['customer_id'];
+                $customer_id = $moloni_customer['customer_id'];
             }
         } else {
-
+            $moloni_customer["number"] = $this->toolNumberCreator($order);
+            $result = $this->moloni->customers->insert($moloni_customer);
+            $customer_id = isset($result['customer_id']) ? $result['customer_id'] : false;
         }
-        echo "<pre>";
-        print_r($moloni_customer);
-        echo "</pre>";
+
+        return $customer_id;
+    }
+
+    private function moloniProductHandler($product)
+    {
+        print_r($product);
     }
 
     private function loadDefaults()
@@ -386,6 +404,8 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $data['settings_values']['client_vat_custom_fields'][] = array("custom_field_id" => "0", "name" => "Use final consumer");
         $data['settings_values']['client_vat_custom_fields'] = array_merge($data['settings_values']['client_vat_custom_fields'], $this->ocdb->getCustomFieldsAll());
+
+        $data['settings_values']['client_maturity_dates'] = $this->moloni->maturity_dates->getAll();
 
         $this->load->model('localisation/order_status');
 
@@ -611,6 +631,31 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $return = $this->moloni->delivery_methods->insert(array("name" => $name));
         return isset($return['delivery_method_id']) ? $return['delivery_method_id'] : false;
+    }
+
+    public function toolCountryHandler($country_iso_2)
+    {
+        foreach ($this->countries as $country) {
+            if (strcasecmp($country_iso_2, $country["iso_3166_1"]) == 0) {
+                return $country['country_id'];
+            }
+        }
+
+        // In case we don't find a country, we return 1 (Portugal)
+        return "1";
+    }
+
+    public function toolNumberCreator($order)
+    {
+        $result = $this->moloni->customers->getLastNumber();
+        $number = str_replace($this->settings['client_prefix'], "", $result['number']);
+        if (is_numeric($number)) {
+            $number += 1;
+        } else {
+            $number = $order['payment_iso_code_2'] . $order['customer_group_id'] . $order["store_id"] . ($order['customer_id'] == 0 ? random(1000, 9999) : $order['customer_id']);
+        }
+        $number = mb_substr($this->settings['client_prefix'] . $number, 0, 28);
+        return $number;
     }
 
     public function toolValidateZipCode($zip_code)

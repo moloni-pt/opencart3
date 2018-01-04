@@ -130,6 +130,11 @@ class connection
             $this->moloni->expire_date = "";
             return false;
         }
+
+        if (isset($result_array['error']) && strtolower($result_array['error']) == 'forbidden') {
+            $result_array = array("Não tem permissões para aceder a este método ou a token está expirada");
+        }
+
         return $result_array;
     }
 }

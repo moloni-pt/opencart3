@@ -147,6 +147,17 @@
                                         </select>
                                     </div>
                                 </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.client_maturity_date|escape('html') }}">{{ label.client_maturity_date }}</span></label>
+                                    <div class="col-sm-10">
+                                        <select name="moloni[maturity_date]" id="input-document-type" class="form-control">
+                                            {% for maturity_date in content.settings_values.client_maturity_dates %}
+                                                <option value="{{ maturity_date.maturity_date_id }}" {{ options.maturity_date == maturity_date.maturity_date_id ? 'selected="selected"' : ""}}>{{ maturity_date.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
                             </fieldset>
 
                             <fieldset>
