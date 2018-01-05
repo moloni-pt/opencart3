@@ -40,5 +40,13 @@
             html += '        <td class="text-right">{{ entry_model }}</td>';
             ]]></add>
         </operation>
+        <operation>
+            <search limit="1"><![CDATA[
+            <td class="text-right">{{ entry_quantity }}</td>
+            ]]></search>
+            <add position="after" trim="true"><![CDATA[
+            <td class="text-right">{{ entry_quantity }}</td>
+            ]]></add>
+        </operation>
     </file>
 </modification>
