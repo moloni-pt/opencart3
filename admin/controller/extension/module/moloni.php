@@ -540,6 +540,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->load->model("setting/event");
         $this->model_setting_event->addEvent($this->eventGroup, "admin/view/common/column_left/before", $this->modulePath . "/injectAdminMenuItem");
         $this->model_setting_event->addEvent($this->eventGroup . "_invoice_button", "admin/view/sale/order_list/before", $this->modulePath . "/invoiceButtonCheck");
+        $this->model_setting_event->addEvent($this->eventGroup . "_options_reference", "admin/view/catalog/product_form/before", $this->modulePath . "/optionsReferenceCheck");
     }
 
     public function uninstall()
@@ -597,6 +598,12 @@ class ControllerExtensionModuleMoloni extends Controller
                 }
             }
         }
+    }
+
+    public function optionsReferenceCheck($evenRoute, &$data)
+    {
+        $this->__start();
+        $data['use_moloni_references'] = true;
     }
 
     public function toolPaymentMethodHandler($name, $methods = false)
