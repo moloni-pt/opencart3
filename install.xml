@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <modification>
-	<code>moloni_invoice_button</code>
-    <name>Moloni - Create Invoice Button</name>
+    <code>moloni_invoice_solutions</code>
+    <name>Moloni - Invoice solutions</name>
     <version>1.0</version>
     <author>Nuno Almeida</author>
     <link>https://moloni.pt</link>
@@ -14,5 +14,31 @@
             {{order.moloni_buttom}}
             ]]></add>
         </operation>
-    </file>  
+    </file>
+    <file path="admin/view/template/catalog/product_form.twig">
+        <operation>
+            <search><![CDATA[
+            <td class="text-right"><input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][quantity]"
+            ]]></search>
+            <add position="before" trim="true"><![CDATA[
+            <td class="text-right"><input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][quantity]" value="{{ product_option_value.quantity }}" placeholder="{{ entry_quantity }}" class="form-control" /></td>
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            html += '  <td class="text-right"><input type="text" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][quantity]" value="" placeholder="{{ entry_quantity }}" class="form-control" /></td>';
+            ]]></search>
+            <add position="before" trim="true"><![CDATA[
+            html += '  <td class="text-right"><input type="text" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][quantity]" value="" placeholder="{{ entry_quantity }}" class="form-control" /></td>';
+            ]]></add>
+        </operation>
+        <operation>
+            <search><![CDATA[
+            html += '        <td class="text-right">{{ entry_quantity }}</td>';
+            ]]></search>
+            <add position="after" trim="true"><![CDATA[
+            html += '        <td class="text-right">{{ entry_model }}</td>';
+            ]]></add>
+        </operation>
+    </file>
 </modification>
