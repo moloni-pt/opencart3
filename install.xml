@@ -21,7 +21,9 @@
             <td class="text-right"><input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][quantity]"
             ]]></search>
             <add position="before" trim="true"><![CDATA[
-            <td class="text-right"><input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][quantity]" value="{{ product_option_value.quantity }}" placeholder="{{ entry_quantity }}" class="form-control" /></td>
+            {% if use_moloni_references %}
+                <td class="text-right"><input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][moloni_reference]" value="{{ product_option_value.quantity }}" placeholder="{{ entry_quantity }}" class="form-control" /></td>
+            {% endif %}
             ]]></add>
         </operation>
         <operation>
@@ -29,23 +31,39 @@
             html += '  <td class="text-right"><input type="text" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][quantity]" value="" placeholder="{{ entry_quantity }}" class="form-control" /></td>';
             ]]></search>
             <add position="before" trim="true"><![CDATA[
-            html += '  <td class="text-right"><input type="text" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][quantity]" value="" placeholder="{{ entry_quantity }}" class="form-control" /></td>';
+            {% if use_moloni_references %}
+                html += '  <td class="text-right"><input type="text" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][moloni_reference]" value="" placeholder="{{ entry_quantity }}" class="form-control" /></td>';
+            {% endif %}
             ]]></add>
         </operation>
         <operation>
             <search><![CDATA[
-            html += '        <td class="text-right">{{ entry_quantity }}</td>';
+            html += '        <td class="text-left">{{ entry_subtract }}</td>';
             ]]></search>
             <add position="after" trim="true"><![CDATA[
-            html += '        <td class="text-right">{{ entry_model }}</td>';
+            {% if use_moloni_references %}
+                html += '        <td class="text-right">{{ entry_model }}</td>';
+            {% endif %}
             ]]></add>
         </operation>
         <operation>
             <search index="1"><![CDATA[
-            <td class="text-right">{{ entry_quantity }}</td>
+            <td class="text-left">{{ entry_subtract }}</td>
+            ]]></search>
+            <add position="before" trim="true"><![CDATA[
+            {% if use_moloni_references %}
+                <td class="text-right">{{ entry_quantity }}</td>
+            {% endif %}
+            ]]></add>
+        </operation>
+        <operation>
+            <search index="2"><![CDATA[
+            <td colspan="6"></td>
             ]]></search>
             <add position="after" trim="true"><![CDATA[
-            <td class="text-right">{{ entry_quantity }}</td>
+            {% if use_moloni_references %}
+                <td></td>
+            {% endif %}
             ]]></add>
         </operation>
     </file>
