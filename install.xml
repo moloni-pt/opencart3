@@ -11,7 +11,7 @@
             <button type="button" data-toggle="dropdown" class="btn btn-primary dropdown-toggle"><span class="caret"></span></button>
             ]]></search>
             <add position="before" trim="true"><![CDATA[
-            /*Molonibutton*/{{order.moloni_buttom}}
+            {{order.moloni_buttom}}Teste
             ]]></add>
         </operation>
     </file>

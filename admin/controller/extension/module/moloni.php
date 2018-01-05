@@ -586,10 +586,8 @@ class ControllerExtensionModuleMoloni extends Controller
     public function invoiceButtonCheck($eventRoute, &$data)
     {
         $this->__start();
-
         foreach ($data['orders'] as &$order) {
             if (is_array($this->settings['order_statuses'])) {
-
                 $order_info = $this->ocdb->getOrderById($order['order_id']);
                 if (in_array($order_info['order_status_id'], $this->settings['order_statuses'])) {
                     $moloni_url = $this->url->link('extension/module/moloni/invoice', array('order_id' => $order['order_id'], 'user_token' => $this->session->data['user_token']), true);
