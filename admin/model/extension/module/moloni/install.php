@@ -54,6 +54,13 @@ class ModelExtensionModuleMoloniInstall extends Model
                     PRIMARY KEY (`id`)
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci	AUTO_INCREMENT=1 ;
 		");
+
+        $column_check = "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='spydesk_loja_opencart3' AND column_name LIKE 'moloni_reference' LIMIT 1";
+        $query = $this->db->query($column_check);
+        $result = $query->row;
+        if (!$result) {
+            $this->db->query("ALTER TABLE `" . DB_PREFIX . "product_option_value` ADD `moloni_reference` VARCHAR( 255 ) CHARACTER SET utf32 COLLATE utf32_general_ci NULL DEFAULT NULL;");
+        }
     }
 
     public function dropTables()

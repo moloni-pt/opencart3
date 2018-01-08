@@ -162,4 +162,18 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
         return $result;
     }
+
+    public function getOptionMoloniReference($product_option_value_id)
+    {
+        $sql = "SELECT moloni_reference FROM " . DB_PREFIX . "product_option_value WHERE product_option_value_id = '" . $product_option_value_id . "'";
+        $query = $this->db->query($sql);
+        $result = $query->row;
+
+        return $result['moloni_reference'];
+    }
+
+    public function updateOptionMoloniReference($value, $option_id)
+    {
+        $this->db->query("UPDATE " . DB_PREFIX . "product_option_value SET moloni_reference = '" . $value . "' WHERE product_option_value_id = '" . $option_id . "'");
+    }
 }

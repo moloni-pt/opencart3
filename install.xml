@@ -22,7 +22,7 @@
             ]]></search>
             <add position="before" trim="true"><![CDATA[
             {% if use_moloni_references %}
-                <td class="text-right"><input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][moloni_reference]" value="{{ product_option_value.quantity }}" placeholder="{{ entry_quantity }}" class="form-control" /></td>
+                <td class="text-right"><input type="text" name="product_option[{{ option_row }}][product_option_value][{{ option_value_row }}][moloni_reference]" value="{{ product_option_value.moloni_reference }}" class="form-control" /></td>
             {% endif %}
             ]]></add>
         </operation>
@@ -32,7 +32,7 @@
             ]]></search>
             <add position="before" trim="true"><![CDATA[
             {% if use_moloni_references %}
-                html += '  <td class="text-right"><input type="text" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][moloni_reference]" value="" placeholder="{{ entry_quantity }}" class="form-control" /></td>';
+                html += '  <td class="text-right"><input type="text" name="product_option[' + option_row + '][product_option_value][' + option_value_row + '][moloni_reference]" value="" class="form-control" /></td>';
             {% endif %}
             ]]></add>
         </operation>
@@ -47,17 +47,17 @@
             ]]></add>
         </operation>
         <operation>
-            <search index="1"><![CDATA[
-            <td class="text-left">{{ entry_subtract }}</td>
+            <search><![CDATA[
+            <td class="text-left">{{ entry_option_value }}</td>
             ]]></search>
-            <add position="before" trim="true"><![CDATA[
+            <add position="after" trim="true"><![CDATA[
             {% if use_moloni_references %}
-                <td class="text-right">{{ entry_quantity }}</td>
+                <td>{{ moloni_reference }}</td>
             {% endif %}
             ]]></add>
         </operation>
         <operation>
-            <search index="2"><![CDATA[
+            <search index="0" offset="0"><![CDATA[
             <td colspan="6"></td>
             ]]></search>
             <add position="after" trim="true"><![CDATA[

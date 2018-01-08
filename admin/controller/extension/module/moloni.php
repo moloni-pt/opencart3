@@ -541,6 +541,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->addEvent($this->eventGroup, "admin/view/common/column_left/before", $this->modulePath . "/injectAdminMenuItem");
         $this->model_setting_event->addEvent($this->eventGroup . "_invoice_button", "admin/view/sale/order_list/before", $this->modulePath . "/invoiceButtonCheck");
         $this->model_setting_event->addEvent($this->eventGroup . "_options_reference", "admin/view/catalog/product_form/before", $this->modulePath . "/optionsReferenceCheck");
+        $this->model_setting_event->addEvent($this->eventGroup . "_product_check", "admin/model/catalog/product/editProduct/after", $this->modulePath . "/eventProductCheck");
+        $this->model_setting_event->addEvent($this->eventGroup . "_product_check", "admin/model/catalog/product/addProduct/after", $this->modulePath . "/eventProductCheck");
     }
 
     public function uninstall()
@@ -603,7 +605,38 @@ class ControllerExtensionModuleMoloni extends Controller
     public function optionsReferenceCheck($evenRoute, &$data)
     {
         $this->__start();
-        $data['use_moloni_references'] = true;
+        $this->settings['moloni_options_reference'] = true;
+        $data['moloni_reference'] = $this->language->get('moloni_reference');
+        $data['use_moloni_references'] = $this->settings['moloni_options_reference'] ? true : false;
+
+        foreach ($data['product_options'] as &$product_option) {
+            foreach ($product_option['product_option_value'] as &$product_option_value) {
+                $moloni_reference = $this->ocdb->getOptionMoloniReference($product_option_value['product_option_value_id']);
+                $product_option_value['moloni_reference'] = is_null($moloni_reference) ? "" : $moloni_reference;
+            }
+        }
+    }
+
+    public function eventProductCheck($evenRoute, &$data)
+    {
+        $this->__start();
+        $this->settings['moloni_options_reference'] = true;
+
+        $product = $data[1];
+
+        if (isset($product['product_option']) && $this->settings['moloni_options_reference'] == true) {
+            foreach ($product['product_option'] as $product_option) {
+                if ($product_option['type'] == 'select') {
+                    foreach ($product_option['product_option_value'] as $product_option_value) {
+                        if (isset($product_option_value['moloni_reference'])) {
+                            $this->ocdb->updateOptionMoloniReference($product_option_value['moloni_reference'], (int) $product_option_value['product_option_value_id']);
+                        }
+                    }
+                }
+            }
+        }
+
+        /* ============ Depois verificamos se ele tem a opção para criar artigos e criamos ============ */
     }
 
     public function toolPaymentMethodHandler($name, $methods = false)
