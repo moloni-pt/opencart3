@@ -34,6 +34,14 @@ $_['tooltip']['shipping_tax_exemption'] = "Choose an exemption reason to be used
 $_['tooltip']['products_prefix'] = "Choose a prefir for the product reference. If you choose for example 'MOLONI', the product reference will start with MOLONI.";
 
 $_['tooltip']['order_auto'] = "Create a documento automatically when the order is set to paid.";
+$_['tooltip']['moloni_options_reference'] = "Enable the use of referecence sufixes in options of type 'Select', this is usefull to create unique products in Moloni.";
+$_['tooltip']['products_auto'] = "Create products automatically when they are inserted or edited in Opencart.";
+
+$_['tooltip']['debug_console'] = "Show a console with all the requests to moloni API.";
+$_['tooltip']['git_username'] = "Choose the Github username you which to update from (default: nunong21)";
+$_['tooltip']['git_repository'] = "Choose the Github repository you which to update from (default: opencart3)";
+$_['tooltip']['git_branch'] = "Choose the Github branch you which to update from (default: master)";
+
 
 
 $_['label']['yes'] = "Yes";
@@ -41,11 +49,13 @@ $_['label']['no'] = "No";
 
 $_['label']['products'] = "Products";
 $_['label']['clients'] = "Clients";
+$_['label']['products_clients'] = "Products and clients";
 $_['label']['document_settings'] = "Document Settings";
 $_['label']['shipping'] = "Shipping";
 $_['label']['orders'] = "Orders";
 
 
+$_['label']['document'] = "Document";
 $_['label']['document_set'] = "Document set";
 $_['label']['document_type'] = "Document Type";
 $_['label']['document_status'] = "Status";
@@ -77,6 +87,9 @@ $_['label']['let_opencart_decide'] = "Let opencart decide";
 $_['label']['products_prefix'] = "Ref. Prefix";
 $_['label']['products_at_category'] = "AT Category";
 
+$_['label']['products_auto'] = "Create products automatically";
+$_['label']['moloni_options_reference'] = "Use references on options";
+
 $_['label']['order_since'] = "Show orders since";
 $_['label']['order_auto'] = "Create order when paid";
 $_['label']['order_status'] = "Order status";
@@ -88,5 +101,12 @@ $_['label']['order_table_order_date'] = "Date";
 $_['label']['order_table_order_total'] = "Total";
 $_['label']['order_table_order_actions'] = "Actions";
 $_['label']['order_table_number'] = "Number";
+
+$_['label']['developers'] = "Developers";
+$_['label']['debug_console'] = "Debug console";
+
+$_['label']['git_username'] = "Git username";
+$_['label']['git_repository'] = "Git repository";
+$_['label']['git_branch'] = "Git branch";
 
 ?>

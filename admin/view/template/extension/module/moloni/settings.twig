@@ -33,9 +33,10 @@
                 <form action="{{ url.settings.save }}" method="post" enctype="multipart/form-data" id="moloni-store-settings" class="form-horizontal">
                     <input type='hidden' name='store_id' value='{{content.store_id}}'>
                     <ul class="nav nav-tabs">
-                        <li class="active"><a href="#tab-document" data-toggle="tab">Document</a></li>
-                        <li><a href="#tab-products" data-toggle="tab">Products and clients</a></li>
-                        <li><a href="#tab-orders" data-toggle="tab">Orders</a></li>
+                        <li class="active"><a href="#tab-document" data-toggle="tab">{{label.document}}</a></li>
+                        <li><a href="#tab-products" data-toggle="tab">{{label.products_clients}}</a></li>
+                        <li><a href="#tab-orders" data-toggle="tab">{{label.orders}}</a></li>
+                        <li><a href="#tab-developer" data-toggle="tab">{{label.developers}}</a></li>
                     </ul>
 
                     <div class="tab-content">
@@ -226,6 +227,32 @@
                                         <input type="text" name="moloni[products_prefix]" value="{{ options.products_prefix }}" id="input-name" class="form-control" />
                                     </div>
                                 </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.products_auto|escape('html') }}">{{label.products_auto}}</span></label>
+                                    <div class="col-sm-10">
+                                        <label class="radio-inline"><input type="radio" name="moloni[products_auto]" value="1" {{ options.products_auto == "1" ? 'checked="checked"' : ""}}>
+                                            {{label.yes}}
+                                        </label>
+                                        <label class="radio-inline"><input type="radio" name="moloni[products_auto]" value="0" {{ options.products_auto == "0" ? 'checked="checked"' : ""}}>
+                                            {{label.no}}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.moloni_options_reference|escape('html') }}">{{label.moloni_options_reference}}</span></label>
+                                    <div class="col-sm-10">
+                                        <label class="radio-inline"><input type="radio" name="moloni[moloni_options_reference]" value="1" {{ options.moloni_options_reference == "1" ? 'checked="checked"' : ""}}>
+                                            {{label.yes}}
+                                        </label>
+                                        <label class="radio-inline"><input type="radio" name="moloni[moloni_options_reference]" value="0" {{ options.moloni_options_reference == "0" ? 'checked="checked"' : ""}}>
+                                            {{label.no}}
+                                        </label>
+                                    </div>
+                                </div>
+
+
                             </fieldset>
                         </div>
 
@@ -278,17 +305,58 @@
                             </fieldset>
                         </div>
 
+                        <div class="tab-pane" id="tab-developer">
+                            <fieldset>
+                                <legend>{{label.developer}}</legend>
 
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.debug_console|escape('html') }}">{{label.debug_console}}</span></label>
+                                    <div class="col-sm-10">
+                                        <label class="radio-inline"><input type="radio" name="moloni[debug_console]" value="1" {{ options.debug_console == "1" ? 'checked="checked"' : ""}}>
+                                            {{label.yes}}
+                                        </label>
+                                        <label class="radio-inline"><input type="radio" name="moloni[debug_console]" value="0" {{ options.debug_console == "0" ? 'checked="checked"' : ""}}>
+                                            {{label.no}}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.git_username|escape('html') }}">{{label.git_username}}</span></label>
+                                    <div class="col-sm-10">
+                                        <input type="text" name="moloni[git_username]" value="{{ options.git_username }}" id="input-name" class="form-control" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.git_repository|escape('html') }}">{{label.git_repository}}</span></label>
+                                    <div class="col-sm-10">
+                                        <input type="text" name="moloni[git_repository]" value="{{ options.git_repository }}" id="input-name" class="form-control" />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.git_branch|escape('html') }}">{{label.git_branch}}</span></label>
+                                    <div class="col-sm-10">
+                                        <input type="text" name="moloni[git_branch]" value="{{ options.git_branch }}" id="input-name" class="form-control" />
+                                    </div>
+                                </div>
+                        </div>
+
+                        </fieldset>
                     </div>
 
 
-
-
-                </form>
             </div>
-        </div>
 
+
+
+
+            </form>
+        </div>
     </div>
+
+</div>
 </div>
 <link href="view/stylesheet/moloni/moloni-sheet.css" rel="stylesheet" />
 <script>

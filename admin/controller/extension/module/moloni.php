@@ -312,7 +312,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->data['breadcrumbs'] = $this->createBreadcrumbs();
         $this->data['document_types'] = $this->getDocumentTypes();
 
-        $this->data['debug_window'] = $this->moloni->debug->getLogs("all");
+        $this->data['debug_window'] = (isset($this->settings['debug_console']) && $this->settings['debug_console']) ? $this->moloni->debug->getLogs("all") : false;
         $this->data['error_warnings'] = $this->moloni->errors->getError("all");
         $this->data['update_result'] = $this->updated_files;
     }
@@ -453,6 +453,19 @@ class ControllerExtensionModuleMoloni extends Controller
                     break;
             }
         }
+
+        if (!isset($settings["git_username"]) || empty($settings["git_username"])) {
+            $settings["git_username"] = $this->git_user;
+        }
+
+        if (!isset($settings["git_branch"]) || empty($settings["git_branch"])) {
+            $settings["git_branch"] = $this->git_branch;
+        }
+
+        if (!isset($settings["git_repository"]) || empty($settings["git_repository1"])) {
+            $settings["git_repository"] = $this->git_repo;
+        }
+
         return $settings;
     }
 
@@ -466,9 +479,9 @@ class ControllerExtensionModuleMoloni extends Controller
                 }
 
                 if ($this->ocdb->qExistsSetting($name, $store_id, $this->moloni->company_id)) {
-                    $this->ocdb->qUpdateMoloniSetting($name, $store_id, $this->moloni->company_id, $value);
+                    $this->ocdb->qUpdateMoloniSetting($name, $store_id, $this->moloni->company_id, trim($value));
                 } else {
-                    $this->ocdb->qInsertMoloniSetting($name, $store_id, $this->moloni->company_id, $value);
+                    $this->ocdb->qInsertMoloniSetting($name, $store_id, $this->moloni->company_id, trim($value));
                 }
             }
         }
@@ -605,7 +618,6 @@ class ControllerExtensionModuleMoloni extends Controller
     public function optionsReferenceCheck($evenRoute, &$data)
     {
         $this->__start();
-        $this->settings['moloni_options_reference'] = true;
         $data['moloni_reference'] = $this->language->get('moloni_reference');
         $data['use_moloni_references'] = $this->settings['moloni_options_reference'] ? true : false;
 
@@ -620,8 +632,6 @@ class ControllerExtensionModuleMoloni extends Controller
     public function eventProductCheck($evenRoute, &$data)
     {
         $this->__start();
-        $this->settings['moloni_options_reference'] = true;
-
         $product = $data[1];
 
         if (isset($product['product_option']) && $this->settings['moloni_options_reference'] == true) {
