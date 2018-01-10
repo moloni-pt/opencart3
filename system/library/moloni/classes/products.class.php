@@ -6,7 +6,7 @@
  */
 namespace moloni;
 
-class suppliers
+class products
 {
 
     public function __construct(\moloni $moloni)
@@ -14,9 +14,20 @@ class suppliers
         $this->moloni = $moloni;
     }
 
-    public function count()
+    public function getByReference($moloni_reference, $exact = true, $company_id = false)
     {
-        echo "test";
-        $this->moloni->connection->testing();
+        $values = array(
+            "company_id" => ($company_id ? $company_id : $this->moloni->company_id),
+            "reference" => $moloni_reference,
+            "exact" => $exact ? "1" : "0"
+        );
+
+        $result = $this->moloni->connection->curl("products/getByReference", $values);
+        print_r($result);
+        if (is_array($result) && isset($result[0]['product_id'])) {
+            return $result;
+        } else {
+            return false;
+        }
     }
 }

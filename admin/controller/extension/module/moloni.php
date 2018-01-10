@@ -146,7 +146,8 @@ class ControllerExtensionModuleMoloni extends Controller
     private function createDocumentFromOrder($order_id)
     {
         $this->load->model('sale/order');
-        $order = $this->model_sale_order->getOrder($order_id);
+        $this->load->model('catalog/product');
+        $this->current_order = $order = $this->model_sale_order->getOrder($order_id);
 
         $this->store_id = $order['store_id'];
 
@@ -167,7 +168,8 @@ class ControllerExtensionModuleMoloni extends Controller
               echo "</pre>"; */
 
             $customer = $this->moloniCustomerHandler($order);
-            foreach ($oc_products as $product) {
+            foreach ($oc_products as &$product) {
+                $product["order_id"] = $order_id;
                 $products[] = $this->moloniProductHandler($product);
             }
             // $products = $this->moloniProductsHandler($)
@@ -298,7 +300,60 @@ class ControllerExtensionModuleMoloni extends Controller
 
     private function moloniProductHandler($product)
     {
+        echo "<pre>";
         print_r($product);
+
+        $oc_product = $this->model_catalog_product->getProduct($product["product_id"]);
+        print_r($oc_product);
+
+        if (isset($oc_product["product_id"])) {
+            $option_reference_sufix = "";
+            $option_name_sufix = "";
+
+            $options = $this->model_sale_order->getOrderOptions($product["order_id"], $product["order_product_id"]);
+            if ($options) {
+                foreach ($options as $option) {
+
+                    if ($this->settings['moloni_options_reference']) {
+                        $option_reference_sufix_aux = $this->ocdb->getOptionMoloniReference($option['product_option_value_id']);
+                    }
+
+                    $option_name_sufix .= " " . $option["product_option_value_id"];
+                    $option_reference_sufix .= ($option_reference_sufix_aux) ? $option_reference_sufix_aux : $option["product_option_value_id"];
+                }
+            }
+
+            $moloni_reference = $oc_product['product_id'];
+
+            if (!empty($oc_product['model'])) {
+                $moloni_reference = $oc_product['model'];
+            }
+
+            if (!empty($oc_product['sku'])) {
+                $moloni_reference = $oc_product['sku'];
+            }
+
+            $moloni_reference = mb_substr(str_replace(" ", "_", $moloni_reference . $option_reference_sufix), 0, 28);
+
+            $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
+
+            $values["name"] = $product['name'] . $option_name_sufix;
+            $values["summary"] = strip_tags($oc_product['description'], "<br>");
+            $values["price"] = $product['price'];
+
+            if ($moloni_product_exists) {
+                $values['product_id'] = $moloni_product_exists['product_id'];
+            } else {
+                $values["reference"] = $moloni_product_exists;
+                $values['discount'] = $this->toolsDiscountHandler($oc_product);
+            }
+
+
+            print_r($values);
+        }
+
+
+        echo "</pre>";
     }
 
     private function loadDefaults()
@@ -647,6 +702,23 @@ class ControllerExtensionModuleMoloni extends Controller
         }
 
         /* ============ Depois verificamos se ele tem a opção para criar artigos e criamos ============ */
+    }
+
+    public function toolsDiscountHandler($oc_product, $order = false)
+    {
+        $tax_rates = array();
+        if (!$order) {
+            $order = $this->current_order;
+        }
+
+        $geo_zone = $this->ocdb->getClientGeoZone($order["payment_country_id"], $order["payment_zone_id"]);
+        $tax_rules = $this->ocdb->getTaxRules($oc_product["tax_class_id"]);
+
+        foreach ($tax_rules as $tax_rule) {
+            $tax_rates[] = $this->ocdb->getTaxRate($tax_rule["tax_rate_id"], $geo_zone["geo_zone_id"]);
+        }
+
+        return $tax_rates;
     }
 
     public function toolPaymentMethodHandler($name, $methods = false)

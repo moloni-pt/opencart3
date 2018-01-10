@@ -176,4 +176,31 @@ class ModelExtensionModuleMoloniOcdb extends Model
     {
         $this->db->query("UPDATE " . DB_PREFIX . "product_option_value SET moloni_reference = '" . $value . "' WHERE product_option_value_id = '" . $option_id . "'");
     }
+
+    public function getClientGeoZone($country_id, $payment_zone_id = 0)
+    {
+        $sql = "SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE country_id = '" . $country_id . "' AND (zone_id = '" . $payment_zone_id . "' OR zone_id = 0)";
+        $query = $this->db->query($sql);
+        $result = $query->row;
+
+        return $result;
+    }
+
+    public function getTaxRules($tax_class_id)
+    {
+        $sql = "SELECT * FROM " . DB_PREFIX . "tax_rule WHERE tax_class_id = '" . $tax_class_id . "' ORDER BY priority ASC";
+        $query = $this->db->query($sql);
+        $result = $query->rows;
+
+        return $result;
+    }
+
+    public function getTaxRate($tax_rate_id, $geo_zone_id)
+    {
+        $sql = "SELECT * FROM " . DB_PREFIX . "tax_rate WHERE tax_rate_id = '" . $tax_rate_id . "' AND geo_zone_id = " . $geo_zone_id . " ";
+        $query = $this->db->query($sql);
+        $result = $query->row;
+
+        return $result;
+    }
 }
