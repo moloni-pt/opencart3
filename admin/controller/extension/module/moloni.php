@@ -161,13 +161,6 @@ class ControllerExtensionModuleMoloni extends Controller
 
             $oc_products = $this->model_sale_order->getOrderProducts($order_id);
 
-            /* echo "<pre>";
-              print_r($order);
-              print_r($settings);
-              print_r($company);
-              print_r($oc_products);
-              echo "</pre>"; */
-
             $customer = $this->moloniCustomerHandler($order);
             foreach ($oc_products as &$product) {
                 $product["order_id"] = $order_id;
@@ -338,11 +331,17 @@ class ControllerExtensionModuleMoloni extends Controller
 
             $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
             $description = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', "", ($oc_product['description'])), 0, 250);
+
             $taxes = $this->toolsTaxesHandler($oc_product);
+
+            // $oc_product["price_without_taxes"] = $this->settings['product_tax'] == 0 ?  : $oc_product;
+
 
             $values["name"] = $product['name'] . $option_name_sufix;
             $values["summary"] = $description . (strlen($description) >= 250 ? "..." : "");
-            $values["price"] = $product['price'];
+            $values["price"] = $this->toolsPriceHandler($product);
+
+            # $values["discount"] = $this->toolsDiscountsHandlers($oc_product);
 
             if (!empty($taxes) && is_array($taxes)) {
                 $values['taxes'] = $taxes;
@@ -712,15 +711,30 @@ class ControllerExtensionModuleMoloni extends Controller
         /* ============ Depois verificamos se ele tem a opção para criar artigos e criamos ============ */
     }
 
-    public function toolsTaxesHandler($oc_product, $order = false)
+    public function toolsPriceHandler($product, $order = false)
     {
         if (!$order) {
             $order = $this->current_order;
         }
 
-        $geo_zone = $this->ocdb->getClientGeoZone($order["payment_country_id"], $order["payment_zone_id"]);
-        $tax_rules = $this->ocdb->getTaxRules($oc_product["tax_class_id"]);
+        /* if ($this->company['currency_id'] != "1" || $this->current_order['currency_code'] != "EUR") {
+          $this->currency->format($product['price'], , null, false);
+          } */
+        print_r($this->company);
+
+        /* if($this->current_order['currency_code'])
+          $this->currency->format($product['price'], $this->current_order['currency_code'], null, false); */
+    }
+
+    public function toolsTaxesHandler($oc_product, $order = false)
+    {
+        if (!$order) {
+            $order = $this->current_order;
+        }
+        echo "teste" . $this->settings['products_tax'];
         if ($this->settings["products_tax"] == 0) {
+            $geo_zone = $this->ocdb->getClientGeoZone($order["payment_country_id"], $order["payment_zone_id"]);
+            $tax_rules = $this->ocdb->getTaxRules($oc_product["tax_class_id"]);
             foreach ($tax_rules as $tax_order => $tax_rule) {
                 $oc_tax = $this->ocdb->getTaxRate($tax_rule["tax_rate_id"], $geo_zone["geo_zone_id"]);
                 $tax_order = $tax_order;
@@ -733,7 +747,12 @@ class ControllerExtensionModuleMoloni extends Controller
                 }
             }
         } else {
-            $taxes[] = array("tax_id" => $this->settings["products_tax"], "value" => $this->settings["products_tax"], "order" => "0", "cumulative" => "1");
+            foreach ($this->moloni_taxes as $moloni_tax) {
+                if ($moloni_tax['tax_id'] == $this->settings['products_tax']) {
+                    $taxes[] = array("tax_id" => $moloni_tax['tax_id'], "value" => $moloni_tax['value'], "order" => "0", "cumulative" => "1");
+                    break;
+                }
+            }
         }
 
         return $taxes;
