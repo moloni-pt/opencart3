@@ -39,8 +39,9 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    {% for order in content.orders_list[0] %}
+
+                {% for order in content.orders_list[0] %}
+                    <tr>
                         <td></td>
                         <td>{{ order.order_id }}</td>
                         <td>{{ order.firstname }} {{ order.lastname }}</td>
@@ -49,9 +50,8 @@
                         <td>{{ order.date_added }}</td>
                         <td>{{ order.total_formated }}</td>
                         <td><a href='{{order.moloni_create}}'>gerar</a></td>
-                    {% endfor %}
-
-                </tr>
+                    </tr>
+                {% endfor %}
             </tbody>
         </table>
 

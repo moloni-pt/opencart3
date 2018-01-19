@@ -160,8 +160,11 @@ class ControllerExtensionModuleMoloni extends Controller
             $this->countries = $this->moloni->countries->getAll();
 
             $oc_products = $this->model_sale_order->getOrderProducts($order_id);
+            $oc_totals = $this->model_sale_order->getOrderTotals($order_id);
 
             $customer = $this->moloniCustomerHandler($order);
+            $discounts = $this->toolsDiscountsHandlers($oc_totals);
+
             foreach ($oc_products as &$product) {
                 $product["order_id"] = $order_id;
                 $products[] = $this->moloniProductHandler($product);
@@ -294,11 +297,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
     private function moloniProductHandler($product)
     {
-        echo "<pre>";
-        print_r($product);
-
         $oc_product = $this->model_catalog_product->getProduct($product["product_id"]);
-        print_r($oc_product);
 
         if (isset($oc_product["product_id"])) {
             $option_reference_sufix = "";
@@ -339,9 +338,8 @@ class ControllerExtensionModuleMoloni extends Controller
 
             $values["name"] = $product['name'] . $option_name_sufix;
             $values["summary"] = $description . (strlen($description) >= 250 ? "..." : "");
-            $values["price"] = $this->toolsPriceHandler($product);
-
-            # $values["discount"] = $this->toolsDiscountsHandlers($oc_product);
+            $values["price"] = $product['price_without_taxes'] = $this->toolsPriceHandler($product, $taxes);
+            $values["discount"] = $product['discount'];
 
             if (!empty($taxes) && is_array($taxes)) {
                 $values['taxes'] = $taxes;
@@ -354,13 +352,7 @@ class ControllerExtensionModuleMoloni extends Controller
             } else {
                 $values["reference"] = $moloni_product_exists;
             }
-
-
-            print_r($values);
         }
-
-
-        echo "</pre>";
     }
 
     private function loadDefaults()
@@ -711,19 +703,31 @@ class ControllerExtensionModuleMoloni extends Controller
         /* ============ Depois verificamos se ele tem a opção para criar artigos e criamos ============ */
     }
 
-    public function toolsPriceHandler($product, $order = false)
+    public function toolsPriceHandler($product, $taxes = false, $order = false)
     {
         if (!$order) {
             $order = $this->current_order;
         }
 
-        /* if ($this->company['currency_id'] != "1" || $this->current_order['currency_code'] != "EUR") {
-          $this->currency->format($product['price'], , null, false);
-          } */
-        print_r($this->company);
+        if ($this->company['currency_id'] == "1") {
+            if ($this->settings['products_tax'] == 0) {
+                $values['price_without_taxes'] = $this->currency->format($product['price'], "EUR", null, false);
+            } else {
+                $values['price_without_taxes'] = ($this->currency->format($product['price'] + $product['tax'], "EUR", null, false) * 100) / (100 + $taxes[0]['value']);
+            }
+        } else {
+            $values['price_without_taxes'] = $this->currency->format($product['price'], null, null, false);
+        }
+        return $values['price_without_taxes'];
+    }
 
-        /* if($this->current_order['currency_code'])
-          $this->currency->format($product['price'], $this->current_order['currency_code'], null, false); */
+    public function toolsDiscountsHandlers($totals)
+    {
+        foreach ($totals as $total) {
+            if ($total['code'] == "voucher") {
+                
+            }
+        }
     }
 
     public function toolsTaxesHandler($oc_product, $order = false)
@@ -731,7 +735,7 @@ class ControllerExtensionModuleMoloni extends Controller
         if (!$order) {
             $order = $this->current_order;
         }
-        echo "teste" . $this->settings['products_tax'];
+
         if ($this->settings["products_tax"] == 0) {
             $geo_zone = $this->ocdb->getClientGeoZone($order["payment_country_id"], $order["payment_zone_id"]);
             $tax_rules = $this->ocdb->getTaxRules($oc_product["tax_class_id"]);
