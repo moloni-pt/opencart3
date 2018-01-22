@@ -23,10 +23,42 @@ class products
         );
 
         $result = $this->moloni->connection->curl("products/getByReference", $values);
-        print_r($result);
         if (is_array($result) && isset($result[0]['product_id'])) {
             return $result;
         } else {
+            return false;
+        }
+    }
+
+    public function insert($input, $company_id = false)
+    {
+        $values["company_id"] = ($company_id ? $company_id : $this->moloni->company_id);
+
+        $values["category_id"] = $input['category_id'];
+        $values["type"] = $input['type'];
+        $values["name"] = $input['name'];
+        $values["reference"] = $input['reference'];
+        $values["price"] = $input['price'];
+        $values["unit_id"] = $input['unit_id'];
+        $values["has_stock"] = $input['has_stock'];
+
+        $values["summary"] = isset($input['summary']) ? $input['summary'] : "";
+        $values["ean"] = isset($input['ean']) ? $input['ean'] : "";
+        $values["stock"] = isset($input['stock']) ? $input['stock'] : "";
+        $values["pos_favorite"] = isset($input['pos_favorite']) ? $input['pos_favorite'] : "";
+        $values["at_product_category"] = isset($input['at_product_category']) ? $input['at_product_category'] : "";
+        $values["exemption_reason"] = isset($input['exemption_reason']) ? $input['exemption_reason'] : "";
+
+        $values["taxes"] = isset($input['taxes']) && is_array($input['taxes']) ? $input['taxes'] : "";
+        $values["suppliers"] = isset($input['suppliers']) && is_array($input['suppliers']) ? $input['suppliers'] : "";
+        $values["properties"] = isset($input['properties']) && is_array($input['properties']) ? $input['properties'] : "";
+        $values["warehouses"] = isset($input['warehouses']) && is_array($input['warehouses']) ? $input['warehouses'] : "";
+
+        $result = $this->moloni->connection->curl("products/insert", $values);
+        if (is_array($result) && isset($result['product_id'])) {
+            return $result;
+        } else {
+            $this->moloni->errors->throwError("Erro ao inserir artigo", $result[0], __CLASS__ . "/" . __FUNCTION__);
             return false;
         }
     }

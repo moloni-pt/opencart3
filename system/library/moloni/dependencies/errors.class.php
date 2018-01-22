@@ -63,6 +63,10 @@ class errors
             case "2 maturity_date_id 1 0" :
                 $string = "Defina um prazo de vencimento nas configurações do plugin";
                 break;
+
+            case "2 unit_id 1 0" :
+                $string = "Unidade de medida errada";
+                break;
         }
 
         return $string;

@@ -35,8 +35,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->store_id = isset($this->request->get["store_id"]) ? $this->request->get["store_id"] : 0;
 
         if (isset($this->request->post["username"]) && isset($this->request->post["password"])) {
-            $this->moloni->username = $_POST["username"];
-            $this->moloni->password = $_POST["password"];
+            $this->moloni->username = $this->request->post["username"];
+            $this->moloni->password = $this->request->post["password"];
         }
 
         if (isset($this->request->get["action"]) && $this->request->get["action"] == 'logout') {
@@ -167,9 +167,10 @@ class ControllerExtensionModuleMoloni extends Controller
 
             foreach ($oc_products as &$product) {
                 $product["order_id"] = $order_id;
+                $product["discount"] = $discounts['products'];
                 $products[] = $this->moloniProductHandler($product);
             }
-            // $products = $this->moloniProductsHandler($)
+// $products = $this->moloniProductsHandler($)
 
             $document = array();
             $document["date"] = date("Y-m-d");
@@ -184,7 +185,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $document['our_reference'] = "#" . $order_id;
             $document['your_reference'] = "#" . $order_id;
 
-            $document['financial_discount'] = "0";
+            $document['financial_discount'] = $discounts['document'];
             $document['special_discount'] = "0";
             $document['eac_id'] = "";
 
@@ -216,12 +217,15 @@ class ControllerExtensionModuleMoloni extends Controller
             $document['notes'] = "";
             $document['status'] = "0";
 
+            if (!$this->moloni->errors->getError("all")) {
+                // Tentamos inserir o documento
+            }
+
             echo "<pre>";
-            print_r($order);
             print_r($document);
             echo "</pre>";
         } else {
-            // @todo Trigger error when it has a document already
+// @todo Trigger error when it has a document already
         }
     }
 
@@ -330,17 +334,18 @@ class ControllerExtensionModuleMoloni extends Controller
 
             $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
             $description = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', "", ($oc_product['description'])), 0, 250);
-
             $taxes = $this->toolsTaxesHandler($oc_product);
-
-            // $oc_product["price_without_taxes"] = $this->settings['product_tax'] == 0 ?  : $oc_product;
-
 
             $values["name"] = $product['name'] . $option_name_sufix;
             $values["summary"] = $description . (strlen($description) >= 250 ? "..." : "");
             $values["price"] = $product['price_without_taxes'] = $this->toolsPriceHandler($product, $taxes);
             $values["discount"] = $product['discount'];
+            $values["qty"] = $product['quantity'];
 
+            $values["order"] = "";
+            $values["warehouse_id"] = "";
+
+            //======= TAXES =======//
             if (!empty($taxes) && is_array($taxes)) {
                 $values['taxes'] = $taxes;
             } else {
@@ -350,14 +355,40 @@ class ControllerExtensionModuleMoloni extends Controller
             if ($moloni_product_exists) {
                 $values['product_id'] = $moloni_product_exists['product_id'];
             } else {
-                $values["reference"] = $moloni_product_exists;
+                $values["reference"] = $moloni_reference;
+                $values["ean"] = $oc_product['ean'];
+
+                $oc_category = $this->model_catalog_product->getProductCategories($product["product_id"]);
+                if (isset($oc_category[0])) {
+                    $category = $this->ocdb->getCategory($oc_category[0]);
+                    $values['category_id'] = $this->toolCategoryHandler($category['name']);
+                } else {
+                    $values['category_id'] = $this->toolCategoryHandler("Sem categoria");
+                }
+
+                if ($oc_product['subtract']) {
+                    $values["type"] = "1";
+                    $values["has_stock"] = "1";
+                    $values["stock"] = $oc_product['quantity'];
+                    $values["at_product_category"] = $this->settings['products_at_category'];
+                    $values["unit_id"] = "";
+                } else {
+                    $values["type"] = "2";
+                    $values["has_stock"] = "0";
+                }
+
+                $inserted = $this->moloni->products->insert($values);
+                if (isset($inserted['product_id'])) {
+                    $values['product_id'] = $inserted['product_id'];
+                }
+
+                return $values;
             }
         }
     }
 
     private function loadDefaults()
     {
-
         $this->data['header'] = $this->load->controller('common/header');
         $this->data['footer'] = $this->load->controller('common/footer');
         $this->data['column_left'] = $this->load->controller('common/column_left');
@@ -376,7 +407,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $url = array();
         $url['login']['form'] = $this->url->link('extension/module/moloni', array('user_token' => $this->session->data['user_token']), true);
         $url['logout'] = $this->url->link('extension/module/moloni', array("action" => "logout", 'user_token' => $this->session->data['user_token']), true);
-        $url['settings']['save'] = $this->url->link('extension/module/moloni/settings', array("store_id" => (isset($_GET['store_id']) ? $_GET['store_id'] : 0), "action" => "save", 'user_token' => $this->session->data['user_token']), true);
+        $url['settings']['save'] = $this->url->link('extension/module/moloni/settings', array("store_id" => (isset($this->request->get['store_id']) ? $this->request->get['store_id'] : 0), "action" => "save", 'user_token' => $this->session->data['user_token']), true);
         $url['settings']['cancel'] = $this->url->link('extension/module/moloni/settings', array('user_token' => $this->session->data['user_token']), true);
         return $url;
     }
@@ -401,7 +432,7 @@ class ControllerExtensionModuleMoloni extends Controller
             case "settings":
                 $breadcrumbs[] = array("text" => "Settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
                 $breadcrumbs[] = array("text" => "Stores", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
-                $breadcrumbs[] = array("text" => "Edit store settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", "store_id" => (isset($_GET['store_id']) ? $_GET['store_id'] : 0), 'user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Edit store settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", "store_id" => (isset($this->request->get['store_id']) ? $this->request->get['store_id'] : 0), 'user_token' => $this->session->data['user_token']), true));
                 break;
             default :
                 $breadcrumbs[] = (array("href" => "extension/module/moloni", "text" => "login"));
@@ -587,7 +618,7 @@ class ControllerExtensionModuleMoloni extends Controller
         curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($con, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($con, CURLOPT_SSL_VERIFYPEER, true);
-        //curl_setopt($con, CURLOPT_USERPWD, "user:pwd");
+//curl_setopt($con, CURLOPT_USERPWD, "user:pwd");
 
         $result = curl_exec($con);
         if (curl_errno($con)) {
@@ -723,11 +754,51 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function toolsDiscountsHandlers($totals)
     {
+        $discount["document"] = 0;
+        $discount["products"] = 0;
+
         foreach ($totals as $total) {
-            if ($total['code'] == "voucher") {
-                
+            $start = strpos($total['title'], '(') + 1;
+            $end = strrpos($total['title'], ')');
+            switch ($total['code']) {
+                case "sub_total" :
+                    $discount['sub_total'] = $total['value'];
+                    break;
+
+                case "coupon" :
+                    if ($start && $end) {
+                        $discount["coupon"] = array(
+                            "code" => substr($total['title'], $start, $end - $start),
+                            "value" => abs($total['value']),
+                            "shipping" => $this->ocdb->getShippingDiscount(substr($total['title'], $start, $end - $start))
+                        );
+                    }
+                    break;
+
+                case "voucher":
+                    if ($start && $end) {
+                        $discount["voucher"] = array(
+                            "code" => substr($total['title'], $start, $end - $start),
+                            "value" => abs($total['value']),
+                        );
+                    }
+                    break;
             }
         }
+
+        if (isset($discount['coupon'])) {
+            if ($discount["coupon"]['shipping']) {
+                $discount["shipping"] = 100;
+            } else {
+                $discount["products"] = (($discount["coupon"]["value"] * 100) / $discount['sub_total']);
+            }
+        }
+
+        if (isset($discount['voucher'])) {
+            $discount["document"] = (($discount["voucher"]["value"] * 100) / $discount['sub_total']);
+        }
+
+        return $discount;
     }
 
     public function toolsTaxesHandler($oc_product, $order = false)
@@ -804,6 +875,25 @@ class ControllerExtensionModuleMoloni extends Controller
 
         // In case we don't find a country, we return 1 (Portugal)
         return "1";
+    }
+
+    public function toolCategoryHandler($category_name)
+    {
+        $ml_categories = $this->moloni->categories->getAllCached();
+        if (!$ml_categories) {
+            $ml_categories = $this->moloni->categories->getAllRecursive(0);
+        }
+
+        foreach ($ml_categories as $category) {
+            if (strcasecmp($category['name'], $category_name) == 0) {
+                return $category['category_id'];
+            }
+        }
+
+        $values['name'] = $category_name;
+        $values['parent_id'] = "0";
+        $insert = $this->moloni->categories->insert($values);
+        return $insert["category_id"];
     }
 
     public function toolNumberCreator($order)
