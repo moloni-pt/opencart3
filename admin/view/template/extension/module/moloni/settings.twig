@@ -176,6 +176,17 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.measure_unit|escape('html') }}">{{ label.measure_unit }}</span></label>
+                                    <div class="col-sm-10">
+                                        <select name="moloni[measure_unit]" id="input-document-type" class="form-control">
+                                            {% for measure_unit in content.settings_values.measure_units %}
+                                                <option value="{{ measure_unit.unit_id }}" {{ measure_unit.unit_id == options.measure_unit ? 'selected="selected"' : ""}}>{{ measure_unit.name }} ({{ measure_unit.short_name }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
                                     <label class="col-sm-2 control-label" for="input-document-set"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.products_tax|escape('html') }}">{{ label.products_tax }}</span></label>
                                     <div class="col-sm-10">
                                         <select name="moloni[products_tax]" id="input-document-type" class="form-control">
@@ -348,15 +359,10 @@
 
 
             </div>
-
-
-
-
             </form>
         </div>
     </div>
 
-</div>
 </div>
 <link href="view/stylesheet/moloni/moloni-sheet.css" rel="stylesheet" />
 <script>

@@ -6,7 +6,7 @@
  */
 namespace moloni;
 
-class suppliers
+class measurements
 {
 
     public function __construct(\moloni $moloni)
@@ -14,9 +14,14 @@ class suppliers
         $this->moloni = $moloni;
     }
 
-    public function count()
+    public function getAll($company_id = false)
     {
-        echo "test";
-        $this->moloni->connection->testing();
+        $values = array("company_id" => $company_id ? $company_id : $this->moloni->company_id);
+        $result = $this->moloni->connection->curl("measurementUnits/getAll", $values);
+        if (is_array($result) && isset($result[0]['unit_id'])) {
+            return $result;
+        } else {
+            return false;
+        }
     }
 }

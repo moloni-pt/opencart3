@@ -165,12 +165,13 @@ class ControllerExtensionModuleMoloni extends Controller
             $customer = $this->moloniCustomerHandler($order);
             $discounts = $this->toolsDiscountsHandlers($oc_totals);
 
-            foreach ($oc_products as &$product) {
+            foreach ($oc_products as $key => &$product) {
                 $product["order_id"] = $order_id;
                 $product["discount"] = $discounts['products'];
-                $products[] = $this->moloniProductHandler($product);
+                $products[] = $this->moloniProductHandler($product, $key);
             }
-// $products = $this->moloniProductsHandler($)
+
+            $shipping = $this->moloniShippingHandler($oc_totals, (count($products) + 1), $products);
 
             $document = array();
             $document["date"] = date("Y-m-d");
@@ -199,6 +200,8 @@ class ControllerExtensionModuleMoloni extends Controller
                 $document['exchange_rate'] = "0";
             }
 
+
+
             if ($this->settings['shipping_details']) {
                 $document['delivery_method_id'] = "";
                 $document['delivery_datetime'] = "";
@@ -218,7 +221,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $document['status'] = "0";
 
             if (!$this->moloni->errors->getError("all")) {
-                // Tentamos inserir o documento
+                // Insert document
             }
 
             echo "<pre>";
@@ -299,7 +302,7 @@ class ControllerExtensionModuleMoloni extends Controller
         return $customer_id;
     }
 
-    private function moloniProductHandler($product)
+    private function moloniProductHandler($product, $key)
     {
         $oc_product = $this->model_catalog_product->getProduct($product["product_id"]);
 
@@ -342,7 +345,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $values["discount"] = $product['discount'];
             $values["qty"] = $product['quantity'];
 
-            $values["order"] = "";
+            $values["order"] = $key;
             $values["warehouse_id"] = "";
 
             //======= TAXES =======//
@@ -377,12 +380,29 @@ class ControllerExtensionModuleMoloni extends Controller
                     $values["has_stock"] = "0";
                 }
 
+                $values["unit_id"] = $this->settings['measure_unit'];
+
                 $inserted = $this->moloni->products->insert($values);
                 if (isset($inserted['product_id'])) {
                     $values['product_id'] = $inserted['product_id'];
                 }
 
                 return $values;
+            }
+        }
+    }
+
+    private function moloniShippingHandler($totals, $order, $products = false)
+    {
+        foreach ($totals as $total) {
+            if ($total['code'] == "shipping") {
+                $values["name"] = $total['title'];
+                $values["summary"] = "";
+                #$values["price"] = $product['price_without_taxes'] = $this->toolsPriceHandler($product, $taxes);
+                #$values["discount"] = $product['discount'];
+                $values["qty"] = "1";
+
+                $values["order"] = $order;
             }
         }
     }
@@ -491,6 +511,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $data['settings_values']['client_vat_custom_fields'] = array_merge($data['settings_values']['client_vat_custom_fields'], $this->ocdb->getCustomFieldsAll());
 
         $data['settings_values']['client_maturity_dates'] = $this->moloni->maturity_dates->getAll();
+        $data['settings_values']['measure_units'] = $this->moloni->measurements->getAll();
 
         $this->load->model('localisation/order_status');
 

@@ -33,6 +33,8 @@ $_['tooltip']['products_tax_exemption'] = "Choose an exemption reason to be used
 $_['tooltip']['shipping_tax_exemption'] = "Choose an exemption reason to be used only when the shipping method does not have a tax associated.";
 $_['tooltip']['products_prefix'] = "Choose a prefir for the product reference. If you choose for example 'MOLONI', the product reference will start with MOLONI.";
 
+$_['tooltip']['measure_unit'] = "Choose a unit measurement to be used by default in your Moloni products.";
+
 $_['tooltip']['order_auto'] = "Create a documento automatically when the order is set to paid.";
 $_['tooltip']['moloni_options_reference'] = "Enable the use of referecence sufixes in options of type 'Select', this is usefull to create unique products in Moloni.";
 $_['tooltip']['products_auto'] = "Create products automatically when they are inserted or edited in Opencart.";
@@ -86,6 +88,7 @@ $_['label']['shipping_tax_exemption'] = "Shipping tax exemption";
 $_['label']['let_opencart_decide'] = "Let opencart decide";
 $_['label']['products_prefix'] = "Ref. Prefix";
 $_['label']['products_at_category'] = "AT Category";
+$_['label']['measure_unit'] = "Measurement unit";
 
 $_['label']['products_auto'] = "Create products automatically";
 $_['label']['moloni_options_reference'] = "Use references on options";
