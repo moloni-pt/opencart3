@@ -20,6 +20,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private $settings;
     private $document_type;
     public $data;
+    private $_myOrder;
 
     public function __construct($registry)
     {
@@ -171,7 +172,11 @@ class ControllerExtensionModuleMoloni extends Controller
                 $products[] = $this->moloniProductHandler($product, $key);
             }
 
-            $shipping = $this->moloniShippingHandler($oc_totals, (count($products) + 1), $products);
+            $shipping = $this->moloniShippingHandler($oc_totals, (count($products) + 1), $discounts);
+            if ($shipping) {
+                $products[] = $shipping;
+            }
+
 
             $document = array();
             $document["date"] = date("Y-m-d");
@@ -351,12 +356,16 @@ class ControllerExtensionModuleMoloni extends Controller
             //======= TAXES =======//
             if (!empty($taxes) && is_array($taxes)) {
                 $values['taxes'] = $taxes;
+                if (!isset($this->_myOrder['has_taxes']) || $this->_myOrder['has_taxes'] == false) {
+                    $this->_myOrder['has_taxes'] = true;
+                    $this->_myOrder['default_taxes'] = $taxes;
+                }
             } else {
                 $values['exemption_reason'] = $this->settings['products_tax_exemption'];
             }
 
             if ($moloni_product_exists) {
-                $values['product_id'] = $moloni_product_exists['product_id'];
+                $values['product_id'] = $moloni_product_exists[0]['product_id'];
             } else {
                 $values["reference"] = $moloni_reference;
                 $values["ean"] = $oc_product['ean'];
@@ -374,35 +383,74 @@ class ControllerExtensionModuleMoloni extends Controller
                     $values["has_stock"] = "1";
                     $values["stock"] = $oc_product['quantity'];
                     $values["at_product_category"] = $this->settings['products_at_category'];
-                    $values["unit_id"] = "";
+                    $values["unit_id"] = $this->settings['measure_unit'];
                 } else {
                     $values["type"] = "2";
                     $values["has_stock"] = "0";
                 }
 
-                $values["unit_id"] = $this->settings['measure_unit'];
-
                 $inserted = $this->moloni->products->insert($values);
                 if (isset($inserted['product_id'])) {
                     $values['product_id'] = $inserted['product_id'];
                 }
-
-                return $values;
             }
+
+            return $values;
         }
     }
 
-    private function moloniShippingHandler($totals, $order, $products = false)
+    private function moloniShippingHandler($totals, $order, $discounts = false)
     {
         foreach ($totals as $total) {
             if ($total['code'] == "shipping") {
+
+                $moloni_reference = "Portes123";
+
+                $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
+
                 $values["name"] = $total['title'];
                 $values["summary"] = "";
-                #$values["price"] = $product['price_without_taxes'] = $this->toolsPriceHandler($product, $taxes);
-                #$values["discount"] = $product['discount'];
+                #
+                $values["discount"] = $discounts['shipping'];
                 $values["qty"] = "1";
 
                 $values["order"] = $order;
+
+
+                foreach ($this->moloni_taxes as $moloni_tax) {
+                    if ($this->settings['shipping_tax'] == "0") {
+                        if ($this->_myOrder["has_taxes"] == true && $this->_myOrder['default_taxes'][0]['tax_id'] == $moloni_tax['tax_id']) {
+                            $values["price"] = $total['value'] / (int) (1 . "." . $moloni_tax['value']);
+                            $values['taxes'] = $this->_myOrder['default_taxes'];
+                        } else {
+                            $values['exemption_reason'] = $this->settings['shipping_exemption_reason'];
+                        }
+                    } else {
+                        if ($moloni_tax['tax_id'] == $this->settings['products_tax']) {
+                            $values["price"] = $total['value'] / (int) (1 . "." . $moloni_tax['value']);
+                            $taxes[] = array("tax_id" => $moloni_tax['tax_id'], "value" => $moloni_tax['value'], "order" => "0", "cumulative" => "1");
+                            break;
+                        }
+                    }
+                }
+
+
+                if ($moloni_product_exists) {
+                    $values['product_id'] = $moloni_product_exists[0]['product_id'];
+                } else {
+                    $values["reference"] = $moloni_reference;
+                    $values['category_id'] = $this->toolCategoryHandler("Outros");
+                    $values["type"] = "2";
+                    $values["has_stock"] = "0";
+                    $values["unit_id"] = $this->settings['measure_unit'];
+
+                    $inserted = $this->moloni->products->insert($values);
+                    if (isset($inserted['product_id'])) {
+                        $values['product_id'] = $inserted['product_id'];
+                    }
+                }
+
+                return $values;
             }
         }
     }
@@ -812,6 +860,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $discount["shipping"] = 100;
             } else {
                 $discount["products"] = (($discount["coupon"]["value"] * 100) / $discount['sub_total']);
+                $discount["shipping"] = 0;
             }
         }
 

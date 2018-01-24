@@ -58,7 +58,7 @@ class products
         if (is_array($result) && isset($result['product_id'])) {
             return $result;
         } else {
-            $this->moloni->errors->throwError("Erro ao inserir artigo", $result[0], __CLASS__ . "/" . __FUNCTION__);
+            $this->moloni->errors->throwError("Erro ao inserir artigo " . $values["reference"] . " - " . $values["name"], $result[0], __CLASS__ . "/" . __FUNCTION__);
             return false;
         }
     }
