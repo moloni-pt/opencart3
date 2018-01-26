@@ -695,14 +695,15 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function install()
     {
+        
         $this->install->createTables();
 
         $this->load->model("setting/event");
         $this->model_setting_event->addEvent($this->eventGroup, "admin/view/common/column_left/before", $this->modulePath . "/injectAdminMenuItem");
         $this->model_setting_event->addEvent($this->eventGroup . "_invoice_button", "admin/view/sale/order_list/before", $this->modulePath . "/invoiceButtonCheck");
         $this->model_setting_event->addEvent($this->eventGroup . "_options_reference", "admin/view/catalog/product_form/before", $this->modulePath . "/optionsReferenceCheck");
-        $this->model_setting_event->addEvent($this->eventGroup . "_product_check", "admin/model/catalog/product/editProduct/after", $this->modulePath . "/eventProductCheck");
-        $this->model_setting_event->addEvent($this->eventGroup . "_product_check", "admin/model/catalog/product/addProduct/after", $this->modulePath . "/eventProductCheck");
+        $this->model_setting_event->addEvent($this->eventGroup . "_product_check_edit", "admin/model/catalog/product/editProduct/after", $this->modulePath . "/eventProductCheck");
+        $this->model_setting_event->addEvent($this->eventGroup . "_product_check_add", "admin/model/catalog/product/addProduct/after", $this->modulePath . "/eventProductCheck");
     }
 
     public function uninstall()
@@ -710,8 +711,18 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->install->dropTables();
 
         $this->load->model("setting/event");
-        $this->model_setting_event->deleteEventByCode('moloni');
+        $this->model_setting_event->deleteEventByCode($this->eventGroup);
+        $this->model_setting_event->deleteEventByCode($this->eventGroup . "_invoice_button");
+        $this->model_setting_event->deleteEventByCode($this->eventGroup . "_options_reference");
+        $this->model_setting_event->deleteEventByCode($this->eventGroup . "_product_check_edit");
+        $this->model_setting_event->deleteEventByCode($this->eventGroup . "_product_check_add");
     }
+    
+    public function patch() {
+		if ($this->config->get('moloni_status') == 1) {
+
+		}
+	}
 
     public function injectAdminMenuItem($eventRoute, &$data)
     {
