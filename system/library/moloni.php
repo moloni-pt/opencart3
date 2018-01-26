@@ -44,6 +44,16 @@ class moloni
         return $this->{$name};
     }
 
+    public function __call($name, $documentType)
+    {
+        $this->documentType = $documentType[0];
+
+        if (!isset($this->{$name}) && !isset($this->dependencies[$name])) {
+            $this->load("moloni/classes/" . $name . ".class.php", $name, $this->namespace . $name);
+        }
+        return $this->{$name};
+    }
+
     public function loadDependencies()
     {
         foreach ($this->dependencies as $name => $depend) {
