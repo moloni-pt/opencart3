@@ -55,7 +55,7 @@ class ModelExtensionModuleMoloniInstall extends Model
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci	AUTO_INCREMENT=1 ;
 		");
 
-        $column_check = "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='spydesk_loja_opencart3' AND column_name LIKE 'moloni_reference' LIMIT 1";
+        $column_check = "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='".DB_DATABASE."' AND column_name LIKE 'moloni_reference' LIMIT 1";
         $query = $this->db->query($column_check);
         $result = $query->row;
         if (!$result) {
