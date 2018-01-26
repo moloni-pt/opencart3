@@ -11,7 +11,7 @@ class ControllerExtensionModuleMoloni extends Controller
         "ocdb" => "model_extension_module_moloni_ocdb"
     );
     private $eventGroup = 'moloni';
-    private $version = '1.01';
+    private $version = 'Alpha';
     private $git_user = "moloni";
     private $git_repo = "opencart3";
     private $git_branch = "master";
