@@ -58,8 +58,8 @@ class ModelExtensionModuleMoloniInstall extends Model
         $column_check = "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='".DB_DATABASE."' AND column_name LIKE 'moloni_reference' LIMIT 1";
         $query = $this->db->query($column_check);
         $result = $query->row;
-        if (!$result) {
-            $this->db->query("ALTER TABLE `" . DB_PREFIX . "product_option_value` ADD `moloni_reference` VARCHAR( 255 ) CHARACTER SET utf32 COLLATE utf32_general_ci NULL DEFAULT NULL;");
+        if (empty($result)) {
+            $this->db->query("ALTER TABLE `" . DB_PREFIX . "product_option_value` ADD `moloni_reference` VARCHAR( 255 ) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL;");
         }
     }
 
@@ -68,6 +68,7 @@ class ModelExtensionModuleMoloniInstall extends Model
         $this->db->query("DROP TABLE `" . DB_PREFIX . "moloni`");
         $this->db->query("DROP TABLE `" . DB_PREFIX . "moloni_settings`");
     }
+    
 }
 
 ?>

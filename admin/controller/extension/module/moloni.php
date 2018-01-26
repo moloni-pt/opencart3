@@ -3,7 +3,7 @@
 class ControllerExtensionModuleMoloni extends Controller
 {
 
-    private $moduleName = 'Moloni';
+    private $moduleName = 'moloni';
     private $modulePathBase = 'extension/module/moloni/';
     private $modulePathView = 'extension/module/moloni/';
     public $modelsRequired = array(
@@ -12,7 +12,7 @@ class ControllerExtensionModuleMoloni extends Controller
     );
     private $eventGroup = 'moloni';
     private $version = '1.01';
-    private $git_user = "nunong21";
+    private $git_user = "moloni";
     private $git_repo = "opencart3";
     private $git_branch = "master";
     private $updated_files = false;
@@ -699,11 +699,11 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->install->createTables();
 
         $this->load->model("setting/event");
-        $this->model_setting_event->addEvent($this->eventGroup, "admin/view/common/column_left/before", $this->modulePath . "/injectAdminMenuItem");
-        $this->model_setting_event->addEvent($this->eventGroup . "_invoice_button", "admin/view/sale/order_list/before", $this->modulePath . "/invoiceButtonCheck");
-        $this->model_setting_event->addEvent($this->eventGroup . "_options_reference", "admin/view/catalog/product_form/before", $this->modulePath . "/optionsReferenceCheck");
-        $this->model_setting_event->addEvent($this->eventGroup . "_product_check_edit", "admin/model/catalog/product/editProduct/after", $this->modulePath . "/eventProductCheck");
-        $this->model_setting_event->addEvent($this->eventGroup . "_product_check_add", "admin/model/catalog/product/addProduct/after", $this->modulePath . "/eventProductCheck");
+        $this->model_setting_event->addEvent($this->eventGroup, "admin/view/common/column_left/before", $this->modulePathBase . "/injectAdminMenuItem");
+        $this->model_setting_event->addEvent($this->eventGroup . "_invoice_button", "admin/view/sale/order_list/before", $this->modulePathBase . "/invoiceButtonCheck");
+        $this->model_setting_event->addEvent($this->eventGroup . "_options_reference", "admin/view/catalog/product_form/before", $this->modulePathBase . "/optionsReferenceCheck");
+        $this->model_setting_event->addEvent($this->eventGroup . "_product_check_edit", "admin/model/catalog/product/editProduct/after", $this->modulePathBase . "/eventProductCheck");
+        $this->model_setting_event->addEvent($this->eventGroup . "_product_check_add", "admin/model/catalog/product/addProduct/after", $this->modulePathBase . "/eventProductCheck");
     }
 
     public function uninstall()
