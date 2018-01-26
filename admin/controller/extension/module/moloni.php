@@ -238,8 +238,14 @@ class ControllerExtensionModuleMoloni extends Controller
     {
 
         $moloni_customer_exists = false;
-
-        $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
+        
+        if(isset($order['custom_field'][$this->settings["client_vat"]])){
+            $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
+        }else{
+            $order['vat_number'] = "999999990";
+        }
+        
+        
         $order['vat_number'] = str_ireplace("pt", "", $order['vat_number']);
 
         $order['payment_entity'] = (!empty($order['payment_company']) ? $order['payment_company'] : $order['payment_firstname'] . " " . $order['payment_lastname']);
@@ -309,14 +315,15 @@ class ControllerExtensionModuleMoloni extends Controller
         $oc_product = $this->model_catalog_product->getProduct($product["product_id"]);
 
         if (isset($oc_product["product_id"])) {
+            $option_reference_sufix_aux = false;
             $option_reference_sufix = "";
             $option_name_sufix = "";
 
             $options = $this->model_sale_order->getOrderOptions($product["order_id"], $product["order_product_id"]);
             if ($options) {
                 foreach ($options as $option) {
-
-                    if ($this->settings['moloni_options_reference']) {
+                    
+                    if (isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference']) {
                         $option_reference_sufix_aux = $this->ocdb->getOptionMoloniReference($option['product_option_value_id']);
                     }
 
