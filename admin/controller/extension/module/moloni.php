@@ -128,9 +128,9 @@ class ControllerExtensionModuleMoloni extends Controller
             if ($order_id) {
                 $parsed = json_decode($order_id, true);
                 if (is_array($parsed)) {
-                   foreach($parsed as $order_id){
-                       $this->createDocumentFromOrder($order_id);
-                   }
+                    foreach ($parsed as $order_id) {
+                        $this->createDocumentFromOrder($order_id);
+                    }
                 } else {
                     $this->createDocumentFromOrder($this->request->get["order_id"]);
                 }
@@ -770,7 +770,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $this->githubUpdate();
                 break;
         }
-        
+
         $this->clearThemeCache();
 
         $this->messages['success'] = array(
@@ -778,14 +778,15 @@ class ControllerExtensionModuleMoloni extends Controller
             "message" => "Actualização feita com sucesso"
         );
     }
-    
-   private function clearThemeCache(){
+
+    private function clearThemeCache()
+    {
         $directories = glob(DIR_CACHE . '*', GLOB_ONLYDIR);
         if ($directories) {
             foreach ($directories as $directory) {
                 $files = glob($directory . '/*');
 
-                foreach ($files as $file) { 
+                foreach ($files as $file) {
                     if (is_file($file)) {
                         unlink($file);
                     }
@@ -919,11 +920,17 @@ class ControllerExtensionModuleMoloni extends Controller
         foreach ($data['orders'] as &$order) {
             if (isset($this->settings['order_statuses']) && is_array($this->settings['order_statuses'])) {
                 $order_info = $this->ocdb->getOrderById($order['order_id']);
-                if (in_array($order_info['order_status_id'], $this->settings['order_statuses'])) {
-                    $moloni_url = $this->url->link('extension/module/moloni/invoice', array('order_id' => $order['order_id'], 'user_token' => $this->session->data['user_token']), true);
-                    $order['moloni_button'] = '<a href="' . $moloni_url . '" data-toggle="tooltip" title="' . $this->language->get('create_moloni_document') . '" class="btn btn-primary"><i class="fa fa-usd"></i></a>';
-                } else {
+                if (isset($order_info['invoice_id']) && !empty(isset($order_info['invoice_id']))) {
+                    # $moloni_url = "https://moloni.pt/" . $this->company['slug'] . $this->moloni->documents($this->settings['document_type'])->getViewUrl($order_info['invoice_id'], $order_info['invoice_status']);
+                    # $order['moloni_button'] = '<a href="' . $moloni_url . '" data-toggle="tooltip" title="' . $this->language->get('details') . '" class="btn btn-primary"><i class="fa fa-file-text-o"></i></a>';
                     $order['moloni_button'] = false;
+                } else {
+                    if (in_array($order_info['order_status_id'], $this->settings['order_statuses'])) {
+                        $moloni_url = $this->url->link('extension/module/moloni/invoice', array('order_id' => $order['order_id'], 'user_token' => $this->session->data['user_token']), true);
+                        $order['moloni_button'] = '<a href="' . $moloni_url . '" data-toggle="tooltip" title="' . $this->language->get('create_moloni_document') . '" class="btn btn-primary"><i class="fa fa-usd"></i></a>';
+                    } else {
+                        $order['moloni_button'] = false;
+                    }
                 }
             }
         }

@@ -11,9 +11,9 @@ $_['login_register'] = 'Register a new moloni account';
 $_['login_login'] = 'Login';
 
 $_['moloni_reference'] = 'Moloni Ref.';
-
 $_['create_moloni_document'] = "Send to moloni";
 
+$_['orders_list'] = "Orders list";
 
 $_['tooltip']['document_set'] = 'Select the document set you want to use for this store.';
 $_['tooltip']['document_type'] = 'You can convert the document to another type directly in Moloni client area.';

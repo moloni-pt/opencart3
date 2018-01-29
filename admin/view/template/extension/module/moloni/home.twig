@@ -24,44 +24,57 @@
             {% include "extension/module/moloni/errors.twig"  %}
         {% endif %}
 
-        <table id="example" class="display" cellspacing="0" width="100%">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>{{ label.order_table_number }}</th>
-                    <th>{{ label.order_table_customer_info }}</th>
-                    <th>{{ label.order_table_order_status }}</th>
-                    <th>{{ label.order_table_store_name }}</th>
-                    <th>{{ label.order_table_order_date }}</th>
-                    <th>{{ label.order_table_order_total }}</th>
-                    <th>{{ label.order_table_order_actions }}</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-list"></i> {{orders_list}} </h3>
+            </div>
+            <div class="panel-body">
+                <div class="table-responsive">
 
-                {% for order in content.orders_list[0] %}
-                    <tr order_id="{{ order.order_id }}">
-                        <td></td>
-                        <td>{{ order.order_id }}</td>
-                        <td>{{ order.firstname }} {{ order.lastname }}</td>
-                        <td>{{ order.order_status }}</td>
-                        <td>{{ order.store_name }}</td>
-                        <td>{{ order.date_added }}</td>
-                        <td>{{ order.total_formated }}</td>
-                        <td><a href='{{order.moloni_create}}'>gerar</a></td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                    <table id="moloni_orders" class="display" cellspacing="0" width="100%">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>{{ label.order_table_number }}</th>
+                                <th>{{ label.order_table_customer_info }}</th>
+                                <th>{{ label.order_table_order_status }}</th>
+                                <th>{{ label.order_table_store_name }}</th>
+                                <th>{{ label.order_table_order_date }}</th>
+                                <th>{{ label.order_table_order_total }}</th>
+                                <th>{{ label.order_table_order_actions }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for order in content.orders_list[0] %}
+                                <tr order_id="{{ order.order_id }}">
+                                    <td></td>
+                                    <td>{{ order.order_id }}</td>
+                                    <td>{{ order.firstname }} {{ order.lastname }}</td>
+                                    <td>{{ order.order_status }}</td>
+                                    <td>{{ order.store_name }}</td>
+                                    <td>{{ order.date_added }}</td>
+                                    <td>{{ order.total_formated }}</td>
+                                    <td><a href='{{order.moloni_create}}'>gerar</a></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
 </div>
+
+<link href="view/stylesheet/moloni/moloni-sheet.css" rel="stylesheet" />
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.16/sl-1.2.4/datatables.min.css"/>
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.16/sl-1.2.4/datatables.min.js"></script>
 
+
 <script>
     $(document).ready(function() {
-        var orders_table = $('#example').DataTable({
+        var orders_table = $('#moloni_orders').DataTable({
             columnDefs: [{
                     orderable: false,
                     className: 'select-checkbox',
