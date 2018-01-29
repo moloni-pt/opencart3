@@ -3,6 +3,9 @@
 <div id="content">
     <div class="page-header">
         <div class="container-fluid">
+            <div class="pull-right">
+                <button data-toggle="tooltip" title="Gerar seleccionadas" class="btn btn-primary" id="create-multiple-invoice"><i class="fa fa-file-text"></i></button>
+            </div>
             <h1>{{ heading_title }}</h1>
             <ul class="breadcrumb">
                 {% for breadcrumb in breadcrumbs %}
@@ -37,7 +40,7 @@
             <tbody>
 
                 {% for order in content.orders_list[0] %}
-                    <tr>
+                    <tr order_id="{{ order.order_id }}">
                         <td></td>
                         <td>{{ order.order_id }}</td>
                         <td>{{ order.firstname }} {{ order.lastname }}</td>
@@ -50,7 +53,6 @@
                 {% endfor %}
             </tbody>
         </table>
-
     </div>
 
 </div>
@@ -72,10 +74,21 @@
             order: [[1, 'asc']]
 
         });
-        orders_table.rows().select();
-        orders_table.rows().deselect();
+
+        $("#create-multiple-invoice").click(function() {
+            if ($('.selected').lenght == 0) {
+                alert("Não tem encomendas seleccionadas");
+            } else {
+                var orders = [];
+                $('.selected').each(function(i, order) {
+                    orders.push(parseInt(order.attributes.order_id.value));
+                });
+                window.location.replace("{{ content.order_url_base|replace({'&amp;': "&"}) }}" + JSON.stringify(orders));
+            }
+        });
+        //orders_table.rows().select();
+        //orders_table.rows().deselect();
     });
 </script>
 
 
-{{ footer }}

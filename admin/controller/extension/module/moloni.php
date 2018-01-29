@@ -126,7 +126,14 @@ class ControllerExtensionModuleMoloni extends Controller
 
             $order_id = $this->request->get["order_id"];
             if ($order_id) {
-                $this->data['document'] = $this->createDocumentFromOrder($this->request->get["order_id"]);
+                $parsed = json_decode($order_id, true);
+                if (is_array($parsed)) {
+                   foreach($parsed as $order_id){
+                       $this->createDocumentFromOrder($order_id);
+                   }
+                } else {
+                    $this->createDocumentFromOrder($this->request->get["order_id"]);
+                }
             }
 
             $this->data['content'] = $this->getIndexData();
@@ -642,6 +649,7 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $data['orders_list'] = array();
         $data['orders_list'][0] = $this->ocdb->getOrdersAll($this->settings);
+        $data['order_url_base'] = $this->url->link('extension/module/moloni/invoice', array('user_token' => $this->session->data['user_token'], 'order_id' => ""));
 
         return $data;
     }
