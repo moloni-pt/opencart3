@@ -770,11 +770,32 @@ class ControllerExtensionModuleMoloni extends Controller
                 $this->githubUpdate();
                 break;
         }
+        
+        $this->clearThemeCache();
 
         $this->messages['success'] = array(
             "title" => "Sucesso",
             "message" => "Actualização feita com sucesso"
         );
+    }
+    
+   private function clearThemeCache(){
+        $directories = glob(DIR_CACHE . '*', GLOB_ONLYDIR);
+        if ($directories) {
+            foreach ($directories as $directory) {
+                $files = glob($directory . '/*');
+
+                foreach ($files as $file) { 
+                    if (is_file($file)) {
+                        unlink($file);
+                    }
+                }
+
+                if (is_dir($directory)) {
+                    rmdir($directory);
+                }
+            }
+        }
     }
 
     private function githubUpdate()
