@@ -1,5 +1,23 @@
+{% for error in messages.errors%}
+    <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error.title }} - {{ error.message }}
+        {% if error.link %}
+            | {{error.link}}
+        {% endif %}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+{% endfor %}
+
 {% for error in error_warnings%}
     <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error.title }} - {{ error.message }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+{% endfor %}
+
+{% for success in messages.success%}
+    <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success.title }} - {{ success.message }}
+        {% if success.link %}
+            | {{success.link}}
+        {% endif %}
         <button type="button" class="close" data-dismiss="alert">&times;</button>
     </div>
 {% endfor %}

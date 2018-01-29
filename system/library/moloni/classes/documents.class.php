@@ -32,6 +32,18 @@ class documents
             return false;
         }
     }
+    
+    public function getViewUrl($document_id, $status = 0){
+        switch($this->moloni->documentType){
+            case "billsOfLading":
+                return "GuiasTransporte/".($status == 0 ? "showUpdate" : "showDetail")."/".$document_id;
+                
+            case "invoiceReceipts":
+                return "FaturasRecibo/".($status == 0 ? "showUpdate" : "showDetail")."/".$document_id;
+            default:
+                break;
+        }                
+    }
 
     public function insert($values = array(), $company_id = false)
     {
@@ -42,6 +54,19 @@ class documents
             return $result;
         } else {
             $this->moloni->errors->throwError("Erro ao inserir documento", $result[0], __CLASS__ . "/" . __FUNCTION__, $result, $values);
+            return false;
+        }
+    }
+    
+    public function update($values = array(), $company_id = false)
+    {
+        $values["company_id"] = $company_id ? $company_id : $this->moloni->company_id;
+
+        $result = $this->moloni->connection->curl($this->moloni->documentType . "/update", $values);
+        if (is_array($result) && isset($result['document_id'])) {
+            return $result;
+        } else {
+            $this->moloni->errors->throwError("Erro ao actualizar documento", isset($result[0]) ? $result[0] : "", __CLASS__ . "/" . __FUNCTION__, $result, $values);
             return false;
         }
     }

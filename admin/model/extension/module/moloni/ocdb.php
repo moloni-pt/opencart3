@@ -227,12 +227,31 @@ class ModelExtensionModuleMoloniOcdb extends Model
         return $result['value'];
     }
 
+    public function getStoreCurrency($store_id = 0)
+    {
+        $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "setting WHERE " . DB_PREFIX . "setting.key = 'config_currency' AND store_id = '" . $store_id . "'");
+        $result = $query->row;
+        return $result['value'];
+    }
+
     public function getStoreLocation($select = 'all')
     {
-        $sql = "SELECT * FROM " . DB_PREFIX . "location " . ($select == 'all') ? "" : " WHERE location_id = " . $select;
+        $sql = "SELECT * FROM " . DB_PREFIX . "location " . ($select == 'all' ? "" : " WHERE location_id = " . $select);
         $query = $this->db->query($sql);
         $result = $query->rows;
 
         return $result;
+    }
+
+    public function setDocumentInserted($values)
+    {
+        $sql = "INSERT INTO " . DB_PREFIX . "moloni_documents SET";
+        foreach ($values as $key => $value) {
+            $sql .= " " . $key . " = '" . $value . "', ";
+        }
+
+        $sql = rtrim($sql, ", ");
+
+        $this->db->query($sql);
     }
 }

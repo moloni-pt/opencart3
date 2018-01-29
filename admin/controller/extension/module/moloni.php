@@ -21,10 +21,16 @@ class ControllerExtensionModuleMoloni extends Controller
     private $document_type;
     public $data;
     private $_myOrder;
+    private $messages = array();
 
     public function __construct($registry)
     {
         parent::__construct($registry);
+
+        if (isset($this->request->get['update']) && $this->request->get['update'] == true) {
+            $this->update();
+        }
+
         $this->__modelHandler();
     }
 
@@ -154,7 +160,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->store_id = $order['store_id'];
 
         $moloni_document = $this->ocdb->getDocumentFromOrderId($order_id);
-        if (!$moloni_document) {
+        if (!$moloni_document || isset($this->request->get['force'])) {
 
             $this->settings = $this->getMoloniSettings();
             $this->company = $this->moloni->companies->getOne();
@@ -163,7 +169,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $oc_products = $this->model_sale_order->getOrderProducts($order_id);
             $oc_totals = $this->model_sale_order->getOrderTotals($order_id);
 
-            $this->_myOrder['has_exchange'] = $this->company['currency_id'] == 1 && $order['currency_code'] <> "EUR" ? true : false;
+            $this->_myOrder['has_exchange'] = $this->company['currency_id'] == 1 && $this->ocdb->getStoreCurrency($this->store_id) <> "EUR" ? true : false;
 
             $customer = $this->moloniCustomerHandler($order);
             $discounts = $this->toolsDiscountsHandlers($oc_totals);
@@ -236,10 +242,33 @@ class ControllerExtensionModuleMoloni extends Controller
                     $shipping_document_insert = $this->moloni->documents("billsOfLading")->insert($document);
                     if ($shipping_document_insert) {
                         $shipping_document_details = $this->moloni->documents()->getOne($shipping_document_insert['document_id']);
-                        $document['associated_documents'] = array(
-                            "associated_id" => $shipping_document_details['document_id'],
-                            "value" => $shipping_document_details['net_value']
-                        );
+                        if ($this->settings['document_status'] == "1") {
+                            if ($shipping_document_details['net_value'] == $this->_myOrder['net_value']) {
+                                $document["document_id"] = $shipping_document_details['document_id'];
+                                $document["status"] = "1";
+
+                                $this->moloni->documents("billsOfLading")->update($document);
+
+                                $document['associated_documents'][] = array(
+                                    "associated_id" => $shipping_document_details['document_id'],
+                                    "value" => $shipping_document_details['net_value']
+                                );
+                            } else {
+                                $message = "Os totais não batem certo - moloni "
+                                    . $shipping_document_details['net_value'] . "€ | encomenda "
+                                    . $this->_myOrder['net_value'] . "€";
+                                $link = "<a target='_BLANK' href='https://moloni.pt/" . $this->company['slug'] . "/" .
+                                    $this->moloni->documents("billsOfLading")->getViewUrl($shipping_document_details['document_id']) .
+                                    "'>ver documento</a>";
+
+                                $this->messages['errors'] = array(
+                                    "title" => "Erro ao inserir documento de transporte",
+                                    "message" => $message,
+                                    "link" => $link,
+                                    "fatal" => 0
+                                );
+                            }
+                        }
                     }
                 }
 
@@ -247,19 +276,57 @@ class ControllerExtensionModuleMoloni extends Controller
                 if ($insert) {
                     $document_details = $this->moloni->documents()->getOne($insert['document_id']);
                     if ($document_details['net_value'] == $this->_myOrder['net_value']) {
-                        echo "yy";
+                        if ($this->settings['document_status'] == "1") {
+                            $document_update["document_id"] = $document_details['document_id'];
+                            $document_update["status"] = "1";
+
+                            $this->moloni->documents($this->settings['document_type'])->update($document_update);
+                        }
+                    } else {
+                        $message = "Os totais não batem certo - moloni "
+                            . $document_details['net_value'] . "€ | encomenda "
+                            . $this->_myOrder['net_value'] . "€";
+                        $link = "<a target='_BLANK' href='https://moloni.pt/" . $this->company['slug'] . "/" .
+                            $this->moloni->documents($this->settings['document_type'])->getViewUrl($document_details['document_id']) .
+                            "'>ver documento</a>";
+
+                        $this->messages['errors'] = array(
+                            "title" => "Erro ao inserir documento de transporte",
+                            "message" => $message,
+                            "link" => $link
+                        );
                     }
-                    echo $document_details['net_value'] . " - " . $this->_myOrder['net_value'];
+
+                    $values = array();
+                    $values['company_id'] = $this->company['company_id'];
+                    $values['store_id'] = $this->store_id;
+                    $values['order_id'] = $order_id;
+                    $values['order_total'] = $this->_myOrder['net_value'];
+                    $values['invoice_id'] = $document_details['document_id'];
+                    $values['invoice_total'] = $document_details['net_value'];
+                    $values['invoice_date'] = $document['date'];
+                    $values['invoice_status'] = isset($document_update["status"]) ? $document_update["status"] : $document['status'] = "0";
+                    $values['metadata'] = json_encode($document);
+                    $this->ocdb->setDocumentInserted($values);
+
+                    $link = "<a target='_BLANK' href='https://moloni.pt/" . $this->company['slug'] . "/" .
+                        $this->moloni->documents($this->settings['document_type'])->getViewUrl($values['invoice_id'], $values['invoice_status']) .
+                        "'>ver documento</a>";
+
+                    $this->messages['success'] = array(
+                        "title" => "Sucesso",
+                        "message" => "Documento inserido com sucesso",
+                        "link" => $link
+                    );
                 }
             }
-
-            echo "<pre>";
-            print_r($order);
-            print_r($document);
-            print_r($document_details);
-            echo "</pre>";
         } else {
-// @todo Trigger error when it has a document already
+
+            $this->messages['errors'] = array(
+                "title" => "Erro",
+                "message" => "O documento já tinha sido gerado",
+                "link" => "<a href='" . $moloni_url = $this->url->link('extension/module/moloni/invoice', array('order_id' => $order['order_id'], "force" => "true", 'user_token' => $this->session->data['user_token']), true) . "'>Gerar novamente</a>"
+            );
         }
     }
 
@@ -501,6 +568,14 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->data['debug_window'] = (isset($this->settings['debug_console']) && $this->settings['debug_console']) ? $this->moloni->debug->getLogs("all") : false;
         $this->data['error_warnings'] = $this->moloni->errors->getError("all");
         $this->data['update_result'] = $this->updated_files;
+
+        if (isset($this->messages['errors']) && is_array($this->messages['errors'])) {
+            $this->data['messages']['errors'][] = $this->messages['errors'];
+        }
+
+        if (isset($this->messages['success']) && is_array($this->messages['success'])) {
+            $this->data['messages']['success'][] = $this->messages['success'];
+        }
     }
 
     private function defaultTemplateUrls()
@@ -687,6 +762,11 @@ class ControllerExtensionModuleMoloni extends Controller
                 $this->githubUpdate();
                 break;
         }
+
+        $this->messages['success'] = array(
+            "title" => "Sucesso",
+            "message" => "Actualização feita com sucesso"
+        );
     }
 
     private function githubUpdate()
@@ -726,7 +806,7 @@ class ControllerExtensionModuleMoloni extends Controller
         curl_setopt($con, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($con, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($con, CURLOPT_SSL_VERIFYPEER, true);
-//curl_setopt($con, CURLOPT_USERPWD, "user:pwd");
+        //curl_setopt($con, CURLOPT_USERPWD, "user:pwd");
 
         $result = curl_exec($con);
         if (curl_errno($con)) {
@@ -767,7 +847,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function patch()
     {
         if ($this->config->get('moloni_status') == 1) {
-
+            
         }
     }
 
@@ -881,9 +961,12 @@ class ControllerExtensionModuleMoloni extends Controller
             $start = strpos($total['title'], '(') + 1;
             $end = strrpos($total['title'], ')');
             switch ($total['code']) {
+                case "total" :
+                    $this->_myOrder['net_value'] = $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false)) : abs($total['value']);
+                    break;
+
                 case "sub_total" :
                     $discount['sub_total'] = $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false)) : abs($total['value']);
-                    $this->_myOrder['net_value'] = $discount['sub_total'];
                     break;
 
                 case "coupon" :
