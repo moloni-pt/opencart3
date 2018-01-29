@@ -786,7 +786,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $tree = json_decode($treeRaw, true);
             foreach ($tree['tree'] as $file) {
                 $file_info = pathinfo($file['path']);
-                if ($file['type'] == "blob" && isset($file_info['extension']) && in_array($file_info['extension'], array("php", "twigg", "css"))) {
+                if ($file['type'] == "blob" && isset($file_info['extension']) && in_array($file_info['extension'], array("php", "twig", "css"))) {
                     $raw = $this->curl("https://raw.githubusercontent.com/" . $this->git_user . "/" . $this->git_repo . "/" . $this->git_branch . "/" . $file['path']);
                     if ($raw) {
                         $this->updated_files['true'][] = $path = str_replace("/admin", "", DIR_APPLICATION) . $file['path'];
