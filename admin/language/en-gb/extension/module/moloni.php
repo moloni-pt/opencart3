@@ -44,7 +44,7 @@ $_['tooltip']['git_username'] = "Choose the Github username you which to update 
 $_['tooltip']['git_repository'] = "Choose the Github repository you which to update from (default: opencart3)";
 $_['tooltip']['git_branch'] = "Choose the Github branch you which to update from (default: master)";
 
-
+$_['tooltip']['store_location'] = "Choose the delivery departure address to use. If you choose the default, we will use your moloni account settings";
 
 $_['label']['yes'] = "Yes";
 $_['label']['no'] = "No";
@@ -63,6 +63,7 @@ $_['label']['document_type'] = "Document Type";
 $_['label']['document_status'] = "Status";
 $_['label']['shipping_details'] = "Shipping Details";
 $_['label']['shipping_document'] = "Shipping Document";
+$_['label']['store_location'] = "Delivery Departure Address";
 
 $_['label']['invoices'] = "Invoices";
 $_['label']['invoiceReceipts'] = "Invoice Receipts";

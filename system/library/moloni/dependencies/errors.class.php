@@ -19,6 +19,17 @@ class errors
 
     public function throwError($title, $message, $where, $received = false, $sent = false)
     {
+        if (is_Array($message)) {
+            foreach ($message as $msg) {
+                $this->logError($title, $msg, $where, $received, $sent);
+            }
+        } else {
+            $this->logError($title, $message, $where, $received, $sent);
+        }
+    }
+
+    public function logError($title, $message, $where, $received = false, $sent = false)
+    {
         $this->error_log[] = array(
             "title" => $title,
             "message" => $this->translateMessage($message),
@@ -66,6 +77,22 @@ class errors
 
             case "2 unit_id 1 0" :
                 $string = "Unidade de medida errada";
+                break;
+
+            case "1 exemption_reason" :
+                $string = "Um dos artigos requer uma razão de isenção";
+                break;
+
+            case "5 exemption_reason" :
+                $string = "Um dos artigos não tem uma razão de isenção definida";
+                break;
+
+            case "5 document_set_id" :
+                $string = "Não está definida a série onde quer emitir o documento";
+                break;
+
+            case "2 price 0 null null 0" :
+                $string = "Um dos artigos tem o preço igual a 0";
                 break;
         }
 

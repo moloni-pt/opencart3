@@ -14,6 +14,25 @@ class documents
         $this->moloni = $moloni;
     }
 
+    public function getOne($input = array(), $company_id = false)
+    {
+        $values["company_id"] = $company_id ? $company_id : $this->moloni->company_id;
+        if (is_array($input)) {
+            foreach ($input as $key => $value) {
+                $values[$key] = $value;
+            }
+        } else {
+            $values['document_id'] = $input;
+        }
+
+        $result = $this->moloni->connection->curl($this->moloni->documentType . "/getOne", $values);
+        if (is_array($result) && isset($result['document_id'])) {
+            return $result;
+        } else {
+            return false;
+        }
+    }
+
     public function insert($values = array(), $company_id = false)
     {
         $values["company_id"] = $company_id ? $company_id : $this->moloni->company_id;

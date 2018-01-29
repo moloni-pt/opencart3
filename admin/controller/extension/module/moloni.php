@@ -203,18 +203,27 @@ class ControllerExtensionModuleMoloni extends Controller
             }
 
             if ($this->settings['shipping_details']) {
-                $document['delivery_method_id'] = "";
-                $document['delivery_datetime'] = "";
+                $document['delivery_method_id'] = $this->toolDeliveryMethodHandler($order['shipping_method']);
+                $document['delivery_datetime'] = date("Y-m-d H:i:s");
 
-                $document['delivery_departure_address'] = "";
-                $document['delivery_departure_city'] = "";
-                $document['delivery_departure_zip_code'] = "";
-                $document['delivery_departure_country'] = "";
+                if (!isset($this->settings['store_location']) || $this->settings['store_location'] == 0) {
+                    $document['delivery_departure_address'] = $this->company['address'];
+                    $document['delivery_departure_city'] = $this->company['city'];
+                    $document['delivery_departure_zip_code'] = $this->company['zip_code'];
+                    $document['delivery_departure_country'] = $this->company['country_id'];
+                } else {
+                    $location = $this->ocdb->getStoreLocation($this->settings['store_location']);
+                    $document['delivery_departure_address'] = $location["address"];
+                    $document['delivery_departure_city'] = $location["geocode"];
+                    $document['delivery_departure_zip_code'] = "1000-100";
+                    $document['delivery_departure_country'] = 1;
+                }
 
-                $document['delivery_destination_address'] = "";
-                $document['delivery_destination_city'] = "";
-                $document['delivery_destination_zip_code'] = "";
-                $document['delivery_destination_country'] = "";
+                $document['delivery_destination_address'] = empty($order['shipping_address_1']) ? "" : $order['shipping_address_1'];
+                $document["delivery_destination_address"] .= empty($order['shipping_address_2']) ? "" : " " . $order['shipping_address_2'];
+                $document['delivery_destination_city'] = empty($order['shipping_city']) ? "" : $order['shipping_city'];
+                $document['delivery_destination_zip_code'] = $order['shipping_iso_code_2'] == 'PT' ? $this->toolValidateZipCode($order['shipping_postcode']) : $order['shipping_postcode'];
+                $document['delivery_destination_country'] = $this->toolCountryHandler($order['shipping_iso_code_2']);
             }
 
             $document['notes'] = "";
@@ -222,12 +231,32 @@ class ControllerExtensionModuleMoloni extends Controller
 
             if (!$this->moloni->errors->getError("all")) {
                 // Insert document
-                $insert = $this->moloni->documents("invoices")->insert($document);
+
+                if ($this->settings['shipping_document'] == 1) {
+                    $shipping_document_insert = $this->moloni->documents("billsOfLading")->insert($document);
+                    if ($shipping_document_insert) {
+                        $shipping_document_details = $this->moloni->documents()->getOne($shipping_document_insert['document_id']);
+                        $document['associated_documents'] = array(
+                            "associated_id" => $shipping_document_details['document_id'],
+                            "value" => $shipping_document_details['net_value']
+                        );
+                    }
+                }
+
+                $insert = $this->moloni->documents($this->settings['document_type'])->insert($document);
+                if ($insert) {
+                    $document_details = $this->moloni->documents()->getOne($insert['document_id']);
+                    if ($document_details['net_value'] == $this->_myOrder['net_value']) {
+                        echo "yy";
+                    }
+                    echo $document_details['net_value'] . " - " . $this->_myOrder['net_value'];
+                }
             }
 
             echo "<pre>";
             print_r($order);
             print_r($document);
+            print_r($document_details);
             echo "</pre>";
         } else {
 // @todo Trigger error when it has a document already
@@ -238,14 +267,14 @@ class ControllerExtensionModuleMoloni extends Controller
     {
 
         $moloni_customer_exists = false;
-        
-        if(isset($order['custom_field'][$this->settings["client_vat"]])){
+
+        if (isset($order['custom_field'][$this->settings["client_vat"]])) {
             $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
-        }else{
+        } else {
             $order['vat_number'] = "999999990";
         }
-        
-        
+
+
         $order['vat_number'] = str_ireplace("pt", "", $order['vat_number']);
 
         $order['payment_entity'] = (!empty($order['payment_company']) ? $order['payment_company'] : $order['payment_firstname'] . " " . $order['payment_lastname']);
@@ -322,7 +351,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $options = $this->model_sale_order->getOrderOptions($product["order_id"], $product["order_product_id"]);
             if ($options) {
                 foreach ($options as $option) {
-                    
+
                     if (isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference']) {
                         $option_reference_sufix_aux = $this->ocdb->getOptionMoloniReference($option['product_option_value_id']);
                     }
@@ -424,11 +453,15 @@ class ControllerExtensionModuleMoloni extends Controller
                             $values['taxes'] = $this->_myOrder['default_taxes'];
                             break;
                         } else {
+                            $values['price'] = $this->_myOrder['has_exchange'] ? $this->currency->format($total['value'], "EUR", null, false) : $total['value'];
                             $values['exemption_reason'] = $this->settings['shipping_tax_exemption'];
                         }
                     } else {
-                        if ($moloni_tax['tax_id'] == $this->settings['products_tax']) {
-                            $values["price"] = $this->_myOrder['has_exchange'] ? $this->currency->format($total['value'] / (int) (1 . "." . $moloni_tax['value']), null, null, false) : $total['value'] / (int) (1 . "." . $moloni_tax['value']);
+                        if ($moloni_tax['tax_id'] == $this->settings['shipping_tax']) {
+                            $values["price"] = $this->_myOrder['has_exchange'] ?
+                                $this->currency->format($total['value'] / (int) (1 . "." . $moloni_tax['value']), null, null, false) :
+                                $total['value'] / (int) (1 . "." . $moloni_tax['value']);
+
                             $values['taxes'][] = array("tax_id" => $moloni_tax['tax_id'], "value" => $moloni_tax['value'], "order" => "0", "cumulative" => "1");
                             break;
                         }
@@ -560,6 +593,12 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $data['settings_values']['client_maturity_dates'] = $this->moloni->maturity_dates->getAll();
         $data['settings_values']['measure_units'] = $this->moloni->measurements->getAll();
+
+        $data['settings_values']['store_locations'][] = array("id" => "0", "name" => "Default Moloni");
+        foreach ($this->ocdb->getStoreLocation("all") as $store) {
+            $data['settings_values']['store_locations'][] = array("id" => $store['location_id'], "name" => $store['name']);
+        }
+
 
         $this->load->model('localisation/order_status');
 
@@ -702,7 +741,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function install()
     {
-        
+
         $this->install->createTables();
 
         $this->load->model("setting/event");
@@ -724,12 +763,13 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->deleteEventByCode($this->eventGroup . "_product_check_edit");
         $this->model_setting_event->deleteEventByCode($this->eventGroup . "_product_check_add");
     }
-    
-    public function patch() {
-		if ($this->config->get('moloni_status') == 1) {
 
-		}
-	}
+    public function patch()
+    {
+        if ($this->config->get('moloni_status') == 1) {
+
+        }
+    }
 
     public function injectAdminMenuItem($eventRoute, &$data)
     {
@@ -768,7 +808,7 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $this->__start();
         foreach ($data['orders'] as &$order) {
-            if (is_array($this->settings['order_statuses'])) {
+            if (isset($this->settings['order_statuses']) && is_array($this->settings['order_statuses'])) {
                 $order_info = $this->ocdb->getOrderById($order['order_id']);
                 if (in_array($order_info['order_status_id'], $this->settings['order_statuses'])) {
                     $moloni_url = $this->url->link('extension/module/moloni/invoice', array('order_id' => $order['order_id'], 'user_token' => $this->session->data['user_token']), true);
@@ -842,14 +882,15 @@ class ControllerExtensionModuleMoloni extends Controller
             $end = strrpos($total['title'], ')');
             switch ($total['code']) {
                 case "sub_total" :
-                    $discount['sub_total'] = $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false) * 100) / (100 + $taxes[0]['value']) : abs($total['value']);
+                    $discount['sub_total'] = $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false)) : abs($total['value']);
+                    $this->_myOrder['net_value'] = $discount['sub_total'];
                     break;
 
                 case "coupon" :
                     if ($start && $end) {
                         $discount["coupon"] = array(
                             "code" => substr($total['title'], $start, $end - $start),
-                            "value" => $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false) * 100) / (100 + $taxes[0]['value']) : abs($total['value']),
+                            "value" => $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false)) : abs($total['value']),
                             "shipping" => $this->ocdb->getShippingDiscount(substr($total['title'], $start, $end - $start))
                         );
                     }
@@ -859,7 +900,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     if ($start && $end) {
                         $discount["voucher"] = array(
                             "code" => substr($total['title'], $start, $end - $start),
-                            "value" => $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false) * 100) / (100 + $taxes[0]['value']) : abs($total['value'])
+                            "value" => $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false)) : abs($total['value'])
                         );
                     }
                     break;

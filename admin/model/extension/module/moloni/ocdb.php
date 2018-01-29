@@ -226,4 +226,13 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
         return $result['value'];
     }
+
+    public function getStoreLocation($select = 'all')
+    {
+        $sql = "SELECT * FROM " . DB_PREFIX . "location " . ($select == 'all') ? "" : " WHERE location_id = " . $select;
+        $query = $this->db->query($sql);
+        $result = $query->rows;
+
+        return $result;
+    }
 }

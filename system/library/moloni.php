@@ -46,7 +46,7 @@ class moloni
 
     public function __call($name, $documentType)
     {
-        $this->documentType = $documentType[0];
+        $this->documentType = empty($documentType[0]) ? "documents" : $documentType[0];
 
         if (!isset($this->{$name}) && !isset($this->dependencies[$name])) {
             $this->load("moloni/classes/" . $name . ".class.php", $name, $this->namespace . $name);
