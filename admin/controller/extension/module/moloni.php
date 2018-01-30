@@ -10,6 +10,7 @@ class ControllerExtensionModuleMoloni extends Controller
         "install" => "model_extension_module_moloni_install",
         "ocdb" => "model_extension_module_moloni_ocdb"
     );
+    public $data;
     private $eventGroup = 'moloni';
     private $version = 'Alpha';
     private $git_user = "moloni";
@@ -19,7 +20,6 @@ class ControllerExtensionModuleMoloni extends Controller
     private $store_id = "0";
     private $settings;
     private $document_type;
-    public $data;
     private $_myOrder;
     private $messages = array();
 
@@ -677,6 +677,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $data['settings_values']['client_maturity_dates'] = $this->moloni->maturity_dates->getAll();
         $data['settings_values']['measure_units'] = $this->moloni->measurements->getAll();
 
+        $data['settings_values']['caes'] = $this->moloni->cae->getAll();
+
         $data['settings_values']['store_locations'][] = array("id" => "0", "name" => "Default Moloni");
         foreach ($this->ocdb->getStoreLocation("all") as $store) {
             $data['settings_values']['store_locations'][] = array("id" => $store['location_id'], "name" => $store['name']);
@@ -877,7 +879,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function patch()
     {
         if ($this->config->get('moloni_status') == 1) {
-            
+
         }
     }
 

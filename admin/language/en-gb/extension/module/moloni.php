@@ -21,6 +21,8 @@ $_['tooltip']['document_status'] = "Choose the state of the document. Don't worr
 $_['tooltip']['shipping_details'] = "Include shipping details on the document. This must be configured on your store settings.";
 $_['tooltip']['shipping_document'] = "Create a Bill fo Landing alongside the document.";
 
+$_['tooltip']['cae'] = "Choose your economic activity code";
+
 $_['tooltip']['client_email'] = "Send an email with the document download url to the client.";
 $_['tooltip']['client_update'] = "Update the client details if already exists one with the same VAT or Email.";
 $_['tooltip']['client_prefix'] = "Choose a prefir for the client reference. If you choose for example 'MOLONI', the client reference will start with MOLONI.";
@@ -61,6 +63,7 @@ $_['label']['document'] = "Document";
 $_['label']['document_set'] = "Document set";
 $_['label']['document_type'] = "Document Type";
 $_['label']['document_status'] = "Status";
+$_['label']['cae'] = "EAC.";
 $_['label']['shipping_details'] = "Shipping Details";
 $_['label']['shipping_document'] = "Shipping Document";
 $_['label']['store_location'] = "Delivery Departure Address";

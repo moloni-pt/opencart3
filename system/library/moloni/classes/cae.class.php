@@ -6,7 +6,7 @@
  */
 namespace moloni;
 
-class suppliers
+class cae
 {
 
     public function __construct(\moloni $moloni)
@@ -14,9 +14,14 @@ class suppliers
         $this->moloni = $moloni;
     }
 
-    public function count()
+    public function getAll()
     {
-        echo "test";
-        $this->moloni->connection->testing();
+        $values = array("company_id" => $this->moloni->company_id);
+        $result = $this->moloni->connection->curl("economicActivityClassificationCodes/getAll", $values);
+        if (is_array($result) && isset($result[0]['eac_id'])) {
+            return $result;
+        } else {
+            return false;
+        }
     }
 }
