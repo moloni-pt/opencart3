@@ -48,6 +48,7 @@ class ModelExtensionModuleMoloniInstall extends Model
                     `order_total` varchar(25) ,
                     `invoice_id` int(25),
                     `invoice_total` varchar(25) ,
+                    `invoice_type` varchar(50) ,
                     `invoice_date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     `invoice_status` int(10),
                     `metadata` TEXT ,
@@ -55,7 +56,7 @@ class ModelExtensionModuleMoloniInstall extends Model
 			) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci	AUTO_INCREMENT=1 ;
 		");
 
-        $column_check = "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='".DB_DATABASE."' AND column_name LIKE 'moloni_reference' LIMIT 1";
+        $column_check = "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='" . DB_DATABASE . "' AND column_name LIKE 'moloni_reference' LIMIT 1";
         $query = $this->db->query($column_check);
         $result = $query->row;
         if (empty($result)) {
@@ -68,7 +69,6 @@ class ModelExtensionModuleMoloniInstall extends Model
         $this->db->query("DROP TABLE `" . DB_PREFIX . "moloni`");
         $this->db->query("DROP TABLE `" . DB_PREFIX . "moloni_settings`");
     }
-    
 }
 
 ?>

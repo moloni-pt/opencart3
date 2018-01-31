@@ -32,17 +32,24 @@ class documents
             return false;
         }
     }
-    
-    public function getViewUrl($document_id, $status = 0){
-        switch($this->moloni->documentType){
+
+    public function getViewUrl($document_id, $status = 0)
+    {
+        switch ($this->moloni->documentType) {
             case "billsOfLading":
-                return "GuiasTransporte/".($status == 0 ? "showUpdate" : "showDetail")."/".$document_id;
-                
+                return "GuiasTransporte/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
+
+            case "invoices":
+            case "FT":
+                return "Faturas/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
+                break;
+
             case "invoiceReceipts":
-                return "FaturasRecibo/".($status == 0 ? "showUpdate" : "showDetail")."/".$document_id;
+            case "FR":
+                return "FaturasRecibo/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
             default:
                 break;
-        }                
+        }
     }
 
     public function insert($values = array(), $company_id = false)
@@ -57,7 +64,7 @@ class documents
             return false;
         }
     }
-    
+
     public function update($values = array(), $company_id = false)
     {
         $values["company_id"] = $company_id ? $company_id : $this->moloni->company_id;

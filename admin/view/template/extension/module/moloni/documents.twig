@@ -1,0 +1,81 @@
+{{ header }}{{ column_left }}
+
+<div id="content">
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="pull-right">
+                <button data-toggle="tooltip" title="Gerar seleccionadas" class="btn btn-primary" id="create-multiple-invoice"><i class="fa fa-file-text"></i></button>
+            </div>
+            <h1>{{ heading_title }}</h1>
+            <ul class="breadcrumb">
+                {% for breadcrumb in breadcrumbs %}
+                    <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+                    {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="container-fluid">
+
+        {% if debug_window %}
+            {% include "extension/module/moloni/debug.twig"  %}
+        {% endif %}
+
+        {% if error_warnings or messages %}
+            {% include "extension/module/moloni/errors.twig"  %}
+        {% endif %}
+
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-list"></i> {{documents_lists}} </h3>
+            </div>
+            <div class="panel-body">
+                <div class="table-responsive">
+
+                    <table id="moloni_orders" class="display" cellspacing="0" width="100%">
+                        <thead>
+                            <tr>
+                                <th>{{ label.order_table_number }}</th>
+                                <th>{{ label.order_table_customer_info }}</th>
+                                <th>{{ label.order_table_order_status }}</th>
+                                <th>{{ label.order_table_store_name }}</th>
+                                <th>{{ label.order_table_order_date }}</th>
+                                <th>{{ label.order_table_order_total }}</th>
+                                <th>{{ label.order_table_order_actions }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            {% for order in content.orders_list %}
+                                <tr order_id="{{ order.order_id }}">
+                                    <td>{{ order.order_id }}</td>
+                                    <td>{{ order.firstname }} {{ order.lastname }}</td>
+                                    <td>{{ order.order_status }}</td>
+                                    <td>{{ order.store_name }}</td>
+                                    <td>{{ order.date_added }}</td>
+                                    <td>{{ order.data.net_value }}</td>
+                                    <td><a href='{{order.view_url}}' target="_blank">ver</a></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<link href="view/stylesheet/moloni/moloni-sheet.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.16/sl-1.2.4/datatables.min.css"/>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.16/sl-1.2.4/datatables.min.js"></script>
+
+
+<script>
+    $(document).ready(function() {
+        var orders_table = $('#moloni_orders').DataTable({
+            order: [[0, 'asc']]
+        });
+    });
+</script>
+
+
