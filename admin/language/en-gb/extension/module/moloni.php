@@ -14,6 +14,7 @@ $_['moloni_reference'] = 'Moloni Ref.';
 $_['create_moloni_document'] = "Send to moloni";
 
 $_['orders_list'] = "Orders list";
+$_['documents_lists'] = "Documents list";
 
 $_['tooltip']['document_set'] = 'Select the document set you want to use for this store.';
 $_['tooltip']['document_type'] = 'You can convert the document to another type directly in Moloni client area.';
@@ -58,6 +59,8 @@ $_['label']['document_settings'] = "Document Settings";
 $_['label']['shipping'] = "Shipping";
 $_['label']['orders'] = "Orders";
 
+$_['label']['details'] = "Details";
+$_['label']['download'] = "Download";
 
 $_['label']['document'] = "Document";
 $_['label']['document_set'] = "Document set";
@@ -108,6 +111,14 @@ $_['label']['order_table_order_date'] = "Date";
 $_['label']['order_table_order_total'] = "Total";
 $_['label']['order_table_order_actions'] = "Actions";
 $_['label']['order_table_number'] = "Number";
+
+$_['label']['documents_table_number'] = "Order";
+$_['label']['documents_table_customer_info'] = "Customer";
+$_['label']['documents_table_document'] = "Document";
+$_['label']['documents_table_date'] = "Date";
+$_['label']['documents_table_status'] = "Status";
+$_['label']['documents_table_total'] = "Total";
+$_['label']['documents_table_actions'] = "Actions";
 
 $_['label']['developers'] = "Developers";
 $_['label']['debug_console'] = "Debug console";

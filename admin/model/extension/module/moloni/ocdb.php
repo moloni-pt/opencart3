@@ -115,7 +115,7 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
     public function getOrdersAll($order_statuses = false, $order_since = false, $store = false, $order_ids = false, $on_moloni = false)
     {
-        $sql = "SELECT o.*, MD.*, "
+        $sql = "SELECT o.*, MD.invoice_id, MD.metadata, "
             . "(SELECT os.name FROM " . DB_PREFIX . "order_status os WHERE os.order_status_id = o.order_status_id AND os.language_id = '" . (int) $this->config->get('config_language_id') . "') AS order_status "
             . " FROM `" . DB_PREFIX . "order` o LEFT JOIN `" . DB_PREFIX . "moloni_documents` MD ON o.order_id = MD.order_id WHERE o.order_id IS NOT NULL ";
 

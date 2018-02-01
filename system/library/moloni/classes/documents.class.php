@@ -33,6 +33,19 @@ class documents
         }
     }
 
+    public function getPDFLink($document_id, $company_id = false)
+    {
+        $values["company_id"] = $company_id ? $company_id : $this->moloni->company_id;
+        $values["document_id"] = $document_id;
+
+        $result = $this->moloni->connection->curl($this->moloni->documentType . "/getPDFLink", $values);
+        if (is_array($result) && isset($result['url'])) {
+            return $result['url'];
+        } else {
+            return false;
+        }
+    }
+
     public function getViewUrl($document_id, $status = 0)
     {
         switch ($this->moloni->documentType) {
@@ -55,6 +68,7 @@ class documents
     public function insert($values = array(), $company_id = false)
     {
         $values["company_id"] = $company_id ? $company_id : $this->moloni->company_id;
+        $values["plugin_id"] = "20";
 
         $result = $this->moloni->connection->curl($this->moloni->documentType . "/insert", $values);
         if (is_array($result) && isset($result['document_id'])) {

@@ -171,6 +171,13 @@ class ControllerExtensionModuleMoloni extends Controller
 
     private function createDocumentFromOrder($order_id)
     {
+        if (isset($this->request->get["action"]) && $this->request->get["action"] == "delete") {
+            $values['order_id'] = $order_id;
+            $values['invoice_id'] = "10";
+            $this->ocdb->setDocumentInserted($values);
+            return false;
+        }
+
         $this->load->model('sale/order');
         $this->load->model('catalog/product');
         $this->current_order = $order = $this->model_sale_order->getOrder($order_id);
@@ -678,6 +685,10 @@ class ControllerExtensionModuleMoloni extends Controller
         foreach ($data['orders_list'] as &$document) {
             $document['info'] = $this->moloni->documents()->getOne($document['invoice_id']);
             $document['view_url'] = "https://moloni.pt/" . $this->company['slug'] . "/" . $this->moloni->documents($document['info']['document_type']['saft_code'])->getViewUrl($document['invoice_id'], $document['info']['status']);
+            $document['redo_url'] = $this->url->link('extension/module/moloni/invoice', array("order_id" => $document['order_id'], "force" => true, 'user_token' => $this->session->data['user_token']), true);
+            if ($document['info']['status'] == "1") {
+                $document['download_url'] = $this->moloni->documents()->getPDFLink($document['invoice_id']);
+            }
         }
 
         return $data;
