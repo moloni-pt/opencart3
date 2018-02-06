@@ -70,8 +70,10 @@ class connection
             . "&client_id=" . $this->moloni->client_id
             . "&client_secret=" . $this->moloni->client_secret
             . "&username=" . $this->moloni->username
-            . "&password=" . $this->moloni->password;
+            . "&password=" . urlencode(html_entity_decode($this->moloni->password));
+        
         $login = $this->curl($url, null);
+        
         if ($login && isset($login["access_token"]) && isset($login["refresh_token"])) {
             $this->moloni->updated_tokens = true;
             $this->moloni->access_token = $login['access_token'];
