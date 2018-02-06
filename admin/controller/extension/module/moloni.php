@@ -118,6 +118,18 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
     }
 
+    public function documents()
+    {
+        $this->__start();
+        if ($this->allowed()) {
+            $this->page = "documents";
+            $this->data['content'] = $this->getDocumentsData();
+        }
+
+        $this->loadDefaults();
+        $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+    }
+
     public function invoice()
     {
         $this->__start();
@@ -159,6 +171,13 @@ class ControllerExtensionModuleMoloni extends Controller
 
     private function createDocumentFromOrder($order_id)
     {
+        if (isset($this->request->get["action"]) && $this->request->get["action"] == "delete") {
+            $values['order_id'] = $order_id;
+            $values['invoice_id'] = "10";
+            $this->ocdb->setDocumentInserted($values);
+            return false;
+        }
+
         $this->load->model('sale/order');
         $this->load->model('catalog/product');
         $this->current_order = $order = $this->model_sale_order->getOrder($order_id);
@@ -313,7 +332,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     $values['invoice_total'] = $document_details['net_value'];
                     $values['invoice_date'] = $document['date'];
                     $values['invoice_status'] = isset($document_update["status"]) ? $document_update["status"] : $document['status'] = "0";
-                    $values['metadata'] = json_encode($document);
+                    $values['metadata'] = json_encode($document_details);
                     $this->ocdb->setDocumentInserted($values);
 
                     $link = "<a target='_BLANK' href='https://moloni.pt/" . $this->company['slug'] . "/" .
@@ -599,23 +618,27 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         switch ($this->page) {
             case "login":
-                $breadcrumbs[] = array("text" => "Login", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Login", 'href' => $this->url->link('extension/module/moloni/login', array('user_token' => $this->session->data['user_token']), true));
                 break;
             case "companies":
-                $breadcrumbs[] = array("text" => "Empresas", 'href' => $this->url->link('extension/module/moloni', array("page" => "home", 'user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Empresas", 'href' => $this->url->link('extension/module/moloni/home', array('user_token' => $this->session->data['user_token']), true));
                 break;
             case "home":
-                $breadcrumbs[] = array("text" => "Home", 'href' => $this->url->link('extension/module/moloni', array('user_token' => $this->session->data['user_token']), true));
-                $breadcrumbs[] = array("text" => "Orders", 'href' => $this->url->link('extension/module/moloni', array('user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Home", 'href' => $this->url->link('extension/module/moloni/home', array('user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Orders", 'href' => $this->url->link('extension/module/moloni/home', array('user_token' => $this->session->data['user_token']), true));
+                break;
+            case "documents":
+                $breadcrumbs[] = array("text" => "Home", 'href' => $this->url->link('extension/module/moloni/home', array('user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Documents", 'href' => $this->url->link('extension/module/documents', array('user_token' => $this->session->data['user_token']), true));
                 break;
             case "store_list":
-                $breadcrumbs[] = array("text" => "Settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
-                $breadcrumbs[] = array("text" => "Choose your store", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Settings", 'href' => $this->url->link('extension/module/moloni/settings', array('user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Choose your store", 'href' => $this->url->link('extension/module/moloni/settings', array('user_token' => $this->session->data['user_token']), true));
                 break;
             case "settings":
-                $breadcrumbs[] = array("text" => "Settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
-                $breadcrumbs[] = array("text" => "Stores", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", 'user_token' => $this->session->data['user_token']), true));
-                $breadcrumbs[] = array("text" => "Edit store settings", 'href' => $this->url->link('extension/module/moloni', array("page" => "settings", "store_id" => (isset($this->request->get['store_id']) ? $this->request->get['store_id'] : 0), 'user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Settings", 'href' => $this->url->link('extension/module/moloni/settings', array('user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Stores", 'href' => $this->url->link('extension/module/moloni/settings', array('user_token' => $this->session->data['user_token']), true));
+                $breadcrumbs[] = array("text" => "Edit store settings", 'href' => $this->url->link('extension/module/moloni/settings', array("store_id" => (isset($this->request->get['store_id']) ? $this->request->get['store_id'] : 0), 'user_token' => $this->session->data['user_token']), true));
                 break;
             default :
                 $breadcrumbs[] = (array("href" => "extension/module/moloni", "text" => "login"));
@@ -648,8 +671,25 @@ class ControllerExtensionModuleMoloni extends Controller
     private function getIndexData()
     {
         $data['orders_list'] = array();
-        $data['orders_list'][0] = $this->ocdb->getOrdersAll($this->settings);
+        $data['orders_list'][0] = $this->ocdb->getOrdersAll($this->settings['order_statuses'], $this->settings['order_since']);
         $data['order_url_base'] = $this->url->link('extension/module/moloni/invoice', array('user_token' => $this->session->data['user_token'], 'order_id' => ""));
+
+        return $data;
+    }
+
+    private function getDocumentsData()
+    {
+        $this->company = $this->moloni->companies->getOne();
+
+        $data['orders_list'] = $this->ocdb->getOrdersAll($this->settings['order_statuses'], $this->settings['order_since'], false, false, true);
+        foreach ($data['orders_list'] as &$document) {
+            $document['info'] = $this->moloni->documents()->getOne($document['invoice_id']);
+            $document['view_url'] = "https://moloni.pt/" . $this->company['slug'] . "/" . $this->moloni->documents($document['info']['document_type']['saft_code'])->getViewUrl($document['invoice_id'], $document['info']['status']);
+            $document['redo_url'] = $this->url->link('extension/module/moloni/invoice', array("order_id" => $document['order_id'], "force" => true, 'user_token' => $this->session->data['user_token']), true);
+            if ($document['info']['status'] == "1") {
+                $document['download_url'] = $this->moloni->documents()->getPDFLink($document['invoice_id']);
+            }
+        }
 
         return $data;
     }

@@ -4,6 +4,7 @@
     <div class="page-header">
         <div class="container-fluid">
             <div class="pull-right">
+                <button data-toggle="tooltip" title="Marcar como geradas" class="btn btn-danger" id="mark-as-sent"><i class="fa fa-trash"></i></button>
                 <button data-toggle="tooltip" title="Gerar seleccionadas" class="btn btn-primary" id="create-multiple-invoice"><i class="fa fa-file-text"></i></button>
             </div>
             <h1>{{ heading_title }}</h1>
@@ -55,7 +56,9 @@
                                     <td>{{ order.store_name }}</td>
                                     <td>{{ order.date_added }}</td>
                                     <td>{{ order.total_formated }}</td>
-                                    <td><a href='{{order.moloni_create}}'>gerar</a></td>
+                                    <td>
+                                        <a href="{{order.moloni_create}}" target="_BLANK" data-toggle="tooltip" title="" class="btn btn-primary" data-original-title="{{create_moloni_document}}"><i class="fa fa-check-square"></i></a>
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -97,6 +100,18 @@
                     orders.push(parseInt(order.attributes.order_id.value));
                 });
                 window.location.replace("{{ content.order_url_base|replace({'&amp;': "&"}) }}" + JSON.stringify(orders));
+            }
+        });
+
+        $("#mark-as-sent").click(function() {
+            if ($('.selected').lenght == 0) {
+                alert("Não tem encomendas seleccionadas");
+            } else {
+                var orders = [];
+                $('.selected').each(function(i, order) {
+                    orders.push(parseInt(order.attributes.order_id.value));
+                });
+                window.location.replace("{{ content.order_url_base|replace({'&amp;': "&"}) }}" + JSON.stringify(orders) + "&action=delete");
             }
         });
         //orders_table.rows().select();

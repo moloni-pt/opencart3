@@ -32,22 +32,43 @@ class documents
             return false;
         }
     }
-    
-    public function getViewUrl($document_id, $status = 0){
-        switch($this->moloni->documentType){
+
+    public function getPDFLink($document_id, $company_id = false)
+    {
+        $values["company_id"] = $company_id ? $company_id : $this->moloni->company_id;
+        $values["document_id"] = $document_id;
+
+        $result = $this->moloni->connection->curl($this->moloni->documentType . "/getPDFLink", $values);
+        if (is_array($result) && isset($result['url'])) {
+            return $result['url'];
+        } else {
+            return false;
+        }
+    }
+
+    public function getViewUrl($document_id, $status = 0)
+    {
+        switch ($this->moloni->documentType) {
             case "billsOfLading":
-                return "GuiasTransporte/".($status == 0 ? "showUpdate" : "showDetail")."/".$document_id;
-                
+                return "GuiasTransporte/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
+
+            case "invoices":
+            case "FT":
+                return "Faturas/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
+                break;
+
             case "invoiceReceipts":
-                return "FaturasRecibo/".($status == 0 ? "showUpdate" : "showDetail")."/".$document_id;
+            case "FR":
+                return "FaturasRecibo/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
             default:
                 break;
-        }                
+        }
     }
 
     public function insert($values = array(), $company_id = false)
     {
         $values["company_id"] = $company_id ? $company_id : $this->moloni->company_id;
+        $values["plugin_id"] = "20";
 
         $result = $this->moloni->connection->curl($this->moloni->documentType . "/insert", $values);
         if (is_array($result) && isset($result['document_id'])) {
@@ -57,7 +78,7 @@ class documents
             return false;
         }
     }
-    
+
     public function update($values = array(), $company_id = false)
     {
         $values["company_id"] = $company_id ? $company_id : $this->moloni->company_id;
