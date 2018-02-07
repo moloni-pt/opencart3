@@ -982,7 +982,7 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $this->__start();
         $data['moloni_reference'] = $this->language->get('moloni_reference');
-        $data['use_moloni_references'] = $this->settings['moloni_options_reference'] ? true : false;
+        $data['use_moloni_references'] = (isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference']) ? true : false;
 
         foreach ($data['product_options'] as &$product_option) {
             foreach ($product_option['product_option_value'] as &$product_option_value) {
@@ -995,15 +995,17 @@ class ControllerExtensionModuleMoloni extends Controller
     public function eventProductCheck($evenRoute, &$data)
     {
         $this->__start();
-        if (isset($data[1])) {
-            $product = $data[1];
+        if ($this->moloni->logged) {
+            if (isset($data[1])) {
+                $product = $data[1];
 
-            if (isset($product['product_option']) && $this->settings['moloni_options_reference'] == true) {
-                foreach ($product['product_option'] as $product_option) {
-                    if ($product_option['type'] == 'select') {
-                        foreach ($product_option['product_option_value'] as $product_option_value) {
-                            if (isset($product_option_value['moloni_reference'])) {
-                                $this->ocdb->updateOptionMoloniReference($product_option_value['moloni_reference'], (int) $product_option_value['product_option_value_id']);
+                if (isset($product['product_option']) && isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference'] == true) {
+                    foreach ($product['product_option'] as $product_option) {
+                        if ($product_option['type'] == 'select') {
+                            foreach ($product_option['product_option_value'] as $product_option_value) {
+                                if (isset($product_option_value['moloni_reference'])) {
+                                    $this->ocdb->updateOptionMoloniReference($product_option_value['moloni_reference'], (int) $product_option_value['product_option_value_id']);
+                                }
                             }
                         }
                     }
