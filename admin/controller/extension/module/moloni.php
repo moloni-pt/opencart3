@@ -671,7 +671,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private function getIndexData()
     {
         $data['orders_list'] = array();
-        $data['orders_list'][0] = $this->ocdb->getOrdersAll($this->settings['order_statuses'], $this->settings['order_since']);
+        $data['orders_list'][0] = $this->ocdb->getOrdersAll(@$this->settings['order_statuses'], @$this->settings['order_since']);
         $data['order_url_base'] = $this->url->link('extension/module/moloni/invoice', array('user_token' => $this->session->data['user_token'], 'order_id' => ""));
 
         return $data;
