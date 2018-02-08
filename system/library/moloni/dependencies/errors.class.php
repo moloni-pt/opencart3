@@ -94,6 +94,10 @@ class errors
             case "2 price 0 null null 0" :
                 $string = "Um dos artigos tem o preço igual a 0";
                 break;
+            
+            case "2 category_id 1 0" :
+                $string = "Um dos artigos não tem uma categoria definida.";
+                break;
         }
 
         return $string;
