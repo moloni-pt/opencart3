@@ -269,7 +269,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     if ($shipping_document_insert) {
                         $shipping_document_details = $this->moloni->documents()->getOne($shipping_document_insert['document_id']);
                         if ($this->settings['document_status'] == "1") {
-                            if ((float)round($shipping_document_details['net_value'], 2) == (float)round($this->_myOrder['net_value'], 2)) {
+                            if ((float) round($shipping_document_details['net_value'], 2) == (float) round($this->_myOrder['net_value'], 2)) {
                                 $document["document_id"] = $shipping_document_details['document_id'];
                                 $document["status"] = "1";
 
@@ -301,7 +301,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $insert = $this->moloni->documents($this->settings['document_type'])->insert($document);
                 if ($insert) {
                     $document_details = $this->moloni->documents()->getOne($insert['document_id']);
-                     if ((float)round($document_details['net_value'], 2) == (float)round($this->_myOrder['net_value'], 2)) {
+                    if ((float) round($document_details['net_value'], 2) == (float) round($this->_myOrder['net_value'], 2)) {
                         if ($this->settings['document_status'] == "1") {
                             $document_update["document_id"] = $document_details['document_id'];
                             $document_update["status"] = "1";
@@ -366,7 +366,6 @@ class ControllerExtensionModuleMoloni extends Controller
         } else {
             $order['vat_number'] = "999999990";
         }
-
 
         $order['vat_number'] = str_ireplace("pt", "", $order['vat_number']);
 
@@ -440,6 +439,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $option_reference_sufix_aux = false;
             $option_reference_sufix = "";
             $option_name_sufix = "";
+            $reference_prefix = isset($this->settings['products_prefix']) && !empty($this->settings['products_prefix']) ? $this->settings['products_prefix'] : "";
 
             $options = $this->model_sale_order->getOrderOptions($product["order_id"], $product["order_product_id"]);
             if ($options) {
@@ -464,7 +464,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $moloni_reference = $oc_product['sku'];
             }
 
-            $moloni_reference = mb_substr(str_replace(" ", "_", $moloni_reference . $option_reference_sufix), 0, 28);
+            $moloni_reference = mb_substr(str_replace(" ", "_", $reference_prefix . $moloni_reference . $option_reference_sufix), 0, 28);
 
             $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
             $description = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', "", ($oc_product['description'])), 0, 250);
@@ -919,7 +919,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function patch()
     {
         if ($this->config->get('moloni_status') == 1) {
-
+            
         }
     }
 
