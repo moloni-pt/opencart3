@@ -269,7 +269,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     if ($shipping_document_insert) {
                         $shipping_document_details = $this->moloni->documents()->getOne($shipping_document_insert['document_id']);
                         if ($this->settings['document_status'] == "1") {
-                            if ($shipping_document_details['net_value'] == $this->_myOrder['net_value']) {
+                            if ((float)round($shipping_document_details['net_value'], 2) == (float)round($this->_myOrder['net_value'], 2)) {
                                 $document["document_id"] = $shipping_document_details['document_id'];
                                 $document["status"] = "1";
 
@@ -301,7 +301,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $insert = $this->moloni->documents($this->settings['document_type'])->insert($document);
                 if ($insert) {
                     $document_details = $this->moloni->documents()->getOne($insert['document_id']);
-                    if ($document_details['net_value'] == $this->_myOrder['net_value']) {
+                     if ((float)round($document_details['net_value'], 2) == (float)round($this->_myOrder['net_value'], 2)) {
                         if ($this->settings['document_status'] == "1") {
                             $document_update["document_id"] = $document_details['document_id'];
                             $document_update["status"] = "1";
