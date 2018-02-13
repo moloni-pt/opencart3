@@ -301,7 +301,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $insert = $this->moloni->documents($this->settings['document_type'])->insert($document);
                 if ($insert) {
                     $document_details = $this->moloni->documents()->getOne($insert['document_id']);
-                    if ((float) round($document_details['net_value'], 2) == (float) round($this->_myOrder['net_value'], 2)) {
+                    if (round($document_details['net_value'], 2) == round($this->_myOrder['net_value'], 2)) {
                         if ($this->settings['document_status'] == "1") {
                             $document_update["document_id"] = $document_details['document_id'];
                             $document_update["status"] = "1";
@@ -360,7 +360,11 @@ class ControllerExtensionModuleMoloni extends Controller
     {
 
         $moloni_customer_exists = false;
-
+        echo "<pre>";
+            print_r($order);
+            print_r($this->settings);            
+        echo "</pre>";
+        
         if (isset($order['custom_field'][$this->settings["client_vat"]])) {
             $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
         } else {
