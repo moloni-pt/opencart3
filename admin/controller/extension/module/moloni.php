@@ -858,7 +858,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     $raw = $this->curl("https://raw.githubusercontent.com/" . $this->git_user . "/" . $this->git_repo . "/" . $this->git_branch . "/" . $file['path']);
                     if ($raw) {
                         $this->updated_files['true'][] = $path = str_replace("/admin", "", DIR_APPLICATION) . $file['path'];
-                        file_put_contents($path, $raw, LOCK_EX);
+                        file_put_contents($path, $raw);
                     } else {
                         $this->updated_files['false'] = str_replace("/admin", "", DIR_APPLICATION) . $file['path'];
                     }
