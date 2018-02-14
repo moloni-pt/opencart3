@@ -195,7 +195,8 @@ class ControllerExtensionModuleMoloni extends Controller
             $oc_products = $this->model_sale_order->getOrderProducts($order_id);
             $oc_totals = $this->model_sale_order->getOrderTotals($order_id);
 
-            $this->_myOrder['has_exchange'] = $this->company['currency_id'] == 1 && $this->ocdb->getStoreCurrency($this->store_id) <> "EUR" ? true : false;
+            $this->_myOrder['has_exchange'] = ($this->company['currency_id'] == 1 && $this->ocdb->getStoreCurrency($this->store_id) <> "EUR" ? true : false);
+            $this->_myOrder['currency'] = $order['currency_code'];
 
             $customer = $this->moloniCustomerHandler($order);
             $discounts = $this->toolsDiscountsHandlers($oc_totals);
@@ -426,6 +427,7 @@ class ControllerExtensionModuleMoloni extends Controller
             }
         } else {
             $moloni_customer["number"] = $this->toolNumberCreator($order);
+            $moloni_customer['vat'] = $order['vat_number'];
             $result = $this->moloni->customers->insert($moloni_customer);
             $customer_id = isset($result['customer_id']) ? $result['customer_id'] : false;
         }
@@ -544,17 +546,17 @@ class ControllerExtensionModuleMoloni extends Controller
                 foreach ($this->moloni_taxes as $moloni_tax) {
                     if ($this->settings['shipping_tax'] == "0") {
                         if ($this->_myOrder["has_taxes"] == true && $this->_myOrder['default_taxes'][0]['tax_id'] == $moloni_tax['tax_id']) {
-                            $values["price"] = $this->_myOrder['has_exchange'] ? $this->currency->format($total['value'] / (int) (1 . "." . $moloni_tax['value']), "EUR", null, false) : $total['value'] / (int) (1 . "." . $moloni_tax['value']);
+                            $values["price"] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'] / (int) (1 . "." . $moloni_tax['value']), $this->_myOrder['currency'], "EUR") : $total['value'] / (int) (1 . "." . $moloni_tax['value']);
                             $values['taxes'] = $this->_myOrder['default_taxes'];
                             break;
                         } else {
-                            $values['price'] = $this->_myOrder['has_exchange'] ? $this->currency->format($total['value'], "EUR", null, false) : $total['value'];
+                            $values['price'] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'], $this->_myOrder['currency'], "EUR") : $total['value'];
                             $values['exemption_reason'] = $this->settings['shipping_tax_exemption'];
                         }
                     } else {
                         if ($moloni_tax['tax_id'] == $this->settings['shipping_tax']) {
                             $values["price"] = $this->_myOrder['has_exchange'] ?
-                                $this->currency->format($total['value'] / (int) (1 . "." . $moloni_tax['value']), null, null, false) :
+                                $this->currency->convert($total['value'] / (int) (1 . "." . $moloni_tax['value']), $this->_myOrder['currency'], "EUR") :
                                 $total['value'] / (int) (1 . "." . $moloni_tax['value']);
 
                             $values['taxes'][] = array("tax_id" => $moloni_tax['tax_id'], "value" => $moloni_tax['value'], "order" => "0", "cumulative" => "1");
@@ -1026,12 +1028,12 @@ class ControllerExtensionModuleMoloni extends Controller
 
         if ($this->company['currency_id'] == "1") {
             if ($this->settings['products_tax'] == 0) {
-                $values['price_without_taxes'] = $this->currency->format($product['price'], "EUR", null, false);
+                $values['price_without_taxes'] = $this->currency->convert($product['price'], $this->_myOrder['currency'], "EUR");
             } else {
-                $values['price_without_taxes'] = ($this->currency->format($product['price'] + $product['tax'], "EUR", null, false) * 100) / (100 + $taxes[0]['value']);
+                $values['price_without_taxes'] = ($this->currency->convert($product['price'] + $product['tax'], $this->_myOrder['currency'], "EUR") * 100) / (100 + $taxes[0]['value']);
             }
         } else {
-            $values['price_without_taxes'] = $this->currency->format($product['price'], null, null, false);
+            $values['price_without_taxes'] = $this->currency->convert($product['price'], $this->_myOrder['currency'], "EUR");
         }
         return $values['price_without_taxes'];
     }
@@ -1046,18 +1048,18 @@ class ControllerExtensionModuleMoloni extends Controller
             $end = strrpos($total['title'], ')');
             switch ($total['code']) {
                 case "total" :
-                    $this->_myOrder['net_value'] = $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false)) : abs($total['value']);
+                    $this->_myOrder['net_value'] = $this->_myOrder['has_exchange'] ? ($this->currency->convert(abs($total['value']), $this->_myOrder['currency'], "EUR")) : abs($total['value']);
                     break;
 
                 case "sub_total" :
-                    $discount['sub_total'] = $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false)) : abs($total['value']);
+                    $discount['sub_total'] = $this->_myOrder['has_exchange'] ? ($this->currency->convert(abs($total['value']), $this->_myOrder['currency'], "EUR")) : abs($total['value']);
                     break;
 
                 case "coupon" :
                     if ($start && $end) {
                         $discount["coupon"] = array(
                             "code" => substr($total['title'], $start, $end - $start),
-                            "value" => $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false)) : abs($total['value']),
+                            "value" => $this->_myOrder['has_exchange'] ? ($this->currency->convert(abs($total['value']), $this->_myOrder['currency'], "EUR")) : abs($total['value']),
                             "shipping" => $this->ocdb->getShippingDiscount(substr($total['title'], $start, $end - $start))
                         );
                     }
@@ -1067,7 +1069,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     if ($start && $end) {
                         $discount["voucher"] = array(
                             "code" => substr($total['title'], $start, $end - $start),
-                            "value" => $this->_myOrder['has_exchange'] ? ($this->currency->format(abs($total['value']), "EUR", null, false)) : abs($total['value'])
+                            "value" => $this->_myOrder['has_exchange'] ? ($this->currency->convert(abs($total['value']), $this->_myOrder['currency'], "EUR")) : abs($total['value'])
                         );
                     }
                     break;
