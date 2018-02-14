@@ -66,6 +66,7 @@ class customers
         $values['company_id'] = $company_id ? $company_id : $this->moloni->company_id;
 
         $values["number"] = $input['number'];
+        $values["vat"] = isset($input['vat']) ? $input['vat'] : "999999990";
 
         $values["name"] = $input['name'];
         $values["address"] = $input['address'];
