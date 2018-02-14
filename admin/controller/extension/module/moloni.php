@@ -360,13 +360,11 @@ class ControllerExtensionModuleMoloni extends Controller
     {
 
         $moloni_customer_exists = false;
-        echo "<pre>";
-            print_r($order);
-            print_r($this->settings);            
-        echo "</pre>";
-        
+
         if (isset($order['custom_field'][$this->settings["client_vat"]])) {
             $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
+        } elseif (isset($order['payment_custom_field'][$this->settings["client_vat"]])) {
+            $order['vat_number'] = trim($order['payment_custom_field'][$this->settings["client_vat"]]);
         } else {
             $order['vat_number'] = "999999990";
         }
@@ -923,7 +921,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function patch()
     {
         if ($this->config->get('moloni_status') == 1) {
-            
+
         }
     }
 
