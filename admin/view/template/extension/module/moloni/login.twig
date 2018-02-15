@@ -52,4 +52,7 @@
     </div>
 
 </div>
-{{ footer }}
+
+{% if update_available %}
+    {% include "extension/module/moloni/update.twig"  %}
+{% endif %}

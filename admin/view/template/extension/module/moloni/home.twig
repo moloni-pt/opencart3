@@ -68,6 +68,10 @@
         </div>
     </div>
 
+    {% if update_available %}
+        {% include "extension/module/moloni/update.twig"  %}
+    {% endif %}
+
 </div>
 
 <link href="view/stylesheet/moloni/moloni-sheet.css" rel="stylesheet" />

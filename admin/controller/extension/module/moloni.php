@@ -17,6 +17,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private $git_repo = "opencart3";
     private $git_branch = "master";
     private $updated_files = false;
+    private $update_available = false;
     private $store_id = "0";
     private $settings;
     private $document_type;
@@ -92,6 +93,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function index()
     {
         $this->__start();
+        $this->versionCheck();
         if ($this->allowed()) {
             $this->page = "home";
             $this->data['content'] = $this->getIndexData();
@@ -598,6 +600,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->data['debug_window'] = (isset($this->settings['debug_console']) && $this->settings['debug_console']) ? $this->moloni->debug->getLogs("all") : false;
         $this->data['error_warnings'] = $this->moloni->errors->getError("all");
         $this->data['update_result'] = $this->updated_files;
+        $this->data['update_available'] = $this->update_available;
 
         if (isset($this->messages['errors']) && is_array($this->messages['errors'])) {
             $this->data['messages']['errors'][] = $this->messages['errors'];
@@ -806,6 +809,15 @@ class ControllerExtensionModuleMoloni extends Controller
                     $this->ocdb->qInsertMoloniSetting($name, $store_id, $this->moloni->company_id, trim($value));
                 }
             }
+        }
+    }
+
+    private function versionCheck()
+    {
+        $release_raw = $this->curl("https://plugins.moloni.com/opencart3/release");
+        $release = json_decode($release_raw, true);
+        if (($release['version'] <> $this->version)) {
+            $this->update_available = $this->url->link('extension/module/moloni', array("update" => "true", 'user_token' => $this->session->data['user_token']), true);
         }
     }
 
