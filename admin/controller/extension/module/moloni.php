@@ -26,8 +26,9 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function __construct($registry)
     {
+
         parent::__construct($registry);
-        if (isset($this->request->get['update']) && $this->request->get['update'] == true && strpos($this->request->get['route'], "extension/module/moloni")) {
+        if (isset($this->request->get['update']) && $this->request->get['update'] == true && strpos($this->request->get['route'], "extension/module/moloni") !== false) {
             $this->update();
         }
 
@@ -1106,6 +1107,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function toolsTaxesHandler($oc_product, $order = false)
     {
+        $taxes = false;
         if (!$order) {
             $order = $this->current_order;
         }
