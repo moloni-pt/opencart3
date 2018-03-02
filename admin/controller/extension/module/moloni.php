@@ -12,7 +12,7 @@ class ControllerExtensionModuleMoloni extends Controller
     );
     public $data;
     private $eventGroup = 'moloni';
-    private $version = 'Beta';
+    private $version = 'v1.01';
     private $git_user = "moloni";
     private $git_repo = "opencart3";
     private $git_branch = "master";
