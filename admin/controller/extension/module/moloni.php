@@ -27,8 +27,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function __construct($registry)
     {
         parent::__construct($registry);
-
-        if (isset($this->request->get['update']) && $this->request->get['update'] == true) {
+        if (isset($this->request->get['update']) && $this->request->get['update'] == true && strpos($this->request->get['route'], "extension/module/moloni")) {
             $this->update();
         }
 
@@ -186,6 +185,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->moloni_taxes = $this->moloni->taxes->getAll();
 
         $this->store_id = $order['store_id'];
+        $this->language_id = $this->ocdb->language_id = $order['language_id'];
 
         $moloni_document = $this->ocdb->getDocumentFromOrderId($order_id);
         if (!$moloni_document || isset($this->request->get['force'])) {
