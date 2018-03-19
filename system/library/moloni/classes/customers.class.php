@@ -99,7 +99,11 @@ class customers
         if (is_array($result) && isset($result['customer_id'])) {
             return $result;
         } else {
-            $this->moloni->errors->throwError("Erro ao inserir cliente", $result[0], __CLASS__ . "/" . __FUNCTION__);
+            if (isset($result[0])) {
+                $this->moloni->errors->throwError("Erro ao inserir cliente", $result[0], __CLASS__ . "/" . __FUNCTION__);
+            } else {
+                $this->moloni->errors->throwError("Erro ao inserir cliente", "Referência repetida", __CLASS__ . "/" . __FUNCTION__);
+            }
             return false;
         }
     }
