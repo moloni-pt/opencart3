@@ -365,19 +365,19 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $moloni_customer_exists = false;
 
-        if (isset($order['custom_field'][$this->settings["client_vat"]])) {
+        $order['vat_number'] = "999999990";
+
+        if (isset($order['custom_field'][$this->settings["client_vat"]]) && !empty(trim(isset($order['custom_field'][$this->settings["client_vat"]])))) {
             $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
-        } elseif (isset($order['payment_custom_field'][$this->settings["client_vat"]])) {
+        } elseif (isset($order['payment_custom_field'][$this->settings["client_vat"]]) && !empty(trim($order['payment_custom_field'][$this->settings["client_vat"]]))) {
             $order['vat_number'] = trim($order['payment_custom_field'][$this->settings["client_vat"]]);
-        } else {
-            $order['vat_number'] = "999999990";
         }
 
         $order['vat_number'] = str_ireplace("pt", "", $order['vat_number']);
 
         $order['payment_entity'] = (!empty($order['payment_company']) ? $order['payment_company'] : $order['payment_firstname'] . " " . $order['payment_lastname']);
 
-        if (in_array($order['vat_number'], array("999999990"))) {
+        if (in_array(trim($order['vat_number']), array("999999990", ""))) {
             $moloni_customer_search = $this->moloni->customers->getBySearch($order['payment_entity'], true);
             foreach ($moloni_customer_search as $result) {
                 if ($result['email'] == $order['email'] && $result['vat'] == $order['vat_number']) {
