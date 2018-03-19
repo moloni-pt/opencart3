@@ -365,9 +365,11 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $moloni_customer_exists = false;
 
-        if (isset($order['custom_field'][$this->settings["client_vat"]])) {
+        $order['vat_number'] = "999999990";
+
+        if (isset($order['custom_field'][$this->settings["client_vat"]]) && !empty(trim(isset($order['custom_field'][$this->settings["client_vat"]])))) {
             $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
-        } elseif (isset($order['payment_custom_field'][$this->settings["client_vat"]])) {
+        } elseif (isset($order['payment_custom_field'][$this->settings["client_vat"]]) && !empty(trim($order['payment_custom_field'][$this->settings["client_vat"]]))) {
             $order['vat_number'] = trim($order['payment_custom_field'][$this->settings["client_vat"]]);
         }
 
