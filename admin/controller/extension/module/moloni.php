@@ -1222,7 +1222,7 @@ class ControllerExtensionModuleMoloni extends Controller
         if (is_numeric($number)) {
             $number += 1;
         } else {
-            $number = $order['payment_iso_code_2'] . $order['customer_group_id'] . $order["store_id"] . ($order['customer_id'] == 0 ? random(1000, 9999) : $order['customer_id']);
+            $number = $order['payment_iso_code_2'] . $order['customer_group_id'] . $order["store_id"] . ($order['customer_id'] == 0 ? rand(1000, 9999) : $order['customer_id']);
         }
         $number = mb_substr($this->settings['client_prefix'] . $number, 0, 28);
         return $number;
