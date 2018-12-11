@@ -1,5 +1,9 @@
 <?php
 
+/*
+ * Main Moloni Controller
+ */
+
 class ControllerExtensionModuleMoloni extends Controller
 {
 
