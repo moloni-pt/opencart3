@@ -9,7 +9,6 @@ class ModelExtensionModuleMoloniOcdb extends Model
 {
 
     private $logs = array();
-    public $language_id = 1;
 
     public function qGetMoloniTokens()
     {
