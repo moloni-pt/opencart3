@@ -1,9 +1,5 @@
 <?php
 
-/*
- * Main Moloni Controller
- */
-
 class ControllerExtensionModuleMoloni extends Controller
 {
 
@@ -490,7 +486,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $values["qty"] = $product['quantity'];
 
             $values["order"] = $key;
-            $values["warehouse_id"] = "";
+            $values["unit_id"] = $this->settings['measure_unit'];
 
             //======= TAXES =======//
             if (!empty($taxes) && is_array($taxes)) {
@@ -521,8 +517,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     $values["type"] = "1";
                     $values["has_stock"] = "1";
                     $values["stock"] = $oc_product['quantity'];
-                    $values["at_product_category"] = $this->settings['products_at_category'];
-                    $values["unit_id"] = $this->settings['measure_unit'];
+                    $values["at_product_category"] = $this->settings['products_at_category'];                    
                 } else {
                     $values["type"] = "2";
                     $values["has_stock"] = "0";
@@ -1226,7 +1221,7 @@ class ControllerExtensionModuleMoloni extends Controller
         if (is_numeric($number)) {
             $number += 1;
         } else {
-            $number = $order['payment_iso_code_2'] . $order['customer_group_id'] . $order["store_id"] . ($order['customer_id'] == 0 ? rand(1000, 9999) : $order['customer_id']);
+            $number = $order['payment_iso_code_2'] . $order['customer_group_id'] . $order["store_id"] . ($order['customer_id'] == 0 ? random(1000, 9999) : $order['customer_id']);
         }
         $number = mb_substr($this->settings['client_prefix'] . $number, 0, 28);
         return $number;
