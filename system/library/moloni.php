@@ -74,7 +74,8 @@ class moloni
 
     private function load($path, $name, $class_name)
     {
-        require_once($path);
+        require_once(DIR_SYSTEM . 'library/' . $path);
         $this->{$name} = new $class_name($this);
     }
+
 }

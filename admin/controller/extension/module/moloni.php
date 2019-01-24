@@ -366,11 +366,12 @@ class ControllerExtensionModuleMoloni extends Controller
         $moloni_customer_exists = false;
 
         $order['vat_number'] = "999999990";
-
-        if (isset($order['custom_field'][$this->settings["client_vat"]]) && !empty(trim(isset($order['custom_field'][$this->settings["client_vat"]])))) {
-            $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
-        } elseif (isset($order['payment_custom_field'][$this->settings["client_vat"]]) && !empty(trim($order['payment_custom_field'][$this->settings["client_vat"]]))) {
-            $order['vat_number'] = trim($order['payment_custom_field'][$this->settings["client_vat"]]);
+        if($this->settings["client_vat"] > 0) {
+            if (isset($order['custom_field'][$this->settings["client_vat"]]) && !empty(trim(isset($order['custom_field'][$this->settings["client_vat"]])))) {
+                $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
+            } elseif (isset($order['payment_custom_field'][$this->settings["client_vat"]]) && !empty(trim($order['payment_custom_field'][$this->settings["client_vat"]]))) {
+                $order['vat_number'] = trim($order['payment_custom_field'][$this->settings["client_vat"]]);
+            }
         }
 
         $order['vat_number'] = str_ireplace("pt", "", $order['vat_number']);
@@ -381,9 +382,11 @@ class ControllerExtensionModuleMoloni extends Controller
 
         if (in_array(trim($order['vat_number']), array("999999990", ""))) {
             $moloni_customer_search = $this->moloni->customers->getBySearch($order['payment_entity'], true);
-            foreach ($moloni_customer_search as $result) {
-                if ($result['email'] == $order['email'] && $result['vat'] == $order['vat_number']) {
-                    $moloni_customer_exists = $result;
+            if($moloni_customer_search && is_array($moloni_customer_search)) {
+                foreach ($moloni_customer_search as $result) {
+                    if ($result['email'] == $order['email'] && $result['vat'] == $order['vat_number']) {
+                        $moloni_customer_exists = $result;
+                    }
                 }
             }
         } else {
@@ -549,7 +552,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
                 foreach ($this->moloni_taxes as $moloni_tax) {
                     if ($this->settings['shipping_tax'] == "0") {
-                        if ($this->_myOrder["has_taxes"] == true && $this->_myOrder['default_taxes'][0]['tax_id'] == $moloni_tax['tax_id']) {
+                        if (isset($this->_myOrder["has_taxes"]) && $this->_myOrder["has_taxes"] == true && $this->_myOrder['default_taxes'][0]['tax_id'] == $moloni_tax['tax_id']) {
                             $values["price"] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'] / (int) (1 . "." . $moloni_tax['value']), $this->_myOrder['currency'], "EUR") : $total['value'] / (int) (1 . "." . $moloni_tax['value']);
                             $values['taxes'] = $this->_myOrder['default_taxes'];
                             break;
