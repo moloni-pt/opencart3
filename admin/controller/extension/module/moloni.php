@@ -366,7 +366,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $moloni_customer_exists = false;
 
         $order['vat_number'] = "999999990";
-        if($this->settings["client_vat"] > 0) {
+        if ($this->settings["client_vat"] > 0) {
             if (isset($order['custom_field'][$this->settings["client_vat"]]) && !empty(trim(isset($order['custom_field'][$this->settings["client_vat"]])))) {
                 $order['vat_number'] = trim($order['custom_field'][$this->settings["client_vat"]]);
             } elseif (isset($order['payment_custom_field'][$this->settings["client_vat"]]) && !empty(trim($order['payment_custom_field'][$this->settings["client_vat"]]))) {
@@ -382,7 +382,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
         if (in_array(trim($order['vat_number']), array("999999990", ""))) {
             $moloni_customer_search = $this->moloni->customers->getBySearch($order['payment_entity'], true);
-            if($moloni_customer_search && is_array($moloni_customer_search)) {
+            if ($moloni_customer_search && is_array($moloni_customer_search)) {
                 foreach ($moloni_customer_search as $result) {
                     if ($result['email'] == $order['email'] && $result['vat'] == $order['vat_number']) {
                         $moloni_customer_exists = $result;
@@ -448,7 +448,6 @@ class ControllerExtensionModuleMoloni extends Controller
         $oc_product = $this->model_catalog_product->getProduct($product["product_id"]);
 
         if (isset($oc_product["product_id"])) {
-            $option_reference_sufix_aux = false;
             $option_reference_sufix = "";
             $option_name_sufix = "";
             $reference_prefix = isset($this->settings['products_prefix']) && !empty($this->settings['products_prefix']) ? $this->settings['products_prefix'] : "";
@@ -456,12 +455,13 @@ class ControllerExtensionModuleMoloni extends Controller
             $options = $this->model_sale_order->getOrderOptions($product["order_id"], $product["order_product_id"]);
             if ($options) {
                 foreach ($options as $option) {
+                    $option_reference_sufix_aux = false;
 
                     if (isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference']) {
                         $option_reference_sufix_aux = $this->ocdb->getOptionMoloniReference($option['product_option_value_id']);
                     }
 
-                    $option_name_sufix .= " " . $option["product_option_value_id"];
+                    $option_name_sufix .= " " . $option["value"];
                     $option_reference_sufix .= ($option_reference_sufix_aux) ? $option_reference_sufix_aux : $option["product_option_value_id"];
                 }
             }
@@ -520,7 +520,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     $values["type"] = "1";
                     $values["has_stock"] = "1";
                     $values["stock"] = $oc_product['quantity'];
-                    $values["at_product_category"] = $this->settings['products_at_category'];                    
+                    $values["at_product_category"] = $this->settings['products_at_category'];
                 } else {
                     $values["type"] = "2";
                     $values["has_stock"] = "0";
@@ -910,8 +910,8 @@ class ControllerExtensionModuleMoloni extends Controller
         curl_close($con);
         return $result;
     }
-    /*     * ******* INSTAL FUNCTIONS *********** */
 
+    /*     * ******* INSTAL FUNCTIONS *********** */
     public function install()
     {
 
@@ -940,7 +940,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function patch()
     {
         if ($this->config->get('moloni_status') == 1) {
-
+            
         }
     }
 
@@ -1269,4 +1269,5 @@ class ControllerExtensionModuleMoloni extends Controller
 
         return (preg_match("/[0-9]{4}\-[0-9]{3}/", $zip_code)) ? $zip_code : "1000-100";
     }
+
 }
