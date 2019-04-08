@@ -52,7 +52,7 @@
             ]]></search>
             <add position="after" trim="true"><![CDATA[
             {% if use_moloni_references %}
-                <td>{{ moloni_reference }}</td>
+                html += '<td>{{ moloni_reference }}</td>';
             {% endif %}
             ]]></add>
         </operation>
