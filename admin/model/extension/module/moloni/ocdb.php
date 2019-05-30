@@ -177,7 +177,7 @@ class ModelExtensionModuleMoloniOcdb extends Model
         $query = $this->db->query($sql);
         $result = $query->row;
 
-        return $result['moloni_reference'];
+        return isset($result['moloni_reference']) ? $result['moloni_reference'] : '';
     }
 
     public function updateOptionMoloniReference($value, $option_id)
