@@ -263,7 +263,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
             $document['notes'] = "";
             $document['status'] = "0";
-       
+
             if (!$this->moloni->errors->getError("all")) {
                 // Insert document
 
@@ -299,7 +299,7 @@ class ControllerExtensionModuleMoloni extends Controller
                             }
                         }
                     }
-                }            
+                }
 
                 $insert = $this->moloni->documents($this->settings['document_type'])->insert($document);
                 if ($insert) {
@@ -453,7 +453,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $reference_prefix = isset($this->settings['products_prefix']) && !empty($this->settings['products_prefix']) ? $this->settings['products_prefix'] : "";
 
             $options = $this->model_sale_order->getOrderOptions($product["order_id"], $product["order_product_id"]);
-            
+
             $options_string = '';
             if ($options && is_array($options)) {
                 foreach ($options as $option) {
@@ -482,7 +482,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $moloni_reference = mb_substr(str_replace(" ", "_", $reference_prefix . $moloni_reference . $option_reference_sufix), 0, 28);
 
             $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
-            if(!empty($options_string)) {
+            if (!empty($options_string)) {
                 $description = rtrim($options_string, "\n");
             } else {
                 $description = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', "", ($oc_product['description'])), 0, 250);
@@ -552,20 +552,20 @@ class ControllerExtensionModuleMoloni extends Controller
 
                 $values = [];
 
-                if($total['code'] == "shipping") {
+                if ($total['code'] == "shipping") {
                     $moloni_reference = "Portes";
                     $values["discount"] = isset($discounts['shipping']) ? $discounts['shipping'] : 0;
                 }
 
-                if($total['code'] == "xfeepro") {
+                if ($total['code'] == "xfeepro") {
                     $moloni_reference = "Taxa";
                     $values["discount"] = 0;
                 }
-                
+
                 $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
 
                 $values["name"] = $total['title'];
-                $values["summary"] = "";                
+                $values["summary"] = "";
                 $values["qty"] = "1";
                 $values["order"] = $order;
 
@@ -582,12 +582,12 @@ class ControllerExtensionModuleMoloni extends Controller
                         }
                     } else {
                         if ($moloni_tax['tax_id'] == $this->settings['shipping_tax']) {
-                            if($this->_myOrder['has_exchange']) {
+                            if ($this->_myOrder['has_exchange']) {
                                 $values["price"] = $this->currency->convert($total['value'] / (float) (1 . "." . $moloni_tax['value']), $this->_myOrder['currency'], "EUR");
                             } else {
                                 $values['price'] = $total['value'] / (float) (1 . "." . $moloni_tax['value']);
                             }
-                            
+
                             $values['taxes'][] = array("tax_id" => $moloni_tax['tax_id'], "value" => $moloni_tax['value'], "order" => "0", "cumulative" => "1");
                             break;
                         }
@@ -717,13 +717,23 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $this->company = $this->moloni->companies->getOne();
 
+        if (!isset($this->settings['order_statuses'])) {
+            $this->settings['order_statuses'] = null;
+        }
+
+        if (!isset($this->settings['order_since'])) {
+            $this->settings['order_since'] = null;
+        }
+
         $data['orders_list'] = $this->ocdb->getOrdersAll($this->settings['order_statuses'], $this->settings['order_since'], false, false, true);
-        foreach ($data['orders_list'] as &$document) {
-            $document['info'] = $this->moloni->documents()->getOne($document['invoice_id']);
-            $document['view_url'] = "https://moloni.pt/" . $this->company['slug'] . "/" . $this->moloni->documents($document['info']['document_type']['saft_code'])->getViewUrl($document['invoice_id'], $document['info']['status']);
-            $document['redo_url'] = $this->url->link('extension/module/moloni/invoice', array("order_id" => $document['order_id'], "force" => true, 'user_token' => $this->session->data['user_token']), true);
-            if ($document['info']['status'] == "1") {
-                $document['download_url'] = $this->moloni->documents()->getPDFLink($document['invoice_id']);
+        if (is_array($data['orders_list']) && !empty($data['orders_list'])) {
+            foreach ($data['orders_list'] as &$document) {
+                $document['info'] = $this->moloni->documents()->getOne($document['invoice_id']);
+                $document['view_url'] = "https://moloni.pt/" . $this->company['slug'] . "/" . $this->moloni->documents($document['info']['document_type']['saft_code'])->getViewUrl($document['invoice_id'], $document['info']['status']);
+                $document['redo_url'] = $this->url->link('extension/module/moloni/invoice', array("order_id" => $document['order_id'], "force" => true, 'user_token' => $this->session->data['user_token']), true);
+                if ($document['info']['status'] == "1") {
+                    $document['download_url'] = $this->moloni->documents()->getPDFLink($document['invoice_id']);
+                }
             }
         }
 

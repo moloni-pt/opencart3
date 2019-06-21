@@ -124,11 +124,11 @@ class ModelExtensionModuleMoloniOcdb extends Model
             $sql .= " AND o.order_id IN (" . implode(',', $order_ids) . ")";
         }
 
-        if ($order_statuses) {
+        if (is_array($order_statuses) && !empty($order_statuses)) {
             $sql .= " AND o.order_status_id IN (" . implode(',', $order_statuses) . ")";
         }
 
-        if ($order_since) {
+        if (is_array($order_since) && !empty($order_since)) {
             $sql .= " AND o.date_added > '" . $order_since . "' ";
         }
 
