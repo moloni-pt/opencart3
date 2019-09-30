@@ -234,10 +234,10 @@ class ControllerExtensionModuleMoloni extends Controller
 
             if ($this->_myOrder['has_exchange']) {
                 $document['exchange_currency_id'] = $this->toolsExchangeHandler("EUR", $order['currency_code']);
-                $document['exchange_rate'] = 1 / ( $this->ocdb->getCurrencyValue("EUR"));
+                $document['exchange_rate'] = 1 / ($this->ocdb->getCurrencyValue("EUR"));
             }
 
-            if ($this->settings['shipping_details']) {
+            if (isset($this->settings['shipping_details']) && $this->settings['shipping_details']) {
                 $document['delivery_method_id'] = $this->toolDeliveryMethodHandler($order['shipping_method']);
                 $document['delivery_datetime'] = date("Y-m-d H:i:s");
 
@@ -267,12 +267,12 @@ class ControllerExtensionModuleMoloni extends Controller
             if (!$this->moloni->errors->getError("all")) {
                 // Insert document
 
-                if ($this->settings['shipping_document'] == 1) {
+                if (isset($this->settings['shipping_document']) && $this->settings['shipping_document'] == 1) {
                     $shipping_document_insert = $this->moloni->documents("billsOfLading")->insert($document);
                     if ($shipping_document_insert) {
                         $shipping_document_details = $this->moloni->documents()->getOne($shipping_document_insert['document_id']);
                         if ($this->settings['document_status'] == "1") {
-                            if ((float) round($shipping_document_details['net_value'], 2) == (float) round($this->_myOrder['net_value'], 2)) {
+                            if ((float)round($shipping_document_details['net_value'], 2) == (float)round($this->_myOrder['net_value'], 2)) {
                                 $document["document_id"] = $shipping_document_details['document_id'];
                                 $document["status"] = "1";
 
@@ -426,12 +426,12 @@ class ControllerExtensionModuleMoloni extends Controller
         $moloni_customer["field_notes"] = "";
 
         if ($moloni_customer_exists) {
-            if ($this->settings['client_update'] == "1") {
+            if (isset($this->settings['client_update']) && $this->settings['client_update'] == "1") {
                 $moloni_customer['customer_id'] = $moloni_customer_exists['customer_id'];
                 $result = $this->moloni->customers->update($moloni_customer);
                 $customer_id = isset($result['customer_id']) ? $result['customer_id'] : false;
             } else {
-                $customer_id = $moloni_customer['customer_id'];
+                $customer_id = $moloni_customer_exists['customer_id'];
             }
         } else {
             $moloni_customer["number"] = $this->toolNumberCreator($order);
@@ -572,7 +572,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 foreach ($this->moloni_taxes as $moloni_tax) {
                     if ($this->settings['shipping_tax'] == "0") {
                         if (isset($this->_myOrder["has_taxes"]) && $this->_myOrder["has_taxes"] == true && $this->_myOrder['default_taxes'][0]['tax_id'] == $moloni_tax['tax_id']) {
-                            $values["price"] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'] / (float) (1 . "." . $moloni_tax['value']), $this->_myOrder['currency'], "EUR") : $total['value'] / (float) (1 . "." . $moloni_tax['value']);
+                            $values["price"] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'] / (float)(1 . "." . $moloni_tax['value']), $this->_myOrder['currency'], "EUR") : $total['value'] / (float)(1 . "." . $moloni_tax['value']);
                             $values['taxes'] = $this->_myOrder['default_taxes'];
                             $values['exemption_reason'] = '';
                             break;
@@ -583,9 +583,9 @@ class ControllerExtensionModuleMoloni extends Controller
                     } else {
                         if ($moloni_tax['tax_id'] == $this->settings['shipping_tax']) {
                             if ($this->_myOrder['has_exchange']) {
-                                $values["price"] = $this->currency->convert($total['value'] / (float) (1 . "." . $moloni_tax['value']), $this->_myOrder['currency'], "EUR");
+                                $values["price"] = $this->currency->convert($total['value'] / (float)(1 . "." . $moloni_tax['value']), $this->_myOrder['currency'], "EUR");
                             } else {
-                                $values['price'] = $total['value'] / (float) (1 . "." . $moloni_tax['value']);
+                                $values['price'] = $total['value'] / (float)(1 . "." . $moloni_tax['value']);
                             }
 
                             $values['taxes'][] = array("tax_id" => $moloni_tax['tax_id'], "value" => $moloni_tax['value'], "order" => "0", "cumulative" => "1");
@@ -974,7 +974,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function patch()
     {
         if ($this->config->get('moloni_status') == 1) {
-            
+
         }
     }
 
@@ -1001,11 +1001,11 @@ class ControllerExtensionModuleMoloni extends Controller
 
             if ($moloni) {
                 array_splice($data['menus'], 5, 0, array(array(
-                        'id' => 'menu-moloni',
-                        'icon' => 'fa-file-text',
-                        'name' => $this->language->get('Moloni'),
-                        'href' => '',
-                        'children' => $moloni
+                    'id' => 'menu-moloni',
+                    'icon' => 'fa-file-text',
+                    'name' => $this->language->get('Moloni'),
+                    'href' => '',
+                    'children' => $moloni
                 )));
             }
         }
@@ -1059,7 +1059,7 @@ class ControllerExtensionModuleMoloni extends Controller
                         if ($product_option['type'] == 'select') {
                             foreach ($product_option['product_option_value'] as $product_option_value) {
                                 if (isset($product_option_value['moloni_reference'])) {
-                                    $this->ocdb->updateOptionMoloniReference($product_option_value['moloni_reference'], (int) $product_option_value['product_option_value_id']);
+                                    $this->ocdb->updateOptionMoloniReference($product_option_value['moloni_reference'], (int)$product_option_value['product_option_value_id']);
                                 }
                             }
                         }
@@ -1158,7 +1158,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $tax_order = $tax_order;
                 foreach ($this->moloni_taxes as $moloni_tax) {
                     if (($oc_tax['type'] == "P" && $moloni_tax['saft_type'] == 1 || $oc_tax['type'] == "F" && $moloni_tax['saft_type'] > 1) &&
-                        (float) round($oc_tax['rate'], 5) == (float) round($moloni_tax['value'], 5)) {
+                        (float)round($oc_tax['rate'], 5) == (float)round($moloni_tax['value'], 5)) {
                         $taxes[] = array("tax_id" => $moloni_tax['tax_id'], "value" => $moloni_tax['value'], "order" => $tax_order, "cumulative" => "1");
                         break;
                     }
