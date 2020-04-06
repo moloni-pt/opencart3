@@ -5,6 +5,11 @@
  * and open the template in the editor.
  */
 
+use moloni\connection;
+
+/**
+ * @property connection connection
+ */
 class moloni
 {
 
@@ -25,32 +30,43 @@ class moloni
       "document_sets" => "document_sets.class.php",
       ); */
     private $dependencies = array(
-        "connection" => "connection.class.php",
-        "errors" => "errors.class.php",
-        "debug" => "debug.class.php",
+        'connection' => 'connection.class.php',
+        'errors' => 'errors.class.php',
+        'debug' => 'debug.class.php',
     );
 
     public function __construct()
     {
         $this->loadDependencies();
-        return true;
     }
 
     public function __get($name)
     {
         if (!isset($this->{$name}) && !isset($this->dependencies[$name])) {
-            $this->load("moloni/classes/" . $name . ".class.php", $name, $this->namespace . $name);
+            $this->load('moloni/classes/' . $name . '.class.php', $name, $this->namespace . $name);
         }
+
         return $this->{$name};
+    }
+
+    public function __set($name, $value)
+    {
+        $this->{$name} = $value;
+    }
+
+    public function __isset($name)
+    {
+        // TODO: Implement __isset() method.
     }
 
     public function __call($name, $documentType)
     {
-        $this->documentType = empty($documentType[0]) ? "documents" : $documentType[0];
+        $this->documentType = empty($documentType[0]) ? 'documents' : $documentType[0];
 
         if (!isset($this->{$name}) && !isset($this->dependencies[$name])) {
-            $this->load("moloni/classes/" . $name . ".class.php", $name, $this->namespace . $name);
+            $this->load('moloni/classes/' . $name . '.class.php', $name, $this->namespace . $name);
         }
+
         return $this->{$name};
     }
 
@@ -58,7 +74,7 @@ class moloni
     {
         foreach ($this->dependencies as $name => $depend) {
             try {
-                $this->load("moloni/dependencies/" . $depend, $name, $this->namespace . $name);
+                $this->load('moloni/dependencies/' . $depend, $name, $this->namespace . $name);
             } catch (Exception $e) {
                 echo 'Caught exception: ', $e->getMessage(), "\n";
             }
@@ -72,10 +88,19 @@ class moloni
         }
     }
 
+    /**
+     * @param string $path
+     * @param string $name
+     * @param string $class_name
+     */
     private function load($path, $name, $class_name)
     {
-        require_once(DIR_SYSTEM . 'library/' . $path);
-        $this->{$name} = new $class_name($this);
+        if (file_exists(__DIR__ . '/' . $path)) {
+            require_once __DIR__ . '/' . $path;
+            $this->{$name} = new $class_name($this);
+        } else {
+            throw new \RuntimeException('Error loading moloni dependency from ' . DIR_SYSTEM . 'library/' . $path);
+        }
     }
 
 }

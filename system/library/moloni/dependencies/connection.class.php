@@ -9,7 +9,7 @@ namespace moloni;
 class connection
 {
 
-    public $moloni_api_url = "https://api.moloni.pt/v1/";
+    public $moloni_api_url = 'https://api.moloni.pt/v1/';
     public $messages;
 
     function __construct(\moloni $moloni)
@@ -43,17 +43,17 @@ class connection
         } elseif (!$this->moloni->access_token) {
             $return = false;
         } else {
-            if (strtotime("now") > $this->moloni->expire_date) {
+            if (time() > $this->moloni->expire_date) {
                 if ($this->moloni->refresh_token) {
-                    if (strtotime("now") > strtotime("+5 days", $this->moloni->expire_date)) {
-                        $this->moloni->errors->throwError("Refresh token expirou", "A refresh token já expirou " . date('Y-m-d H:i:s', strtotime("+6 days", $this->moloni->expire_date)), "refresh_token");
+                    if (time() > strtotime('+5 days', $this->moloni->expire_date)) {
+                        $this->moloni->errors->throwError('Refresh token expirou', 'A refresh token já expirou ' . date('Y-m-d H:i:s', strtotime('+6 days', $this->moloni->expire_date)), 'refresh_token');
                         $return = false;
                     } else {
                         $this->refreshHandler();
                         $return = true;
                     }
                 } else {
-                    $this->moloni->errors->throwError("Refresh token e falta", "O refresh token não está definido", "refresh_token");
+                    $this->moloni->errors->throwError('Refresh token e falta', 'O refresh token não está definido', 'refresh_token');
                     $return = false;
                 }
             } else {
@@ -66,50 +66,50 @@ class connection
 
     public function loginHandler()
     {
-        $url = "grant/?grant_type=password"
-            . "&client_id=" . $this->moloni->client_id
-            . "&client_secret=" . $this->moloni->client_secret
-            . "&username=" . $this->moloni->username
-            . "&password=" . urlencode(html_entity_decode($this->moloni->password));
+        $url = 'grant/?grant_type=password'
+            . '&client_id=' . $this->moloni->client_id
+            . '&client_secret=' . $this->moloni->client_secret
+            . '&username=' . $this->moloni->username
+            . '&password=' . urlencode(html_entity_decode($this->moloni->password));
         
         $login = $this->curl($url, null);
         
-        if ($login && isset($login["access_token"]) && isset($login["refresh_token"])) {
+        if ($login && isset($login['access_token']) && isset($login['refresh_token'])) {
             $this->moloni->updated_tokens = true;
             $this->moloni->access_token = $login['access_token'];
             $this->moloni->refresh_token = $login['refresh_token'];
-            $this->moloni->expire_date = strtotime("+50 minutes");
+            $this->moloni->expire_date = strtotime('+50 minutes');
             return true;
-        } else {
-            $this->moloni->errors->throwError("Dados incorrectos", "Os dados de login que inseriu não correspondem a uma conta Moloni. <a href='https://moloni.pt/' target='_BLANK'>Registar</a>", "login");
-            return false;
         }
+
+        $this->moloni->errors->throwError('Dados incorrectos', "Os dados de login que inseriu não correspondem a uma conta Moloni. <a href='https://moloni.pt/' target='_BLANK'>Registar</a>", 'login');
+        return false;
     }
 
     public function refreshHandler()
     {
-        $url = "grant/?grant_type=refresh_token"
-            . "&client_id=" . $this->moloni->client_id
-            . "&client_secret=" . $this->moloni->client_secret
-            . "&refresh_token=" . $this->moloni->refresh_token;
+        $url = 'grant/?grant_type=refresh_token'
+            . '&client_id=' . $this->moloni->client_id
+            . '&client_secret=' . $this->moloni->client_secret
+            . '&refresh_token=' . $this->moloni->refresh_token;
 
         $refresh = $this->curl($url, null);
-        if ($refresh && isset($refresh["access_token"]) && isset($refresh["refresh_token"])) {
+        if (isset($refresh['access_token'], $refresh['refresh_token']) && $refresh) {
             $this->moloni->updated_tokens = true;
             $this->moloni->access_token = $refresh['access_token'];
             $this->moloni->refresh_token = $refresh['refresh_token'];
-            $this->moloni->expire_date = strtotime("+50 minutes");
+            $this->moloni->expire_date = strtotime('+50 minutes');
             return true;
-        } else {
-            $this->moloni->errors->throwError("Dados incorrectos", "Os dados de login que inseriu não correspondem a uma conta Moloni. <a href='https://moloni.pt/' target='_BLANK'>Registar</a>", "login");
-            return false;
         }
+
+        $this->moloni->errors->throwError('Dados incorrectos', "Os dados de login que inseriu não correspondem a uma conta Moloni. <a href='https://moloni.pt/' target='_BLANK'>Registar</a>", 'login');
+        return false;
     }
 
     public function curl($action, $values = false, $debug = false)
     {
         $con = curl_init();
-        $url = $this->moloni_api_url . $action . ($this->moloni->logged ? "/?access_token=" . $this->moloni->access_token : "");
+        $url = $this->moloni_api_url . $action . ($this->moloni->logged ? '/?access_token=' . $this->moloni->access_token : '');
         curl_setopt($con, CURLOPT_URL, $url);
         curl_setopt($con, CURLOPT_POST, true);
         curl_setopt($con, CURLOPT_POSTFIELDS, $values ? http_build_query($values) : false);
@@ -123,18 +123,18 @@ class connection
 
         $this->moloni->debug->addLog($url, $values, $result_array);
 
-        if (isset($result_array['error_description']) && strtolower($result_array['error_description']) == 'invalid access token.') {
-            $this->moloni->errors->throwError("Access token errada", "Access token inválida", "login");
+        if (isset($result_array['error_description']) && strtolower($result_array['error_description']) === 'invalid access token.') {
+            $this->moloni->errors->throwError('Access token errada', 'Access token inválida', 'login');
             $this->moloni->logged = false;
             $this->moloni->updated_tokens = true;
-            $this->moloni->access_token = "";
-            $this->moloni->refresh_token = "";
-            $this->moloni->expire_date = "";
+            $this->moloni->access_token = '';
+            $this->moloni->refresh_token = '';
+            $this->moloni->expire_date = '';
             return false;
         }
 
-        if (isset($result_array['error']) && strtolower($result_array['error']) == 'forbidden') {
-            $result_array = array("Não tem permissões para aceder a este método ou a token está expirada");
+        if (isset($result_array['error']) && strtolower($result_array['error']) === 'forbidden') {
+            $result_array = array('Não tem permissões para aceder a este método ou a token está expirada');
         }
 
         return $result_array;
