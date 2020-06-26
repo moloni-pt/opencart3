@@ -106,7 +106,7 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
     public function getOrderById($order_id)
     {
-        $sql = "SELECT * FROM " . DB_PREFIX . "order o LEFT JOIN `" . DB_PREFIX . "moloni_documents` MD ON o.order_id = MD.order_id WHERE o.order_id = '" . $order_id . "'";
+        $sql = "SELECT * FROM `" . DB_PREFIX . "order` o LEFT JOIN `" . DB_PREFIX . "moloni_documents` MD ON o.order_id = MD.order_id WHERE o.order_id = '" . $order_id . "'";
         $query = $this->db->query($sql);
         $result = $query->row;
 
