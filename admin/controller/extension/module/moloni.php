@@ -319,6 +319,12 @@ class ControllerExtensionModuleMoloni extends Controller
                     }
                 }
 
+                /**
+                 * This prevents document to be inserted as closed
+                 * (status could be closed if bill of lading was inserted)
+                 */
+                $document['status'] = 0;
+
                 $insert = $this->moloni->documents($this->settings['document_type'])->insert($document);
                 if ($insert) {
                     $document_details = $this->moloni->documents()->getOne($insert['document_id']);
