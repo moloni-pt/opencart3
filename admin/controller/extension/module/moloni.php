@@ -255,7 +255,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $document['exchange_rate'] = 1 / ($this->ocdb->getCurrencyValue('EUR'));
             }
 
-            if (isset($this->settings['shipping_details']) && $this->settings['shipping_details']) {
+            if (isset($this->settings['shipping_details']) && $this->settings['shipping_details'] && $order['shipping_method'] !== '') {
                 $document['delivery_method_id'] = $this->toolDeliveryMethodHandler($order['shipping_method']);
                 $document['delivery_datetime'] = date('Y-m-d H:i:s');
 
@@ -285,7 +285,7 @@ class ControllerExtensionModuleMoloni extends Controller
             if (!$this->moloni->errors->getError('all')) {
                 // Insert document
 
-                if (isset($this->settings['shipping_document']) && $this->settings['shipping_document'] == 1) {
+                if (isset($this->settings['shipping_document']) && $this->settings['shipping_document'] == 1 && $order['shipping_method'] !== '') {
                     $shipping_document_insert = $this->moloni->documents('billsOfLading')->insert($document);
                     if ($shipping_document_insert) {
                         $shipping_document_details = $this->moloni->documents()->getOne($shipping_document_insert['document_id']);
@@ -429,7 +429,10 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $moloni_customer['maturity_date_id'] = $this->settings['maturity_date'];
         $moloni_customer['payment_method_id'] = $this->toolPaymentMethodHandler($order['payment_method']);
-        $moloni_customer['delivery_method_id'] = $this->toolDeliveryMethodHandler($order['shipping_method']);
+
+        if ($order['shipping_method'] !== '') {
+            $moloni_customer['delivery_method_id'] = $this->toolDeliveryMethodHandler($order['shipping_method']);
+        }
 
         $moloni_customer['country_id'] = $this->toolCountryHandler($order['payment_iso_code_2']);
         $moloni_customer['language_id'] = (int)$moloni_customer['country_id'] === 1 ? 1 : 2;
