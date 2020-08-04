@@ -1191,6 +1191,11 @@ class ControllerExtensionModuleMoloni extends Controller
             $tax_rules = $this->ocdb->getTaxRules($oc_product['tax_class_id']);
             foreach ($tax_rules as $tax_order => $tax_rule) {
                 $oc_tax = $this->ocdb->getTaxRate($tax_rule['tax_rate_id'], $geo_zone['geo_zone_id']);
+
+                if (empty($oc_tax)) {
+                    continue;
+                }
+
                 foreach ($this->moloni_taxes as $moloni_tax) {
                     if ((($oc_tax['type'] === 'P' && $moloni_tax['saft_type'] == 1) || ($oc_tax['type'] === 'F' && $moloni_tax['saft_type'] > 1)) &&
                         (float)round($oc_tax['rate'], 5) === (float)round($moloni_tax['value'], 5)) {
