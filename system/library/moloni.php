@@ -95,11 +95,13 @@ class moloni
      */
     private function load($path, $name, $class_name)
     {
-        if (file_exists(__DIR__ . '/' . $path)) {
-            require_once __DIR__ . '/' . $path;
+        $fullPath = DIR_SYSTEM . '/library/moloni/' . $path;
+
+        try {
+            require_once $fullPath;
             $this->{$name} = new $class_name($this);
-        } else {
-            throw new \RuntimeException('Error loading moloni dependency from ' . DIR_SYSTEM . 'library/' . $path);
+        } catch(Exception $exception) {
+            #throw new \RuntimeException('Error loading moloni dependency from ' . $fullPath);
         }
     }
 
