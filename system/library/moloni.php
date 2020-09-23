@@ -104,5 +104,4 @@ class moloni
             #throw new \RuntimeException('Error loading moloni dependency from ' . $fullPath);
         }
     }
-
 }
