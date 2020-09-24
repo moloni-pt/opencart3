@@ -95,7 +95,7 @@ class moloni
      */
     private function load($path, $name, $class_name)
     {
-        $fullPath = DIR_SYSTEM . '/library/moloni/' . $path;
+        $fullPath = DIR_SYSTEM . '/library/' . $path;
 
         try {
             require_once $fullPath;
