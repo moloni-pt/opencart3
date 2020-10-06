@@ -11,7 +11,7 @@
             <ul class="breadcrumb">
                 {% for breadcrumb in breadcrumbs %}
                     <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
-                    {% endfor %}
+                {% endfor %}
             </ul>
         </div>
     </div>
@@ -34,33 +34,33 @@
 
                     <table id="moloni_orders" class="display" cellspacing="0" width="100%">
                         <thead>
-                            <tr>
-                                <th></th>
-                                <th>{{ label.order_table_number }}</th>
-                                <th>{{ label.order_table_customer_info }}</th>
-                                <th>{{ label.order_table_order_status }}</th>
-                                <th>{{ label.order_table_store_name }}</th>
-                                <th>{{ label.order_table_order_date }}</th>
-                                <th>{{ label.order_table_order_total }}</th>
-                                <th>{{ label.order_table_order_actions }}</th>
-                            </tr>
+                        <tr>
+                            <th></th>
+                            <th>{{ label.order_table_number }}</th>
+                            <th>{{ label.order_table_customer_info }}</th>
+                            <th>{{ label.order_table_order_status }}</th>
+                            <th>{{ label.order_table_store_name }}</th>
+                            <th>{{ label.order_table_order_date }}</th>
+                            <th>{{ label.order_table_order_total }}</th>
+                            <th>{{ label.order_table_order_actions }}</th>
+                        </tr>
                         </thead>
                         <tbody>
 
-                            {% for order in content.orders_list[0] %}
-                                <tr order_id="{{ order.order_id }}">
-                                    <td></td>
-                                    <td>{{ order.order_id }}</td>
-                                    <td>{{ order.firstname }} {{ order.lastname }}</td>
-                                    <td>{{ order.order_status }}</td>
-                                    <td>{{ order.store_name }}</td>
-                                    <td>{{ order.date_added }}</td>
-                                    <td>{{ order.total_formated }}</td>
-                                    <td>
-                                        <a href="{{order.moloni_create}}" target="" data-toggle="tooltip" title="" class="btn btn-primary" data-original-title="{{create_moloni_document}}"><i class="fa fa-check-square"></i></a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
+                        {% for order in content.orders_list[0] %}
+                            <tr order_id="{{ order.order_id }}">
+                                <td></td>
+                                <td>{{ order.order_id }}</td>
+                                <td>{{ order.firstname }} {{ order.lastname }}</td>
+                                <td>{{ order.order_status }}</td>
+                                <td>{{ order.store_name }}</td>
+                                <td>{{ order.date_added }}</td>
+                                <td>{{ order.total_formated }}</td>
+                                <td>
+                                    <a href="{{order.moloni_create}}" target="" data-toggle="tooltip" title="" class="btn btn-primary" data-original-title="{{create_moloni_document}}"><i class="fa fa-check-square"></i></a>
+                                </td>
+                            </tr>
+                        {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -69,7 +69,7 @@
     </div>
 
     {% if update_available %}
-        {% include "extension/module/moloni/update.twig"  %}
+        {{ update_page }}
     {% endif %}
 
 </div>
@@ -83,10 +83,10 @@
     $(document).ready(function() {
         var orders_table = $('#moloni_orders').DataTable({
             columnDefs: [{
-                    orderable: false,
-                    className: 'select-checkbox',
-                    targets: 0
-                }],
+                orderable: false,
+                className: 'select-checkbox',
+                targets: 0
+            }],
             select: {
                 style: 'multi',
                 selector: 'td:first-child'

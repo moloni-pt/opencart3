@@ -111,6 +111,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $this->data['content'] = $this->getIndexData();
         }
         $this->loadDefaults();
+
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
     }
 
@@ -884,7 +885,9 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $release_raw = $this->curl('https://plugins.moloni.com/opencart3/release');
         $release = json_decode($release_raw, true);
-        if (($release['version'] <> $this->version)) {
+       
+        if (($release['version'] !== $this->version)) {
+            $this->data['update_page'] = $this->load->view($this->modulePathView . 'update');
             $this->update_available = $this->url->link('extension/module/moloni', array('update' => 'true', 'user_token' => $this->session->data['user_token']), true);
         }
     }
