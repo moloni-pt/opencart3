@@ -30,6 +30,12 @@ $_['tooltip']['shipping_tax_exemption'] = "Choose an exemption reason to be used
 $_['tooltip']['products_prefix'] = "Choose a prefir for the product reference. If you choose for example 'MOLONI', the product reference will start with MOLONI.";
 
 $_['tooltip']['order_auto'] = "Create a documento automatically when the order is set to paid.";
+$_['tooltip']['moloni_options_reference'] = "Enable the use of referecence sufixes in options of type 'Select', this is usefull to create unique products in Moloni.";
+$_['tooltip']['products_auto'] = "Create products automatically when they are inserted or edited in Opencart.";
+$_['tooltip']['products_description_document'] = "Include product's description on the document when creating it";
+$_['tooltip']['products_description_moloni'] = "Include product's description when creating the product on Moloni";
+$_['tooltip']['remove_extra_tax'] = "Remove VAT from extra taxes (e.g Payment taxes)";
+$_['tooltip']['remove_extra_tax_shipping'] = "Remove VAT from shipping taxes";
 
 
 $_['label']['yes'] = "Yes";
@@ -70,6 +76,13 @@ $_['label']['shipping_tax_exemption'] = "Shipping tax exemption";
 $_['label']['let_opencart_decide'] = "Let opencart decide";
 $_['label']['products_prefix'] = "Ref. Prefix";
 $_['label']['products_at_category'] = "AT Category";
+
+$_['label']['products_auto'] = "Create products automatically";
+$_['label']['products_description_document'] = "Include product's description on document";
+$_['label']['products_description_moloni'] = "Include product's description on Moloni";
+$_['label']['remove_extra_tax'] = "Remove VAT from extra taxes";
+$_['label']['remove_extra_tax_shipping'] = "Remove VAT from shipping taxes";
+$_['label']['moloni_options_reference'] = "Use references on options";
 
 $_['label']['order_since'] = "Show orders since";
 $_['label']['order_auto'] = "Create order when paid";

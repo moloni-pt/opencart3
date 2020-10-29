@@ -124,6 +124,474 @@ class ControllerExtensionModuleMoloni extends Controller
         }
     }
 
+    private function createDocumentFromOrder($order_id)
+    {
+        if (isset($this->request->get['action']) && $this->request->get['action'] === 'delete') {
+            $values['order_id'] = $order_id;
+            $values['invoice_id'] = '10';
+            $this->ocdb->setDocumentInserted($values);
+            return false;
+        }
+
+        $this->load->model('sale/order');
+        $this->load->model('catalog/product');
+        $this->current_order = $order = $this->model_sale_order->getOrder($order_id);
+        $this->moloni_taxes = $this->moloni->taxes->getAll();
+
+        $this->store_id = $order['store_id'];
+        $this->language_id = $this->ocdb->language_id = $order['language_id'];
+
+        $moloni_document = $this->ocdb->getDocumentFromOrderId($order_id);
+        if (!$moloni_document || isset($this->request->get['force'])) {
+
+            $this->settings = $this->getMoloniSettings();
+            $this->company = $this->moloni->companies->getOne();
+            $this->countries = $this->moloni->countries->getAll();
+
+            $oc_products = $this->model_sale_order->getOrderProducts($order_id);
+            $oc_totals = $this->model_sale_order->getOrderTotals($order_id);
+
+            $this->_myOrder['has_exchange'] = ($this->company['currency_id'] == 1 && $this->ocdb->getStoreCurrency($this->store_id) !== 'EUR' ? true : false);
+            $this->_myOrder['currency'] = $order['currency_code'];
+
+            $customer = $this->moloniCustomerHandler($order);
+            $discounts = $this->toolsDiscountsHandlers($oc_totals);
+
+            foreach ($oc_products as $key => &$product) {
+                $product['order_id'] = $order_id;
+                $product['discount'] = $discounts['products'];
+                $products[] = $this->moloniProductHandler($product, $key);
+            }
+
+            $extras = $this->moloniShippingHandler($oc_totals, (count($products) + 1), $discounts);
+            if (!empty($extras) && is_array($extras)) {
+                $products = array_merge($products, $extras);
+            }
+
+            var_dump($products);
+            var_dump($extras);
+
+            $document = array();
+            $document['date'] = date('Y-m-d');
+            $document['expiration_date'] = date('Y-m-d');
+            $document['document_set_id'] = $this->settings['document_set_id'];
+
+            $document['customer_id'] = $customer;
+            $document['alternate_address_id'] = (isset($customer['alternate_address_id']) ? $customer['alternate_address_id'] : '');
+
+            $document['products'] = $products;
+
+            $document['our_reference'] = '#' . $order_id;
+            $document['your_reference'] = '#' . $order_id;
+
+            $document['financial_discount'] = $discounts['document'];
+            $document['special_discount'] = '0';
+            $document['eac_id'] = '';
+
+            if ($this->_myOrder['has_exchange']) {
+                $document['exchange_currency_id'] = $this->toolsExchangeHandler('EUR', $order['currency_code']);
+                $document['exchange_rate'] = 1 / ($this->ocdb->getCurrencyValue('EUR'));
+            }
+
+            if (isset($this->settings['shipping_details']) && $this->settings['shipping_details'] && $order['shipping_method'] !== '') {
+                $document['delivery_method_id'] = $this->toolDeliveryMethodHandler($order['shipping_method']);
+                $document['delivery_datetime'] = date('Y-m-d H:i:s');
+
+                if (!isset($this->settings['store_location']) || $this->settings['store_location'] == 0) {
+                    $document['delivery_departure_address'] = $this->company['address'];
+                    $document['delivery_departure_city'] = $this->company['city'];
+                    $document['delivery_departure_zip_code'] = $this->company['zip_code'];
+                    $document['delivery_departure_country'] = $this->company['country_id'];
+                } else {
+                    $location = $this->ocdb->getStoreLocation($this->settings['store_location']);
+                    $document['delivery_departure_address'] = $location['address'];
+                    $document['delivery_departure_city'] = $location['geocode'];
+                    $document['delivery_departure_zip_code'] = '1000-100';
+                    $document['delivery_departure_country'] = 1;
+                }
+
+                $document['delivery_destination_address'] = empty($order['shipping_address_1']) ? '' : $order['shipping_address_1'];
+                $document['delivery_destination_address'] .= empty($order['shipping_address_2']) ? '' : ' ' . $order['shipping_address_2'];
+                $document['delivery_destination_city'] = empty($order['shipping_city']) ? '' : $order['shipping_city'];
+                $document['delivery_destination_zip_code'] = $order['shipping_iso_code_2'] === 'PT' ? $this->toolValidateZipCode($order['shipping_postcode']) : $order['shipping_postcode'];
+                $document['delivery_destination_country'] = $this->toolCountryHandler($order['shipping_iso_code_2']);
+            }
+
+            $document['notes'] = '';
+            $document['status'] = '0';
+
+            if (!$this->moloni->errors->getError('all')) {
+                // Insert document
+
+                if (isset($this->settings['shipping_document']) && $this->settings['shipping_document'] == 1 && $order['shipping_method'] !== '') {
+                    $shipping_document_insert = $this->moloni->documents('billsOfLading')->insert($document);
+                    if ($shipping_document_insert) {
+                        $shipping_document_details = $this->moloni->documents()->getOne($shipping_document_insert['document_id']);
+                        if ($this->settings['document_status'] == '1') {
+                            if ((float)round($shipping_document_details['net_value'], 2) == (float)round($this->_myOrder['net_value'], 2)) {
+                                $document['document_id'] = $shipping_document_details['document_id'];
+                                $document['status'] = '1';
+
+                                $this->moloni->documents('billsOfLading')->update($document);
+
+                                $document['associated_documents'][] = array(
+                                    'associated_id' => $shipping_document_details['document_id'],
+                                    'value' => $shipping_document_details['net_value']
+                                );
+                            } else {
+                                $message = 'Os totais não batem certo - moloni '
+                                    . $shipping_document_details['net_value'] . '€ | encomenda '
+                                    . $this->_myOrder['net_value'] . '€';
+                                $link = "<a target='_BLANK' href='https://moloni.pt/" . $this->company['slug'] . '/' .
+                                    $this->moloni->documents('billsOfLading')->getViewUrl($shipping_document_details['document_id']) .
+                                    "'>ver documento</a>";
+
+                                $this->messages['errors'] = array(
+                                    'title' => 'Erro ao inserir documento de transporte',
+                                    'message' => $message,
+                                    'link' => $link,
+                                    'fatal' => 0
+                                );
+                            }
+                        }
+                    }
+                }
+
+                /**
+                 * This prevents document to be inserted as closed
+                 * (status could be closed if bill of lading was inserted)
+                 */
+                $document['status'] = 0;
+
+                $insert = $this->moloni->documents($this->settings['document_type'])->insert($document);
+                if ($insert) {
+                    $document_details = $this->moloni->documents()->getOne($insert['document_id']);
+                    if (round($document_details['net_value'], 2) == round($this->_myOrder['net_value'], 2)) {
+                        if ($this->settings['document_status'] == '1') {
+                            $document_update['document_id'] = $document_details['document_id'];
+                            $document_update['status'] = '1';
+
+                            $this->moloni->documents($this->settings['document_type'])->update($document_update);
+                        }
+                    } else {
+                        $message = 'Os totais não batem certo - moloni '
+                            . $document_details['net_value'] . '€ | encomenda '
+                            . $this->_myOrder['net_value'] . '€';
+                        $link = "<a target='_BLANK' href='https://moloni.pt/" . $this->company['slug'] . '/' .
+                            $this->moloni->documents($this->settings['document_type'])->getViewUrl($document_details['document_id']) .
+                            "'>ver documento</a>";
+
+                        $this->messages['errors'] = array(
+                            'title' => 'Erro ao inserir documento de transporte',
+                            'message' => $message,
+                            'link' => $link
+                        );
+                    }
+
+                    $values = array();
+                    $values['company_id'] = $this->company['company_id'];
+                    $values['store_id'] = $this->store_id;
+                    $values['order_id'] = $order_id;
+                    $values['order_total'] = $this->_myOrder['net_value'];
+                    $values['invoice_id'] = $document_details['document_id'];
+                    $values['invoice_total'] = $document_details['net_value'];
+                    $values['invoice_date'] = $document['date'];
+                    $values['invoice_status'] = isset($document_update['status']) ? $document_update['status'] : $document['status'] = '0';
+                    $values['metadata'] = json_encode($document_details);
+                    $this->ocdb->setDocumentInserted($values);
+
+                    $link = "<a target='_BLANK' href='https://moloni.pt/" . $this->company['slug'] . '/' .
+                        $this->moloni->documents($this->settings['document_type'])->getViewUrl($values['invoice_id'], $values['invoice_status']) .
+                        "'>ver documento</a>";
+
+                    $this->messages['success'] = array(
+                        'title' => 'Sucesso',
+                        'message' => 'Documento inserido com sucesso',
+                        'link' => $link
+                    );
+                }
+            }
+        } else {
+
+            $this->messages['errors'] = array(
+                'title' => 'Erro',
+                'message' => 'O documento já tinha sido gerado',
+                'link' => "<a href='" . $moloni_url = $this->url->link('extension/module/moloni/invoice', array('order_id' => $order['order_id'], 'force' => 'true', 'user_token' => $this->session->data['user_token']), true) . "'>Gerar novamente</a>"
+            );
+        }
+    }
+
+    private function moloniCustomerHandler($order)
+    {
+
+        $moloni_customer_exists = false;
+
+        $order['vat_number'] = '999999990';
+
+        if ($this->settings['client_vat'] > 0) {
+            if (isset($order['custom_field'][$this->settings['client_vat']]) && !empty(trim(isset($order['custom_field'][$this->settings['client_vat']])))) {
+                $order['vat_number'] = trim($order['custom_field'][$this->settings['client_vat']]);
+            } elseif (isset($order['payment_custom_field'][$this->settings['client_vat']]) && !empty(trim($order['payment_custom_field'][$this->settings['client_vat']]))) {
+                $order['vat_number'] = trim($order['payment_custom_field'][$this->settings['client_vat']]);
+            }
+        }
+
+        $order['vat_number'] = str_ireplace('pt', '', $order['vat_number']);
+
+        $order['vat_number'] = trim($order['vat_number']) == '' ? '999999990' : $order['vat_number'];
+
+        $order['payment_entity'] = (!empty($order['payment_company']) ? $order['payment_company'] : $order['payment_firstname'] . ' ' . $order['payment_lastname']);
+
+        if (in_array(trim($order['vat_number']), array('999999990', ''))) {
+            $moloni_customer_search = $this->moloni->customers->getBySearch($order['payment_entity'], true);
+            if ($moloni_customer_search && is_array($moloni_customer_search)) {
+                foreach ($moloni_customer_search as $result) {
+                    if ($result['email'] == $order['email'] && $result['vat'] == $order['vat_number']) {
+                        $moloni_customer_exists = $result;
+                    }
+                }
+            }
+        } else {
+            $moloni_customer_exists_aux = $this->moloni->customers->getByVat($order['vat_number'], true);
+            $moloni_customer_exists = $moloni_customer_exists_aux[0];
+        }
+
+        $moloni_customer['name'] = $order['payment_entity'];
+        $moloni_customer['address'] = empty($order['payment_address_1']) ? 'Desconhecido' : $order['payment_address_1'];
+        $moloni_customer['address'] .= empty($order['payment_address_2']) ? '' : ' ' . $order['payment_address_2'];
+        $moloni_customer['zip_code'] = $order['payment_iso_code_2'] === 'PT' ? $this->toolValidateZipCode($order['payment_postcode']) : $order['payment_postcode'];
+        $moloni_customer['city'] = empty($order['payment_city']) ? 'Desconhecida' : $order['payment_city'];
+
+        $moloni_customer['contact_name'] = $order['payment_firstname'] . ' ' . $order['payment_lastname'];
+        $moloni_customer['contact_email'] = filter_var($order['email'], FILTER_VALIDATE_EMAIL) ? $order['email'] : '';
+        $moloni_customer['contact_phone'] = trim($order['telephone']);
+
+        $moloni_customer['email'] = filter_var($order['email'], FILTER_VALIDATE_EMAIL) ? $order['email'] : '';
+        $moloni_customer['phone'] = $order['telephone'];
+        $moloni_customer['website'] = '';
+        $moloni_customer['fax'] = '';
+
+        $moloni_customer['maturity_date_id'] = $this->settings['maturity_date'];
+        $moloni_customer['payment_method_id'] = $this->toolPaymentMethodHandler($order['payment_method']);
+
+        if ($order['shipping_method'] !== '') {
+            $moloni_customer['delivery_method_id'] = $this->toolDeliveryMethodHandler($order['shipping_method']);
+        }
+
+        $moloni_customer['country_id'] = $this->toolCountryHandler($order['payment_iso_code_2']);
+        $moloni_customer['language_id'] = (int)$moloni_customer['country_id'] === 1 ? 1 : 2;
+
+        $moloni_customer['copies'] = $this->company['copies'];
+
+        $moloni_customer['notes'] = '';
+        $moloni_customer['salesman_id'] = '';
+        $moloni_customer['payment_day'] = '';
+        $moloni_customer['discount'] = '0';
+        $moloni_customer['credit_limit'] = '0';
+        $moloni_customer['field_notes'] = '';
+
+        if ($moloni_customer_exists) {
+            if (isset($this->settings['client_update']) && $this->settings['client_update'] == '1') {
+                $moloni_customer['customer_id'] = $moloni_customer_exists['customer_id'];
+                $result = $this->moloni->customers->update($moloni_customer);
+                $customer_id = isset($result['customer_id']) ? $result['customer_id'] : false;
+            } else {
+                $customer_id = $moloni_customer_exists['customer_id'];
+            }
+        } else {
+            $moloni_customer['number'] = $this->toolNumberCreator($order);
+            $moloni_customer['vat'] = $order['vat_number'];
+            $result = $this->moloni->customers->insert($moloni_customer);
+            $customer_id = isset($result['customer_id']) ? $result['customer_id'] : false;
+        }
+
+        return $customer_id;
+    }
+
+    private function moloniProductHandler($product, $key)
+    {
+        $oc_product = $this->model_catalog_product->getProduct($product['product_id']);
+
+        if (isset($oc_product['product_id'])) {
+            $option_reference_sufix = '';
+            $option_name_sufix = '';
+            $reference_prefix = isset($this->settings['products_prefix']) && !empty($this->settings['products_prefix']) ? $this->settings['products_prefix'] : '';
+
+            $options = $this->model_sale_order->getOrderOptions($product['order_id'], $product['order_product_id']);
+
+            $options_string = '';
+            if ($options && is_array($options)) {
+                foreach ($options as $option) {
+                    $options_string .= $option['name'] . ' ' . $option['value'] . "\n";
+                    $option_reference_sufix_aux = false;
+
+                    if (isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference']) {
+                        $option_reference_sufix_aux = $this->ocdb->getOptionMoloniReference($option['product_option_value_id']);
+                    }
+
+                    $option_name_sufix .= ' ' . $option['value'];
+                    $option_reference_sufix .= ($option_reference_sufix_aux) ? $option_reference_sufix_aux : $option['product_option_value_id'];
+                }
+            }
+
+            $moloni_reference = $oc_product['product_id'];
+
+            if (!empty($oc_product['model'])) {
+                $moloni_reference = $oc_product['model'];
+            }
+
+            if (!empty($oc_product['sku'])) {
+                $moloni_reference = $oc_product['sku'];
+            }
+
+            $moloni_reference = mb_substr(str_replace(' ', '_', $reference_prefix . $moloni_reference . $option_reference_sufix), 0, 28);
+
+            $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
+
+            if (!empty($options_string)) {
+                $description = rtrim($options_string, "\n");
+            } else {
+                $description = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', '', ($oc_product['description'])), 0, 250);
+            }
+
+            $taxes = $this->toolsTaxesHandler($oc_product);
+
+            $values['name'] = $product['name'] . $option_name_sufix;
+            $values['summary'] = $description . (strlen($description) >= 250 ? '...' : '');
+            $values['price'] = $product['price_without_taxes'] = $this->toolsPriceHandler($product, $taxes);
+            $values['discount'] = $product['discount'];
+            $values['qty'] = $product['quantity'];
+
+            $values['order'] = $key;
+            $values['unit_id'] = $this->settings['measure_unit'];
+
+            //======= TAXES =======//
+            if (!empty($taxes) && is_array($taxes)) {
+                $values['taxes'] = $taxes;
+                if (!isset($this->_myOrder['has_taxes']) || $this->_myOrder['has_taxes'] == false) {
+                    $this->_myOrder['has_taxes'] = true;
+                    $this->_myOrder['default_taxes'] = $taxes;
+                }
+            } else {
+                $values['exemption_reason'] = $this->settings['products_tax_exemption'];
+            }
+
+            if ($moloni_product_exists) {
+                $values['product_id'] = $moloni_product_exists[0]['product_id'];
+            } else {
+                $values['reference'] = $moloni_reference;
+                $values['ean'] = $oc_product['ean'];
+
+                $oc_category = $this->model_catalog_product->getProductCategories($product['product_id']);
+                if (isset($oc_category[0])) {
+                    $category = $this->ocdb->getCategory($oc_category[0]);
+                    $values['category_id'] = $this->toolCategoryHandler($category['name']);
+                } else {
+                    $values['category_id'] = $this->toolCategoryHandler('Sem categoria');
+                }
+
+                if ($oc_product['subtract']) {
+                    $values['type'] = '1';
+                    $values['has_stock'] = '1';
+                    $values['stock'] = $oc_product['quantity'];
+                    $values['at_product_category'] = $this->settings['products_at_category'];
+                } else {
+                    $values['type'] = '2';
+                    $values['has_stock'] = '0';
+                }
+
+                if(isset($this->settings['products_description_moloni']) && empty($this->settings['products_description_moloni'])){
+                    unset($values['summary']);
+                }
+                $inserted = $this->moloni->products->insert($values);
+                if (isset($inserted['product_id'])) {
+                    $values['product_id'] = $inserted['product_id'];
+                }
+            }
+
+            if(isset($this->settings['products_description_document']) && !empty($this->settings['products_description_document']) && !isset($values['summary'])){
+                $values['summary'] = $description . (strlen($description) >= 250 ? '...' : '');
+            } else if(isset($this->settings['products_description_document']) && empty($this->settings['products_description_document']) && isset($values['summary'])){
+                unset($values['summary']);
+            }
+            return $values;
+        }
+    }
+
+    private function moloniShippingHandler($totals, $order, $discounts = false)
+    {
+        $products = [];
+
+        foreach ($totals as $total) {
+            if (!in_array($total['code'],['total','sub_total','tax'])) {
+
+                $values = [];
+
+                if ($total['code'] === 'shipping') {
+                    $moloni_reference = 'Portes';
+                    $values['discount'] = isset($discounts['shipping']) ? $discounts['shipping'] : 0;
+                } else {
+                    $moloni_reference = 'Taxa';
+                    $values['discount'] = 0;
+                }
+
+                $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
+
+                $values['name'] = $total['title'];
+                $values['summary'] = '';
+                $values['qty'] = '1';
+                $values['order'] = $order;
+
+                foreach ($this->moloni_taxes as $moloni_tax) {
+                    if ($this->settings['shipping_tax'] == '0') {
+                        if (isset($this->_myOrder['has_taxes']) && $this->_myOrder['has_taxes'] == true && $this->_myOrder['default_taxes'][0]['tax_id'] == $moloni_tax['tax_id']) {
+                            if($total['code'] == 'shipping'){
+                                $values['price'] = $this->toolRemoveExtraTaxShipping($total['value'], $moloni_tax['value']);
+                            } else {
+                                $values['price']= $this->toolRemoveExtraTax($total['value'], $moloni_tax['value']);
+                            }
+                            $values['taxes'] = $this->_myOrder['default_taxes'];
+                            $values['exemption_reason'] = '';
+                            break;
+                        } else {
+                            $values['price'] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'], $this->_myOrder['currency'], 'EUR') : $total['value'];
+                            $values['exemption_reason'] = $this->settings['shipping_tax_exemption'];
+                        }
+                    } else {
+                        if ($moloni_tax['tax_id'] == $this->settings['shipping_tax']) {
+                            if($total['code'] == 'shipping'){
+                                $values['price'] = $this->toolRemoveExtraTaxShipping($total['value'], $moloni_tax['value']);
+                            } else {
+                                $values['price'] = $this->toolRemoveExtraTax($total['value'], $moloni_tax['value']);
+                            }
+                            $values['taxes'][] = array('tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => '0', 'cumulative' => '1');
+                            break;
+                        }
+                    }
+                }
+
+                if ($moloni_product_exists) {
+                    $values['product_id'] = $moloni_product_exists[0]['product_id'];
+                } else {
+                    $values['reference'] = $moloni_reference;
+                    $values['category_id'] = $this->toolCategoryHandler('Outros');
+                    $values['type'] = '2';
+                    $values['has_stock'] = '0';
+                    $values['unit_id'] = $this->settings['measure_unit'];
+
+                    $inserted = $this->moloni->products->insert($values);
+                    if (isset($inserted['product_id'])) {
+                        $values['product_id'] = $inserted['product_id'];
+                    }
+                }
+
+                $products[] = $values;
+            }
+        }
+
+        return $products;
+    }
+
     private function loadDefaults()
     {
 
@@ -135,9 +603,21 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->data['breadcrumbs'] = $this->createBreadcrumbs();
         $this->data['document_types'] = $this->getDocumentTypes();
 
-        $this->data['debug_window'] = $this->moloni->debug->getLogs("all");
-        $this->data['error_warnings'] = $this->moloni->errors->getError("all");
+        $this->data['debug_window'] = (isset($this->settings['debug_console']) && $this->settings['debug_console']) ? $this->moloni->debug->getLogs('all') : false;
+        $this->data['debug_console'] = ($this->data['debug_window']) ? $this->load->view('extension/module/moloni/debug', $this->data) : false;
+        $this->data['error_warnings'] = $this->moloni->errors->getError('all');
         $this->data['update_result'] = $this->updated_files;
+        $this->data['update_available'] = $this->update_available;
+
+        if (isset($this->messages['errors']) && is_array($this->messages['errors'])) {
+            $this->data['messages']['errors'][] = $this->messages['errors'];
+        }
+
+        if (isset($this->messages['success']) && is_array($this->messages['success'])) {
+            $this->data['messages']['success'][] = $this->messages['success'];
+        }
+
+        $this->data['errors_template'] = (!empty($this->data['error_warnings']) || !empty($this->data['messages']['errors']) || !empty($this->data['messages']['success'])) ? $this->load->view('extension/module/moloni/errors', $this->data) : false;
     }
 
     private function defaultTemplateUrls()
@@ -408,4 +888,304 @@ class ControllerExtensionModuleMoloni extends Controller
             }
         }
     }
+
+    public function optionsReferenceCheck($evenRoute, &$data)
+    {
+        $this->start();
+        $data['moloni_reference'] = $this->language->get('moloni_reference');
+        $data['use_moloni_references'] = (isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference']) ? true : false;
+
+        foreach ($data['product_options'] as &$product_option) {
+            foreach ($product_option['product_option_value'] as &$product_option_value) {
+                $moloni_reference = $this->ocdb->getOptionMoloniReference($product_option_value['product_option_value_id']);
+                $product_option_value['moloni_reference'] = is_null($moloni_reference) ? '' : $moloni_reference;
+            }
+        }
+    }
+
+    /**
+     * @param $evenRoute
+     * @param $data
+     * @throws Exception
+     */
+    public function eventProductCheck($evenRoute, &$data)
+    {
+        $this->start();
+
+        error_log('Cenas');
+
+        if ($this->moloni->logged) {
+            if (isset($data[1])) {
+                $product = $data[1];
+
+                if (isset($product['product_option']) && isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference'] == true) {
+                    foreach ($product['product_option'] as $product_option) {
+                        if ($product_option['type'] === 'select') {
+                            foreach ($product_option['product_option_value'] as $product_option_value) {
+                                if (isset($product_option_value['moloni_reference'])) {
+                                    $this->ocdb->updateOptionMoloniReference($product_option_value['moloni_reference'], (int)$product_option_value['product_option_value_id']);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /* ============ Depois verificamos se ele tem a opção para criar artigos e criamos ============ */
+    }
+
+    public function toolsPriceHandler($product, $taxes = false, $order = false)
+    {
+        if (!$order) {
+            $order = $this->current_order;
+        }
+
+        if ($this->company['currency_id'] == '1') {
+            if ($this->settings['products_tax'] == 0) {
+                $values['price_without_taxes'] = $this->currency->convert($product['price'], $this->_myOrder['currency'], 'EUR');
+            } else {
+                $values['price_without_taxes'] = ($this->currency->convert($product['price'] + $product['tax'], $this->_myOrder['currency'], 'EUR') * 100) / (100 + $taxes[0]['value']);
+            }
+        } else {
+            $values['price_without_taxes'] = $this->currency->convert($product['price'], $this->_myOrder['currency'], 'EUR');
+        }
+        return $values['price_without_taxes'];
+    }
+
+    public function toolsDiscountsHandlers($totals)
+    {
+        $discount['document'] = 0;
+        $discount['products'] = 0;
+
+        foreach ($totals as $total) {
+            $start = strpos($total['title'], '(') + 1;
+            $end = strrpos($total['title'], ')');
+            switch ($total['code']) {
+                case 'total' :
+                    $this->_myOrder['net_value'] = $this->_myOrder['has_exchange'] ? ($this->currency->convert(abs($total['value']), $this->_myOrder['currency'], 'EUR')) : abs($total['value']);
+                    break;
+
+                case 'sub_total' :
+                    $discount['sub_total'] = $this->_myOrder['has_exchange'] ? ($this->currency->convert(abs($total['value']), $this->_myOrder['currency'], 'EUR')) : abs($total['value']);
+                    break;
+
+                case 'coupon' :
+                    if ($start && $end) {
+                        $discount['coupon'] = array(
+                            'code' => substr($total['title'], $start, $end - $start),
+                            'value' => $this->_myOrder['has_exchange'] ? ($this->currency->convert(abs($total['value']), $this->_myOrder['currency'], 'EUR')) : abs($total['value']),
+                            'shipping' => $this->ocdb->getShippingDiscount(substr($total['title'], $start, $end - $start))
+                        );
+                    }
+                    break;
+
+                case 'voucher':
+                    if ($start && $end) {
+                        $discount['voucher'] = array(
+                            'code' => substr($total['title'], $start, $end - $start),
+                            'value' => $this->_myOrder['has_exchange'] ? ($this->currency->convert(abs($total['value']), $this->_myOrder['currency'], 'EUR')) : abs($total['value'])
+                        );
+                    }
+                    break;
+            }
+        }
+
+        if (isset($discount['coupon'])) {
+            if ($discount['coupon']['shipping']) {
+                $discount['shipping'] = 100;
+            } else {
+                $discount['products'] = (($discount['coupon']['value'] * 100) / $discount['sub_total']);
+                $discount['shipping'] = 0;
+            }
+        }
+
+        if (isset($discount['voucher'])) {
+            $discount['document'] = (($discount['voucher']['value'] * 100) / $discount['sub_total']);
+        }
+
+        return $discount;
+    }
+
+    public function toolsTaxesHandler($oc_product, $order = false)
+    {
+        $taxes = false;
+        if (!$order) {
+            $order = $this->current_order;
+        }
+
+        if ($this->settings['products_tax'] == 0) {
+            $geo_zone = $this->ocdb->getClientGeoZone($order['payment_country_id'], $order['payment_zone_id']);
+            $geo_zone_id = (empty($geo_zone)) ? 0 : $geo_zone['geo_zone_id'] ;
+            $tax_rules = $this->ocdb->getTaxRules($oc_product['tax_class_id']);
+            foreach ($tax_rules as $tax_order => $tax_rule) {
+                $oc_tax = $this->ocdb->getTaxRate($tax_rule['tax_rate_id'], $geo_zone_id);
+
+                if (empty($oc_tax)) {
+                    continue;
+                }
+
+                foreach ($this->moloni_taxes as $moloni_tax) {
+                    if ((($oc_tax['type'] === 'P' && $moloni_tax['saft_type'] == 1) || ($oc_tax['type'] === 'F' && $moloni_tax['saft_type'] > 1)) &&
+                        (float)round($oc_tax['rate'], 5) === (float)round($moloni_tax['value'], 5)) {
+                        $taxes[] = array('tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => $tax_order, 'cumulative' => '1');
+                        break;
+                    }
+                }
+            }
+        } else {
+            foreach ($this->moloni_taxes as $moloni_tax) {
+                if ((int)$moloni_tax['tax_id'] === (int)$this->settings['products_tax']) {
+                    $taxes[] = array('tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => '0', 'cumulative' => '1');
+                    break;
+                }
+            }
+        }
+
+        return $taxes;
+    }
+
+    public function toolPaymentMethodHandler($name, $methods = false)
+    {
+        if (!$methods) {
+            $methods = $this->moloni->payment_methods->getAll();
+        }
+
+        foreach ($methods as $payment) {
+            if (strcasecmp($name, $payment['name']) == 0) {
+                return $payment['payment_method_id'];
+            }
+        }
+
+        $return = $this->moloni->payment_methods->insert(array('name' => $name));
+        return isset($return['payment_method_id']) ? $return['payment_method_id'] : false;
+    }
+
+    public function toolDeliveryMethodHandler($name, $methods = false)
+    {
+        if (!$methods) {
+            $methods = $this->moloni->delivery_methods->getAll();
+        }
+
+        foreach ($methods as $delivery) {
+            if (strcasecmp($name, $delivery['name']) == 0) {
+                return $delivery['delivery_method_id'];
+            }
+        }
+
+        $return = $this->moloni->delivery_methods->insert(array('name' => $name));
+        return isset($return['delivery_method_id']) ? $return['delivery_method_id'] : false;
+    }
+
+    public function toolCountryHandler($country_iso_2)
+    {
+        foreach ($this->countries as $country) {
+            if (strcasecmp($country_iso_2, $country['iso_3166_1']) == 0) {
+                return $country['country_id'];
+            }
+        }
+
+        // In case we don't find a country, we return 1 (Portugal)
+        return '1';
+    }
+
+    public function toolCategoryHandler($category_name)
+    {
+        $ml_categories = $this->moloni->categories->getAllCached();
+        if (!$ml_categories) {
+            $ml_categories = $this->moloni->categories->getAllRecursive(0);
+        }
+
+        foreach ($ml_categories as $category) {
+            if (strcasecmp($category['name'], $category_name) == 0) {
+                return $category['category_id'];
+            }
+        }
+
+        $values['name'] = $category_name;
+        $values['parent_id'] = '0';
+        $insert = $this->moloni->categories->insert($values);
+        return $insert['category_id'];
+    }
+
+    public function toolsExchangeHandler($from, $to)
+    {
+        $moloni_exchanges = $this->moloni->currency_exchange->getALl();
+        foreach ($moloni_exchanges as $exchange) {
+            if ($exchange['name'] == $from . '/' . $to) {
+                return $exchange['to'];
+            }
+        }
+
+        return '0';
+    }
+
+    public function toolNumberCreator($order)
+    {
+        $result = $this->moloni->customers->getNextNumber();
+        return $result['number'];
+    }
+
+    public function toolValidateZipCode($zip_code)
+    {
+        $zip_code = trim(str_replace(' ', '', $zip_code));
+        $zip_code = preg_replace('/[^0-9]/', '', $zip_code);
+
+        if (strlen($zip_code) == 7) {
+            $zip_code = $zip_code[0] . $zip_code[1] . $zip_code[2] . $zip_code[3] . '-' . $zip_code[4] . $zip_code[5] . $zip_code[6];
+        }
+
+        if (strlen($zip_code) == 6) {
+            $zip_code = $zip_code[0] . $zip_code[1] . $zip_code[2] . $zip_code[3] . '-' . $zip_code[4] . $zip_code[5] . '0';
+        }
+
+        if (strlen($zip_code) == 5) {
+            $zip_code = $zip_code[0] . $zip_code[1] . $zip_code[2] . $zip_code[3] . '-' . $zip_code[4] . '00';
+        }
+
+        if (strlen($zip_code) == 4) {
+            $zip_code .= '-' . '000';
+        }
+
+        if (strlen($zip_code) == 3) {
+            $zip_code .= '0-' . '000';
+        }
+
+        if (strlen($zip_code) == 2) {
+            $zip_code .= '00-' . '000';
+        }
+
+        if (strlen($zip_code) == 1) {
+            $zip_code .= '000-' . '000';
+        }
+
+        if (strlen($zip_code) == 0) {
+            $zip_code = '1000-100';
+        }
+
+        return (preg_match("/[0-9]{4}\-[0-9]{3}/", $zip_code)) ? $zip_code : '1000-100';
+    }
+
+    public function toolRemoveExtraTax($total_value, $moloni_tax_value)
+    {
+        if(isset($this->settings['remove_extra_tax']) && empty($this->settings['remove_extra_tax'])){
+            $priceExtraTax = (float)($total_value);
+        } else {
+            $priceExtraTax = $total_value / (float)(1 . '.' . $moloni_tax_value);
+        }
+
+        return $this->_myOrder['has_exchange'] ? $this->currency->convert($priceExtraTax, $this->_myOrder['currency'], 'EUR') : $priceExtraTax;
+    }
+
+    public function toolRemoveExtraTaxShipping($total_value, $moloni_tax_value)
+    {
+        if(isset($this->settings['remove_extra_tax_shipping']) && empty($this->settings['remove_extra_tax_shipping'])){
+            $priceExtraTaxShipping = (float)($total_value);
+        } else {
+            $priceExtraTaxShipping = $total_value / (float)(1 . '.' . $moloni_tax_value);
+        }
+
+        return $this->_myOrder['has_exchange'] ? $this->currency->convert($priceExtraTaxShipping, $this->_myOrder['currency'], 'EUR') : $priceExtraTaxShipping;
+    }
+
 }
