@@ -40,6 +40,10 @@ $_['tooltip']['measure_unit'] = "Choose a unit measurement to be used by default
 $_['tooltip']['order_auto'] = "Create a documento automatically when the order is set to paid.";
 $_['tooltip']['moloni_options_reference'] = "Enable the use of referecence sufixes in options of type 'Select', this is usefull to create unique products in Moloni.";
 $_['tooltip']['products_auto'] = "Create products automatically when they are inserted or edited in Opencart.";
+$_['tooltip']['products_description_document'] = "Incluir resumo de artigos em documentos.";
+$_['tooltip']['products_description_moloni'] = "Incluir resumo de artigos na criação da ficha de artigo.";
+$_['tooltip']['remove_extra_tax'] = "Remover IVA nas taxas extra (e.g Taxas de pagamento).";
+$_['tooltip']['remove_extra_tax_shipping'] = "Remover IVA nos portes";
 
 $_['tooltip']['debug_console'] = "Show a console with all the requests to moloni API.";
 $_['tooltip']['git_username'] = "Choose the Github username you which to update from (default: nunong21)";
@@ -95,6 +99,10 @@ $_['label']['products_at_category'] = "AT Category";
 $_['label']['measure_unit'] = "Measurement unit";
 
 $_['label']['products_auto'] = "Create products automatically";
+$_['label']['products_description_document'] = "Incluir resumo de artigo em documentos";
+$_['label']['products_description_moloni'] = "Incluir resumo na ficha de artigo";
+$_['label']['remove_extra_tax'] = "Remover IVA nas taxas extra";
+$_['label']['remove_extra_tax_shipping'] = "Remover IVA nos portes";
 $_['label']['moloni_options_reference'] = "Use references on options";
 
 $_['label']['order_since'] = "Show orders since";

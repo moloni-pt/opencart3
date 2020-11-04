@@ -16,7 +16,7 @@
     <div class="container-fluid">
 
         {% if debug_window %}
-            {% include "extension/module/moloni/debug.twig"  %}
+            {{ debug_console }}
         {% endif %}
 
         {% if error_warnings %}
