@@ -18,11 +18,11 @@
     <div class="container-fluid">
 
         {% if debug_window %}
-            {% include "extension/module/moloni/debug.twig"  %}
+            {{ debug_console }}
         {% endif %}
 
         {% if error_warnings or messages %}
-            {% include "extension/module/moloni/errors.twig"  %}
+            {{ errors_template }}
         {% endif %}
 
         <div class="panel panel-default">

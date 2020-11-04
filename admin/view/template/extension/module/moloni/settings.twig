@@ -17,11 +17,11 @@
     <div class="container-fluid">
 
         {% if debug_window %}
-            {% include "extension/module/moloni/debug.twig"  %}
+            {{ debug_console }}
         {% endif %}
 
         {% if error_warnings %}
-            {% include "extension/module/moloni/errors.twig"  %}
+            {{ errors_template }}
         {% endif %}
 
         <div class="panel panel-default">
@@ -271,6 +271,54 @@
                                                 {{label.yes}}
                                             </label>
                                             <label class="radio-inline"><input type="radio" name="moloni[products_auto]" value="0" {{ options.products_auto == "0" ? 'checked="checked"' : ""}}>
+                                                {{label.no}}
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.products_description_document|escape('html') }}">{{label.products_description_document}}</span></label>
+                                        <div class="col-sm-10">
+                                            <label class="radio-inline"><input type="radio" name="moloni[products_description_document]" value="1" {{ options.products_description_document == "1" ? 'checked="checked"' : ""}}>
+                                                {{label.yes}}
+                                            </label>
+                                            <label class="radio-inline"><input type="radio" name="moloni[products_description_document]" value="0" {{ options.products_description_document == "0" ? 'checked="checked"' : ""}}>
+                                                {{label.no}}
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.products_description_moloni|escape('html') }}">{{label.products_description_moloni}}</span></label>
+                                        <div class="col-sm-10">
+                                            <label class="radio-inline"><input type="radio" name="moloni[products_description_moloni]" value="1" {{ options.products_description_moloni == "1" ? 'checked="checked"' : ""}}>
+                                                {{label.yes}}
+                                            </label>
+                                            <label class="radio-inline"><input type="radio" name="moloni[products_description_moloni]" value="0" {{ options.products_description_moloni == "0" ? 'checked="checked"' : ""}}>
+                                                {{label.no}}
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.remove_extra_tax|escape('html') }}">{{label.remove_extra_tax}}</span></label>
+                                        <div class="col-sm-10">
+                                            <label class="radio-inline"><input type="radio" name="moloni[remove_extra_tax]" value="1" {{ options.remove_extra_tax == "1" ? 'checked="checked"' : ""}}>
+                                                {{label.yes}}
+                                            </label>
+                                            <label class="radio-inline"><input type="radio" name="moloni[remove_extra_tax]" value="0" {{ options.remove_extra_tax == "0" ? 'checked="checked"' : ""}}>
+                                                {{label.no}}
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.remove_extra_tax_shipping|escape('html') }}">{{label.remove_extra_tax_shipping}}</span></label>
+                                        <div class="col-sm-10">
+                                            <label class="radio-inline"><input type="radio" name="moloni[remove_extra_tax_shipping]" value="1" {{ options.remove_extra_tax_shipping == "1" ? 'checked="checked"' : ""}}>
+                                                {{label.yes}}
+                                            </label>
+                                            <label class="radio-inline"><input type="radio" name="moloni[remove_extra_tax_shipping]" value="0" {{ options.remove_extra_tax_shipping == "0" ? 'checked="checked"' : ""}}>
                                                 {{label.no}}
                                             </label>
                                         </div>

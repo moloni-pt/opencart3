@@ -87,7 +87,7 @@ class customers
         $values['city'] = $input['city'];
         $values['maturity_date_id'] = $input['maturity_date_id'];
         $values['payment_method_id'] = $input['payment_method_id'];
-        $values['delivery_method_id'] = $input['delivery_method_id'];
+        $values['delivery_method_id'] = isset($input['delivery_method_id']) ? $input['delivery_method_id'] : 0;
         $values['country_id'] = $input['country_id'];
         $values['language_id'] = $input['language_id'];
         $values['copies'] = $input['copies'];
