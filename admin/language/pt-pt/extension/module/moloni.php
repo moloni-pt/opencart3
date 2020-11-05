@@ -72,13 +72,14 @@ $_['label']['shipping_details'] = "Shipping Details";
 $_['label']['shipping_document'] = "Shipping Document";
 $_['label']['store_location'] = "Delivery Departure Address";
 
-$_['label']['invoices'] = "Invoices";
-$_['label']['invoiceReceipts'] = "Invoice Receipts";
-$_['label']['simplifiedInvoices'] = "Simplified Invoices";
-$_['label']['billsOfLading'] = "Bills of Landing";
-$_['label']['deliveryNotes'] = "Delivery Notes";
-$_['label']['internalDocuments'] = "Internal Documents";
-$_['label']['estimates'] = "Estimates";
+$_['label']['invoices'] = "Faturas";
+$_['label']['invoiceReceipts'] = "Faturas/Recibo";
+$_['label']['simplifiedInvoices'] = "Faturas Simplificadas";
+$_['label']['billsOfLading'] = "Guia de Transporte";
+$_['label']['deliveryNotes'] = "Guia de Remessa";
+$_['label']['internalDocuments'] = "Documentos Internos";
+$_['label']['estimates'] = "Orçamentos";
+$_['label']['purchaseOrder'] = "Nota de encomenda";
 
 $_['label']['client_update'] = "Update client";
 $_['label']['client_email'] = "Send email";

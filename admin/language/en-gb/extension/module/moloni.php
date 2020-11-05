@@ -82,6 +82,7 @@ $_['label']['billsOfLading'] = "Bills of Landing";
 $_['label']['deliveryNotes'] = "Delivery Notes";
 $_['label']['internalDocuments'] = "Internal Documents";
 $_['label']['estimates'] = "Estimates";
+$_['label']['purchaseOrder'] = "Purchase Order";
 
 $_['label']['client_update'] = "Update client";
 $_['label']['client_email'] = "Send email";

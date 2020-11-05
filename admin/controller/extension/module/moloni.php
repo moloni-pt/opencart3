@@ -122,7 +122,6 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $this->start();
         if ($this->allowed()) {
-
             if ($this->ocdb->getTotalStores() > 0 && !isset($this->request->get['store_id'])) {
                 $this->data['content'] = $this->getStoreListData();
                 $this->page = 'store_list';
@@ -742,6 +741,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->document_type['deliveryNotes'] = array('name' => 'deliveryNotes', 'url' => 'NotasEncomenda');
         $this->document_type['internalDocuments'] = array('name' => 'internalDocuments', 'url' => 'DocumentosInternos');
         $this->document_type['estimates'] = array('name' => 'estimates', 'url' => 'Orcamentos');
+        $this->document_type['purchaseOrder'] = array('name' => 'purchaseOrder', 'url' => 'NotasEncomenda');
 
         return $this->document_type;
     }
