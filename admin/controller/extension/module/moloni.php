@@ -181,6 +181,9 @@ class ControllerExtensionModuleMoloni extends Controller
             } else {
                 $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
             }
+        } else {
+            $json['success'] = 'Success: You have modified orders!';
+            $this->response->setOutput(json_encode($json));
         }
     }
 
