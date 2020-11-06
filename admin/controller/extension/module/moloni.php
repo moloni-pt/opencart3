@@ -153,32 +153,34 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function invoice()
     {
-        $this->start();
-        if ($this->allowed()) {
-            $this->page = 'home';
+        if((isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni' && isset($this->settings['order_auto']) && $this->settings['order_auto']) || (!isset($this->request->get['evento']) || empty($this->request->get['evento']))){
+            $this->start();
+            if ($this->allowed()) {
+                $this->page = 'home';
 
-            $order_id = $this->request->get['order_id'];
-            if ($order_id) {
-                $parsed = json_decode($order_id, true);
-                if (is_array($parsed)) {
-                    foreach ($parsed as $order_id) {
-                        $this->createDocumentFromOrder($order_id);
+                $order_id = $this->request->get['order_id'];
+                if ($order_id) {
+                    $parsed = json_decode($order_id, true);
+                    if (is_array($parsed)) {
+                        foreach ($parsed as $order_id) {
+                            $this->createDocumentFromOrder($order_id);
+                        }
+                    } else {
+                        $this->createDocumentFromOrder($this->request->get['order_id']);
                     }
-                } else {
-                    $this->createDocumentFromOrder($this->request->get['order_id']);
                 }
+
+                $this->data['content'] = $this->getIndexData();
             }
 
-            $this->data['content'] = $this->getIndexData();
-        }
-
-        $this->loadDefaults();
-        if(isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni'){
-            $json['error'] = isset($this->data['messages']['errors']) ? implode(" - ", $this->data['messages']['errors'][0]) : NULL;
-            $json['success'] = isset($this->data['messages']['success']) ? implode(" - ",$this->data['messages']['success'][0]) : NULL;
-            $this->response->setOutput(json_encode($json));
-        } else {
-            $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+            $this->loadDefaults();
+            if(isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni'){
+                $json['error'] = isset($this->data['messages']['errors']) ? implode(" - ", $this->data['messages']['errors'][0]) : NULL;
+                $json['success'] = isset($this->data['messages']['success']) ? implode(" - ",$this->data['messages']['success'][0]) : NULL;
+                $this->response->setOutput(json_encode($json));
+            } else {
+                $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+            }
         }
     }
 
