@@ -153,8 +153,8 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function invoice()
     {
+        $this->start();
         if((isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni' && isset($this->settings['order_auto']) && $this->settings['order_auto']) || (!isset($this->request->get['evento']) || empty($this->request->get['evento']))){
-            $this->start();
             if ($this->allowed()) {
                 $this->page = 'home';
 
