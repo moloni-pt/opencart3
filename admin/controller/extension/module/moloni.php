@@ -173,7 +173,13 @@ class ControllerExtensionModuleMoloni extends Controller
         }
 
         $this->loadDefaults();
-        $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+        if(isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni'){
+            $json['error'] = isset($this->data['messages']['errors']) ? implode(" - ", $this->data['messages']['errors'][0]) : NULL;
+            $json['success'] = isset($this->data['messages']['success']) ? implode(" - ",$this->data['messages']['success'][0]) : NULL;
+            $this->response->setOutput(json_encode($json));
+        } else {
+            $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+        }
     }
 
     private function allowed()
@@ -1000,6 +1006,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->addEvent($this->eventGroup . '_options_reference', 'admin/view/catalog/product_form/before', $this->modulePathBase . 'optionsReferenceCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_edit', 'admin/model/catalog/product/editProduct/after', $this->modulePathBase . 'eventProductCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_add', 'admin/model/catalog/product/addProduct/after', $this->modulePathBase . 'eventProductCheck');
+        $this->model_setting_event->addEvent($this->eventGroup . '_order_history_check_paid', 'catalog/model/checkout/order/addOrderHistory/after', 'event/moloni/eventCreateDocument');
     }
 
     public function uninstall()
@@ -1012,6 +1019,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_options_reference');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_edit');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_add');
+        $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_history_check_paid');
     }
 
     public function patch()
