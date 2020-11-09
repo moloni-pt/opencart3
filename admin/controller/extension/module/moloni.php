@@ -345,6 +345,15 @@ class ControllerExtensionModuleMoloni extends Controller
                             $document_update['document_id'] = $document_details['document_id'];
                             $document_update['status'] = '1';
 
+                            if(isset($this->settings['client_email']) && $this->settings['client_email']){
+                                $document_update['send_email'] = [];
+                                $document_update['send_email'][] = [
+                                    'email' => $order['email'],
+                                    'name' => (!empty($order['payment_company']) ? $order['payment_company'] : $order['payment_firstname'] . ' ' . $order['payment_lastname']),
+                                    'msg' => ''
+                                ];
+                            }
+
                             $this->moloni->documents($this->settings['document_type'])->update($document_update);
                         }
                     } else {
