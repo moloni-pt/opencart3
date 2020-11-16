@@ -153,26 +153,37 @@ class ControllerExtensionModuleMoloni extends Controller
     public function invoice()
     {
         $this->start();
-        if ($this->allowed()) {
-            $this->page = 'home';
+        if((isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni' && isset($this->settings['order_auto']) && $this->settings['order_auto']) || (!isset($this->request->get['evento']) || empty($this->request->get['evento']))){
+            if ($this->allowed()) {
+                $this->page = 'home';
 
-            $order_id = $this->request->get['order_id'];
-            if ($order_id) {
-                $parsed = json_decode($order_id, true);
-                if (is_array($parsed)) {
-                    foreach ($parsed as $order_id) {
-                        $this->createDocumentFromOrder($order_id);
+                $order_id = $this->request->get['order_id'];
+                if ($order_id) {
+                    $parsed = json_decode($order_id, true);
+                    if (is_array($parsed)) {
+                        foreach ($parsed as $order_id) {
+                            $this->createDocumentFromOrder($order_id);
+                        }
+                    } else {
+                        $this->createDocumentFromOrder($this->request->get['order_id']);
                     }
-                } else {
-                    $this->createDocumentFromOrder($this->request->get['order_id']);
                 }
+
+                $this->data['content'] = $this->getIndexData();
             }
 
-            $this->data['content'] = $this->getIndexData();
+            $this->loadDefaults();
+            if(isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni'){
+                $json['error'] = isset($this->data['messages']['errors']) ? implode(" - ", $this->data['messages']['errors'][0]) : NULL;
+                $json['success'] = isset($this->data['messages']['success']) ? implode(" - ",$this->data['messages']['success'][0]) : NULL;
+                $this->response->setOutput(json_encode($json));
+            } else {
+                $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+            }
+        } else {
+            $json['success'] = 'Success: You have modified orders!';
+            $this->response->setOutput(json_encode($json));
         }
-
-        $this->loadDefaults();
-        $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
     }
 
     private function allowed()
@@ -332,6 +343,15 @@ class ControllerExtensionModuleMoloni extends Controller
                         if ($this->settings['document_status'] == '1') {
                             $document_update['document_id'] = $document_details['document_id'];
                             $document_update['status'] = '1';
+
+                            if(isset($this->settings['client_email']) && $this->settings['client_email']){
+                                $document_update['send_email'] = [];
+                                $document_update['send_email'][] = [
+                                    'email' => $order['email'],
+                                    'name' => (!empty($order['payment_company']) ? $order['payment_company'] : $order['payment_firstname'] . ' ' . $order['payment_lastname']),
+                                    'msg' => ''
+                                ];
+                            }
 
                             $this->moloni->documents($this->settings['document_type'])->update($document_update);
                         }
@@ -1000,6 +1020,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->addEvent($this->eventGroup . '_options_reference', 'admin/view/catalog/product_form/before', $this->modulePathBase . 'optionsReferenceCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_edit', 'admin/model/catalog/product/editProduct/after', $this->modulePathBase . 'eventProductCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_add', 'admin/model/catalog/product/addProduct/after', $this->modulePathBase . 'eventProductCheck');
+        $this->model_setting_event->addEvent($this->eventGroup . '_order_history_check_paid', 'catalog/model/checkout/order/addOrderHistory/after', 'event/moloni/eventCreateDocument');
     }
 
     public function uninstall()
@@ -1012,6 +1033,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_options_reference');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_edit');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_add');
+        $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_history_check_paid');
     }
 
     public function patch()
