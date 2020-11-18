@@ -649,6 +649,9 @@ class ControllerExtensionModuleMoloni extends Controller
                             }
                             $values['taxes'][] = array('tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => '0', 'cumulative' => '1');
                             break;
+                        } else {
+                            $values['price'] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'], $this->_myOrder['currency'], 'EUR') : $total['value'];
+                            $values['exemption_reason'] = $this->settings['shipping_tax_exemption'];
                         }
                     }
                 }
