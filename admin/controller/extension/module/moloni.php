@@ -1275,7 +1275,11 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function toolDeliveryMethodHandler($name, $methods = false)
     {
-        $nameMethod = preg_replace('/\(([^\)]*)\)/', '()', $name, 1);
+        $nameMethod = preg_replace('/\(([^\)]*)\)/', '', $name, 1);
+
+        while(ctype_space(substr($nameMethod, -1))){
+            $nameMethod = substr($nameMethod, 0,-1);
+        }
 
         if (!$methods) {
             $methods = $this->moloni->delivery_methods->getAll();
