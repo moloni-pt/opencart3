@@ -648,6 +648,9 @@ class ControllerExtensionModuleMoloni extends Controller
                             }
                             $values['taxes'][] = array('tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => '0', 'cumulative' => '1');
                             break;
+                        } else {
+                            $values['price'] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'], $this->_myOrder['currency'], 'EUR') : $total['value'];
+                            $values['exemption_reason'] = $this->settings['shipping_tax_exemption'];
                         }
                     }
                 }
@@ -1272,17 +1275,23 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function toolDeliveryMethodHandler($name, $methods = false)
     {
+        $nameMethod = preg_replace('/\(([^\)]*)\)/', '', $name, 1);
+
+        while(ctype_space(substr($nameMethod, -1))){
+            $nameMethod = substr($nameMethod, 0,-1);
+        }
+
         if (!$methods) {
             $methods = $this->moloni->delivery_methods->getAll();
         }
 
         foreach ($methods as $delivery) {
-            if (strcasecmp($name, $delivery['name']) == 0) {
+            if (strcasecmp($nameMethod, $delivery['name']) == 0) {
                 return $delivery['delivery_method_id'];
             }
         }
 
-        $return = $this->moloni->delivery_methods->insert(array('name' => $name));
+        $return = $this->moloni->delivery_methods->insert(array('name' => $nameMethod));
         return isset($return['delivery_method_id']) ? $return['delivery_method_id'] : false;
     }
 
