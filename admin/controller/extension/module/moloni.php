@@ -365,7 +365,7 @@ class ControllerExtensionModuleMoloni extends Controller
                             "'>ver documento</a>";
 
                         $this->messages['errors'] = array(
-                            'title' => 'Erro ao inserir documento de transporte',
+                            'title' => 'Erro ao inserir documento',
                             'message' => $message,
                             'link' => $link
                         );
@@ -462,7 +462,12 @@ class ControllerExtensionModuleMoloni extends Controller
         }
 
         $moloni_customer['country_id'] = $this->toolCountryHandler($order['payment_iso_code_2']);
-        $moloni_customer['language_id'] = (int)$moloni_customer['country_id'] === 1 ? 1 : 2;
+        if((int)$moloni_customer['country_id'] === 1){
+            $moloni_customer['language_id'] = 1;
+        } else {
+            $country_spanish = array('MX', 'CO', 'ES', 'AR', 'PE', 'VE', 'CL', 'EC', 'GT', 'CU', 'BO', 'DO', 'HN', 'PY', 'SV', 'NI', 'CR', 'PA', 'UY', 'PR', 'GQ');
+            $moloni_customer['language_id'] = in_array($order['payment_iso_code_2'], $country_spanish)? 3 : 2;
+        }
 
         $moloni_customer['copies'] = $this->company['copies'];
 
@@ -1227,10 +1232,10 @@ class ControllerExtensionModuleMoloni extends Controller
         }
 
         if ($this->settings['products_tax'] == 0) {
-            $geo_zone = $this->ocdb->getClientGeoZone($order['payment_country_id'], $order['payment_zone_id']);
-            $geo_zone_id = (empty($geo_zone)) ? 0 : $geo_zone['geo_zone_id'] ;
             $tax_rules = $this->ocdb->getTaxRules($oc_product['tax_class_id']);
             foreach ($tax_rules as $tax_order => $tax_rule) {
+                $geo_zone = ($tax_rule['based'] == 'shipping') ? $this->ocdb->getClientGeoZone($order['shipping_country_id'], $order['shipping_zone_id']) : $this->ocdb->getClientGeoZone($order['payment_country_id'], $order['payment_zone_id']);
+                $geo_zone_id = !empty($geo_zone) ? $geo_zone : 0;
                 $oc_tax = $this->ocdb->getTaxRate($tax_rule['tax_rate_id'], $geo_zone_id);
 
                 if (empty($oc_tax)) {
@@ -1238,7 +1243,8 @@ class ControllerExtensionModuleMoloni extends Controller
                 }
 
                 foreach ($this->moloni_taxes as $moloni_tax) {
-                    if ((($oc_tax['type'] === 'P' && $moloni_tax['saft_type'] == 1) || ($oc_tax['type'] === 'F' && $moloni_tax['saft_type'] > 1)) &&
+                    if ((($oc_tax['type'] === 'P' && $moloni_tax['saft_type'] == 1) || ($oc_tax['type'] === 'F' && $moloni_tax['saft_type'] > 1))
+                        && (($this->company['country_id'] != 1) || ($this->company['country_id'] == 1 && empty($taxes))) &&
                         (float)round($oc_tax['rate'], 5) === (float)round($moloni_tax['value'], 5)) {
                         $taxes[] = array('tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => $tax_order, 'cumulative' => '1');
                         break;

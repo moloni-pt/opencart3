@@ -161,8 +161,8 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
     public function getCustomFieldsAll()
     {
-        $sql = "SELECT cf.*, "
-            . "(SELECT cfd.name FROM " . DB_PREFIX . "custom_field_description cfd WHERE cfd.custom_field_id = cf.custom_field_id AND cfd.language_id = '" . (int) $this->language_id . "') AS name "
+        $sql = "SELECT cf.custom_field_id, "
+            . "(SELECT cfd.name FROM " . DB_PREFIX . "custom_field_description cfd WHERE cfd.custom_field_id = cf.custom_field_id LIMIT 1) AS name "
             . " FROM `" . DB_PREFIX . "custom_field` cf";
 
         $query = $this->db->query($sql);
@@ -189,7 +189,7 @@ class ModelExtensionModuleMoloniOcdb extends Model
     {
         $sql = "SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone WHERE country_id = '" . $country_id . "' AND (zone_id = '" . $payment_zone_id . "' OR zone_id = 0)";
         $query = $this->db->query($sql);
-        $result = $query->row;
+        $result = $query->rows;
 
         return $result;
     }
@@ -205,11 +205,21 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
     public function getTaxRate($tax_rate_id, $geo_zone_id)
     {
-        $sql = "SELECT * FROM " . DB_PREFIX . "tax_rate WHERE tax_rate_id = '" . $tax_rate_id . "' AND geo_zone_id = " . $geo_zone_id . " ";
-        $query = $this->db->query($sql);
-        $result = $query->row;
+        $taxRate = 0;
+        foreach($geo_zone_id as $geo_zone){
+            $sql = "SELECT * FROM " . DB_PREFIX . "tax_rate WHERE tax_rate_id = '" . $tax_rate_id . "' AND geo_zone_id = " . $geo_zone['geo_zone_id'] . " ";
+            $query = $this->db->query($sql);
+            $result = $query->row;
+            if(!empty($result)){
+                if($geo_zone['zone_id'] != 0){
+                    $taxRate = $result;
+                } elseif (empty($taxRate)){
+                    $taxRate = $result;
+                }
+            }
+        }
 
-        return $result;
+        return $taxRate;
     }
 
     public function getShippingDiscount($code)
