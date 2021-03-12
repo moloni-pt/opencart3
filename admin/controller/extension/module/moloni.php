@@ -27,6 +27,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private $document_type;
     private $_myOrder;
     private $messages = [];
+    private $hasNegative = false;
 
     public function __construct($registry)
     {
@@ -301,7 +302,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     $shipping_document_insert = $this->moloni->documents('billsOfLading')->insert($document);
                     if ($shipping_document_insert) {
                         $shipping_document_details = $this->moloni->documents()->getOne($shipping_document_insert['document_id']);
-                        if ($this->settings['document_status'] == '1') {
+                        if ($this->settings['document_status'] == '1' && !$this->hasNegative) {
                             if ((float)round($shipping_document_details['net_value'], 2) == (float)round($this->_myOrder['net_value'], 2)) {
                                 $document['document_id'] = $shipping_document_details['document_id'];
                                 $document['status'] = '1';
@@ -327,6 +328,11 @@ class ControllerExtensionModuleMoloni extends Controller
                                     'fatal' => 0
                                 );
                             }
+                        } elseif ($this->hasNegative){
+                            $this->messages['errors'] = array(
+                                'title' => 'Documento inserido em rascunho pois tem preços a negativo',
+                                'message' => 'Documento possui promoções ou taxas a negativo',
+                            );
                         }
                     }
                 }
@@ -340,7 +346,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $insert = $this->moloni->documents($this->settings['document_type'])->insert($document);
                 if ($insert) {
                     $document_details = $this->moloni->documents()->getOne($insert['document_id']);
-                    if (round($document_details['net_value'], 2) == round($this->_myOrder['net_value'], 2)) {
+                    if ((round($document_details['net_value'], 2) == round($this->_myOrder['net_value'], 2)) && !$this->hasNegative) {
                         if ($this->settings['document_status'] == '1') {
                             $document_update['document_id'] = $document_details['document_id'];
                             $document_update['status'] = '1';
@@ -357,7 +363,7 @@ class ControllerExtensionModuleMoloni extends Controller
                             $this->moloni->documents($this->settings['document_type'])->update($document_update);
                         }
                     } else {
-                        $message = 'Os totais não batem certo - moloni '
+                        $message = ($this->hasNegative) ? 'Encomenda possui taxas/promoções a negativo' : 'Os totais não batem certo - moloni '
                             . $document_details['net_value'] . '€ | encomenda '
                             . $this->_myOrder['net_value'] . '€';
                         $link = "<a target='_BLANK' href='https://moloni.pt/" . $this->company['slug'] . '/' .
@@ -365,7 +371,7 @@ class ControllerExtensionModuleMoloni extends Controller
                             "'>ver documento</a>";
 
                         $this->messages['errors'] = array(
-                            'title' => 'Erro ao inserir documento',
+                            'title' => 'Erro ao inserir documento | Documento inserido em rascunho',
                             'message' => $message,
                             'link' => $link
                         );
@@ -614,6 +620,11 @@ class ControllerExtensionModuleMoloni extends Controller
             if (!in_array($total['code'],['total','sub_total','tax'])) {
 
                 $values = [];
+
+                if((float)$total['value'] < 0){
+                    $this->hasNegative = true;
+                    continue;
+                }
 
                 if ($total['code'] === 'shipping') {
                     $moloni_reference = 'Portes';

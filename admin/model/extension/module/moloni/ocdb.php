@@ -206,17 +206,24 @@ class ModelExtensionModuleMoloniOcdb extends Model
     public function getTaxRate($tax_rate_id, $geo_zone_id)
     {
         $taxRate = 0;
-        foreach($geo_zone_id as $geo_zone){
-            $sql = "SELECT * FROM " . DB_PREFIX . "tax_rate WHERE tax_rate_id = '" . $tax_rate_id . "' AND geo_zone_id = " . $geo_zone['geo_zone_id'] . " ";
-            $query = $this->db->query($sql);
-            $result = $query->row;
-            if(!empty($result)){
-                if($geo_zone['zone_id'] != 0){
-                    $taxRate = $result;
-                } elseif (empty($taxRate)){
-                    $taxRate = $result;
+        if(is_array($geo_zone_id) && !empty($geo_zone_id)){
+            foreach($geo_zone_id as $geo_zone){
+                $sql = "SELECT * FROM " . DB_PREFIX . "tax_rate WHERE tax_rate_id = '" . $tax_rate_id . "' AND geo_zone_id = " . $geo_zone['geo_zone_id'] . " ";
+                $query = $this->db->query($sql);
+                $result = $query->row;
+                if(!empty($result)){
+                    if($geo_zone['zone_id'] != 0){
+                        $taxRate = $result;
+                    } elseif (empty($taxRate)){
+                        $taxRate = $result;
+                    }
                 }
             }
+        } else {
+            $sql = "SELECT * FROM " . DB_PREFIX . "tax_rate WHERE tax_rate_id = '" . $tax_rate_id . "' AND geo_zone_id = " . $geo_zone_id . " ";
+            $query = $this->db->query($sql);
+            $result = $query->row;
+            $taxRate = $result;
         }
 
         return $taxRate;
