@@ -778,7 +778,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->document_type['invoiceReceipts'] = array('name' => 'invoiceReceipts', 'url' => 'FaturasRecibo');
         $this->document_type['simplifiedInvoices'] = array('name' => 'simplifiedInvoices', 'url' => 'FaturaSimplificada');
         $this->document_type['billsOfLading'] = array('name' => 'billsOfLading', 'url' => 'GuiasTransporte');
-        $this->document_type['deliveryNotes'] = array('name' => 'deliveryNotes', 'url' => 'NotasEncomenda');
+        $this->document_type['deliveryNotes'] = array('name' => 'deliveryNotes', 'url' => 'GuiasRemessa');
+        $this->document_type['purchaseOrder'] = array('name' => 'purchaseOrder', 'url' => 'NotasEncomenda');
         $this->document_type['internalDocuments'] = array('name' => 'internalDocuments', 'url' => 'DocumentosInternos');
         $this->document_type['estimates'] = array('name' => 'estimates', 'url' => 'Orcamentos');
 
