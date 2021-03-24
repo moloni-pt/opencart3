@@ -1040,7 +1040,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->addEvent($this->eventGroup . '_options_reference', 'admin/view/catalog/product_form/before', $this->modulePathBase . 'optionsReferenceCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_edit', 'admin/model/catalog/product/editProduct/after', $this->modulePathBase . 'eventProductCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_add', 'admin/model/catalog/product/addProduct/after', $this->modulePathBase . 'eventProductCheck');
-        $this->model_setting_event->addEvent($this->eventGroup . '_order_history_check_paid', 'catalog/model/checkout/order/addOrderHistory/after', 'event/moloni/eventCreateDocument');
+        $this->model_setting_event->addEvent($this->eventGroup . '_order_edit_check_paid', 'catalog/model/checkout/order/addOrderHistory/after', 'extension/module/moloni/eventCreateDocument');
+        $this->model_setting_event->addEvent($this->eventGroup . '_order_add_check_paid', 'catalog/model/checkout/order/addOrder/after', 'extension/module/moloni/eventCreateDocument');
     }
 
     public function uninstall()
@@ -1053,7 +1054,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_options_reference');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_edit');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_add');
-        $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_history_check_paid');
+        $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_edit_check_paid');
+        $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_add_check_paid');
     }
 
     public function patch()
