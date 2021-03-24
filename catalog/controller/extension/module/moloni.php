@@ -1,6 +1,6 @@
 <?php
 
-class ControllerEventMoloni extends Controller {
+class ControllerExtensionModuleMoloni extends Controller {
     // model/checkout/order/addOrderHistory/after
     public function eventCreateDocument(&$route, &$args, &$output)
     {

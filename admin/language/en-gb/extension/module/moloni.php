@@ -80,6 +80,7 @@ $_['label']['invoiceReceipts'] = "Invoice Receipts";
 $_['label']['simplifiedInvoices'] = "Simplified Invoices";
 $_['label']['billsOfLading'] = "Bills of Landing";
 $_['label']['deliveryNotes'] = "Delivery Notes";
+$_['label']['purchaseOrder'] = "Purchase Order";
 $_['label']['internalDocuments'] = "Internal Documents";
 $_['label']['estimates'] = "Estimates";
 $_['label']['purchaseOrder'] = "Purchase Order";

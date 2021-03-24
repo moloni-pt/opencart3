@@ -27,6 +27,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private $document_type;
     private $_myOrder;
     private $messages = [];
+    private $hasNegative = false;
 
     public function __construct($registry)
     {
@@ -300,7 +301,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     $shipping_document_insert = $this->moloni->documents('billsOfLading')->insert($document);
                     if ($shipping_document_insert) {
                         $shipping_document_details = $this->moloni->documents()->getOne($shipping_document_insert['document_id']);
-                        if ($this->settings['document_status'] == '1') {
+                        if ($this->settings['document_status'] == '1' && !$this->hasNegative) {
                             if ((float)round($shipping_document_details['net_value'], 2) == (float)round($this->_myOrder['net_value'], 2)) {
                                 $document['document_id'] = $shipping_document_details['document_id'];
                                 $document['status'] = '1';
@@ -326,6 +327,11 @@ class ControllerExtensionModuleMoloni extends Controller
                                     'fatal' => 0
                                 );
                             }
+                        } elseif ($this->hasNegative){
+                            $this->messages['errors'] = array(
+                                'title' => 'Documento inserido em rascunho pois tem preços a negativo',
+                                'message' => 'Documento possui promoções ou taxas a negativo',
+                            );
                         }
                     }
                 }
@@ -339,7 +345,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $insert = $this->moloni->documents($this->settings['document_type'])->insert($document);
                 if ($insert) {
                     $document_details = $this->moloni->documents()->getOne($insert['document_id']);
-                    if (round($document_details['net_value'], 2) == round($this->_myOrder['net_value'], 2)) {
+                    if ((round($document_details['net_value'], 2) == round($this->_myOrder['net_value'], 2)) && !$this->hasNegative) {
                         if ($this->settings['document_status'] == '1') {
                             $document_update['document_id'] = $document_details['document_id'];
                             $document_update['status'] = '1';
@@ -356,7 +362,7 @@ class ControllerExtensionModuleMoloni extends Controller
                             $this->moloni->documents($this->settings['document_type'])->update($document_update);
                         }
                     } else {
-                        $message = 'Os totais não batem certo - moloni '
+                        $message = ($this->hasNegative) ? 'Encomenda possui taxas/promoções a negativo' : 'Os totais não batem certo - moloni '
                             . $document_details['net_value'] . '€ | encomenda '
                             . $this->_myOrder['net_value'] . '€';
                         $link = "<a target='_BLANK' href='https://moloni.pt/" . $this->company['slug'] . '/' .
@@ -364,7 +370,7 @@ class ControllerExtensionModuleMoloni extends Controller
                             "'>ver documento</a>";
 
                         $this->messages['errors'] = array(
-                            'title' => 'Erro ao inserir documento de transporte',
+                            'title' => 'Erro ao inserir documento | Documento inserido em rascunho',
                             'message' => $message,
                             'link' => $link
                         );
@@ -461,7 +467,12 @@ class ControllerExtensionModuleMoloni extends Controller
         }
 
         $moloni_customer['country_id'] = $this->toolCountryHandler($order['payment_iso_code_2']);
-        $moloni_customer['language_id'] = (int)$moloni_customer['country_id'] === 1 ? 1 : 2;
+        if((int)$moloni_customer['country_id'] === 1){
+            $moloni_customer['language_id'] = 1;
+        } else {
+            $country_spanish = array('MX', 'CO', 'ES', 'AR', 'PE', 'VE', 'CL', 'EC', 'GT', 'CU', 'BO', 'DO', 'HN', 'PY', 'SV', 'NI', 'CR', 'PA', 'UY', 'PR', 'GQ');
+            $moloni_customer['language_id'] = in_array($order['payment_iso_code_2'], $country_spanish)? 3 : 2;
+        }
 
         $moloni_customer['copies'] = $this->company['copies'];
 
@@ -608,6 +619,11 @@ class ControllerExtensionModuleMoloni extends Controller
             if (!in_array($total['code'],['total','sub_total','tax'])) {
 
                 $values = [];
+
+                if((float)$total['value'] < 0){
+                    $this->hasNegative = true;
+                    continue;
+                }
 
                 if ($total['code'] === 'shipping') {
                     $moloni_reference = 'Portes';
@@ -761,7 +777,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->document_type['invoiceReceipts'] = array('name' => 'invoiceReceipts', 'url' => 'FaturasRecibo');
         $this->document_type['simplifiedInvoices'] = array('name' => 'simplifiedInvoices', 'url' => 'FaturaSimplificada');
         $this->document_type['billsOfLading'] = array('name' => 'billsOfLading', 'url' => 'GuiasTransporte');
-        $this->document_type['deliveryNotes'] = array('name' => 'deliveryNotes', 'url' => 'NotasEncomenda');
+        $this->document_type['deliveryNotes'] = array('name' => 'deliveryNotes', 'url' => 'GuiasRemessa');
+        $this->document_type['purchaseOrder'] = array('name' => 'purchaseOrder', 'url' => 'NotasEncomenda');
         $this->document_type['internalDocuments'] = array('name' => 'internalDocuments', 'url' => 'DocumentosInternos');
         $this->document_type['estimates'] = array('name' => 'estimates', 'url' => 'Orcamentos');
         $this->document_type['purchaseOrder'] = array('name' => 'purchaseOrder', 'url' => 'NotasEncomenda');
@@ -1023,7 +1040,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->addEvent($this->eventGroup . '_options_reference', 'admin/view/catalog/product_form/before', $this->modulePathBase . 'optionsReferenceCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_edit', 'admin/model/catalog/product/editProduct/after', $this->modulePathBase . 'eventProductCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_add', 'admin/model/catalog/product/addProduct/after', $this->modulePathBase . 'eventProductCheck');
-        $this->model_setting_event->addEvent($this->eventGroup . '_order_history_check_paid', 'catalog/model/checkout/order/addOrderHistory/after', 'event/moloni/eventCreateDocument');
+        $this->model_setting_event->addEvent($this->eventGroup . '_order_edit_check_paid', 'catalog/model/checkout/order/addOrderHistory/after', 'extension/module/moloni/eventCreateDocument');
+        $this->model_setting_event->addEvent($this->eventGroup . '_order_add_check_paid', 'catalog/model/checkout/order/addOrder/after', 'extension/module/moloni/eventCreateDocument');
     }
 
     public function uninstall()
@@ -1036,7 +1054,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_options_reference');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_edit');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_add');
-        $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_history_check_paid');
+        $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_edit_check_paid');
+        $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_add_check_paid');
     }
 
     public function patch()
@@ -1227,10 +1246,10 @@ class ControllerExtensionModuleMoloni extends Controller
         }
 
         if ($this->settings['products_tax'] == 0) {
-            $geo_zone = $this->ocdb->getClientGeoZone($order['payment_country_id'], $order['payment_zone_id']);
-            $geo_zone_id = (empty($geo_zone)) ? 0 : $geo_zone['geo_zone_id'] ;
             $tax_rules = $this->ocdb->getTaxRules($oc_product['tax_class_id']);
             foreach ($tax_rules as $tax_order => $tax_rule) {
+                $geo_zone = ($tax_rule['based'] == 'shipping') ? $this->ocdb->getClientGeoZone($order['shipping_country_id'], $order['shipping_zone_id']) : $this->ocdb->getClientGeoZone($order['payment_country_id'], $order['payment_zone_id']);
+                $geo_zone_id = !empty($geo_zone) ? $geo_zone : 0;
                 $oc_tax = $this->ocdb->getTaxRate($tax_rule['tax_rate_id'], $geo_zone_id);
 
                 if (empty($oc_tax)) {
@@ -1238,7 +1257,8 @@ class ControllerExtensionModuleMoloni extends Controller
                 }
 
                 foreach ($this->moloni_taxes as $moloni_tax) {
-                    if ((($oc_tax['type'] === 'P' && $moloni_tax['saft_type'] == 1) || ($oc_tax['type'] === 'F' && $moloni_tax['saft_type'] > 1)) &&
+                    if ((($oc_tax['type'] === 'P' && $moloni_tax['saft_type'] == 1) || ($oc_tax['type'] === 'F' && $moloni_tax['saft_type'] > 1))
+                        && (($this->company['country_id'] != 1) || ($this->company['country_id'] == 1 && empty($taxes))) &&
                         (float)round($oc_tax['rate'], 5) === (float)round($moloni_tax['value'], 5)) {
                         $taxes[] = array('tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => $tax_order, 'cumulative' => '1');
                         break;

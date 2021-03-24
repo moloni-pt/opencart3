@@ -52,6 +52,21 @@ class documents
             case "billsOfLading":
                 return "GuiasTransporte/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
 
+            case "purchaseOrder":
+                return "NotasEncomenda/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
+
+            case "deliveryNotes":
+                return "GuiasRemessa/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
+
+            case "simplifiedInvoices":
+                return "FaturaSimplificada/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
+
+            case "internalDocuments":
+                return "DocumentosInternos/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
+
+            case "estimates":
+                return "Orcamentos/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
+
             case "invoices":
             case "FT":
                 return "Faturas/" . ($status == 0 ? "showUpdate" : "showDetail") . "/" . $document_id;
