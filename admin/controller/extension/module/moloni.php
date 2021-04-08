@@ -562,10 +562,6 @@ class ControllerExtensionModuleMoloni extends Controller
             //======= TAXES =======//
             if (!empty($taxes) && is_array($taxes)) {
                 $values['taxes'] = $taxes;
-                if (!isset($this->_myOrder['has_taxes']) || $this->_myOrder['has_taxes'] == false) {
-                    $this->_myOrder['has_taxes'] = true;
-                    $this->_myOrder['default_taxes'] = $taxes;
-                }
             } else {
                 $values['exemption_reason'] = $this->settings['products_tax_exemption'];
             }
@@ -641,22 +637,37 @@ class ControllerExtensionModuleMoloni extends Controller
                 $values['qty'] = '1';
                 $values['order'] = $order;
 
-                foreach ($this->moloni_taxes as $moloni_tax) {
-                    if ($this->settings['shipping_tax'] == '0') {
-                        if (isset($this->_myOrder['has_taxes']) && $this->_myOrder['has_taxes'] == true && $this->_myOrder['default_taxes'][0]['tax_id'] == $moloni_tax['tax_id']) {
-                            if($total['code'] == 'shipping'){
-                                $values['price'] = $this->toolRemoveExtraTaxShipping($total['value'], $moloni_tax['value']);
-                            } else {
-                                $values['price']= $this->toolRemoveExtraTax($total['value'], $moloni_tax['value']);
+                if ($this->settings['shipping_tax'] == '0') {
+                    $shipping_method = explode(".", $this->current_order['shipping_code']);
+                    $shipping_code_tax_id = $this->config->get('shipping_' . $shipping_method[0] . '_tax_class_id');
+                    if(!empty($shipping_code_tax_id)){
+                        $tax_rules = $this->ocdb->getTaxRules($shipping_code_tax_id);
+                        foreach ($tax_rules as $tax_order => $tax_rule) {
+                            $geo_zone = ($tax_rule['based'] == 'shipping') ? $this->ocdb->getClientGeoZone($this->current_order['shipping_country_id'], $this->current_order['shipping_zone_id']) : $this->ocdb->getClientGeoZone($this->current_order['payment_country_id'], $this->current_order['payment_zone_id']);
+                            $geo_zone_id = !empty($geo_zone) ? $geo_zone : 0;
+                            $oc_tax = $this->ocdb->getTaxRate($tax_rule['tax_rate_id'], $geo_zone_id);
+
+                            if (empty($oc_tax)) {
+                                continue;
                             }
-                            $values['taxes'] = $this->_myOrder['default_taxes'];
-                            $values['exemption_reason'] = '';
-                            break;
-                        } else {
-                            $values['price'] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'], $this->_myOrder['currency'], 'EUR') : $total['value'];
-                            $values['exemption_reason'] = $this->settings['shipping_tax_exemption'];
+
+                            foreach ($this->moloni_taxes as $moloni_tax) {
+                                if ((($oc_tax['type'] === 'P' && $moloni_tax['saft_type'] == 1) || ($oc_tax['type'] === 'F' && $moloni_tax['saft_type'] > 1))
+                                    && (($this->company['country_id'] != 1) || ($this->company['country_id'] == 1 && empty($values['taxes']))) &&
+                                    (float)round($oc_tax['rate'], 5) === (float)round($moloni_tax['value'], 5)) {
+                                    if($total['code'] == 'shipping'){
+                                        $values['price'] = $this->toolRemoveExtraTaxShipping($total['value'], $moloni_tax['value']);
+                                    } else {
+                                        $values['price']= $this->toolRemoveExtraTax($total['value'], $moloni_tax['value']);
+                                    }
+                                    $values['taxes'][] = array('tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => $tax_order, 'cumulative' => '1');
+                                    break;
+                                }
+                            }
                         }
-                    } else {
+                    }
+                } else {
+                    foreach ($this->moloni_taxes as $moloni_tax) {
                         if ($moloni_tax['tax_id'] == $this->settings['shipping_tax']) {
                             if($total['code'] == 'shipping'){
                                 $values['price'] = $this->toolRemoveExtraTaxShipping($total['value'], $moloni_tax['value']);
@@ -665,11 +676,13 @@ class ControllerExtensionModuleMoloni extends Controller
                             }
                             $values['taxes'][] = array('tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => '0', 'cumulative' => '1');
                             break;
-                        } else {
-                            $values['price'] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'], $this->_myOrder['currency'], 'EUR') : $total['value'];
-                            $values['exemption_reason'] = $this->settings['shipping_tax_exemption'];
                         }
                     }
+                }
+
+                if(!isset($values['taxes']) || (isset($values['taxes']) && empty($values['taxes']))){
+                    $values['price'] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'], $this->_myOrder['currency'], 'EUR') : $total['value'];
+                    $values['exemption_reason'] = $this->settings['shipping_tax_exemption'];
                 }
 
                 if ($moloni_product_exists) {
