@@ -62,4 +62,21 @@ class products
             return false;
         }
     }
+
+    public function getModifiedSince($company_id = false, $offset = 0, $lastmodified = 0)
+    {
+        if(empty($lastmodified)){
+            $lastmodifiedGMT = date("Y-m-d 01:00:00", strtotime("-7 days"));
+        } else {
+            $lastmodifiedGMT = date("Y-m-d 01:00:00", strtotime($lastmodified));
+        }
+
+        $values = array(
+            "company_id" => ($company_id ? $company_id : $this->moloni->company_id),
+            "offset" => $offset,
+            'lastmodified' => $lastmodifiedGMT
+        );
+
+        return $this->moloni->connection->curl("products/getModifiedSince", $values);
+    }
 }

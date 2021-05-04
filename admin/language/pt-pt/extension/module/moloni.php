@@ -34,6 +34,9 @@ $_['tooltip']['shipping_tax'] = "If your prices already have taxes included, sel
 $_['tooltip']['products_tax_exemption'] = "Choose an exemption reason to be used only when a product does not have a tax associated.";
 $_['tooltip']['shipping_tax_exemption'] = "Choose an exemption reason to be used only when the shipping method does not have a tax associated.";
 $_['tooltip']['products_prefix'] = "Choose a prefir for the product reference. If you choose for example 'MOLONI', the product reference will start with MOLONI.";
+$_['tooltip']['import_products'] = "Todos os artigos da sua conta Moloni serão importados";
+$_['tooltip']['import_tax_class'] = "Escolha a classe de taxas que será aplicada aos artigos importados";
+$_['tooltip']['import_product_since'] = "Escolha a data a partir da qual serão importados os artigos. Por defeito serão importados todos os artigos criados/modificados nos últimos 7 dias";
 
 $_['tooltip']['measure_unit'] = "Choose a unit measurement to be used by default in your Moloni products.";
 
@@ -44,6 +47,7 @@ $_['tooltip']['products_description_document'] = "Incluir resumo de artigos em d
 $_['tooltip']['products_description_moloni'] = "Incluir resumo de artigos na criação da ficha de artigo.";
 $_['tooltip']['remove_extra_tax'] = "Remover IVA nas taxas extra (e.g Taxas de pagamento).";
 $_['tooltip']['remove_extra_tax_shipping'] = "Remover IVA nos portes";
+$_['tooltip']['replace_white_space'] = "Substituir espaços em branco por underscore na referência do produto";
 
 $_['tooltip']['debug_console'] = "Show a console with all the requests to moloni API.";
 $_['tooltip']['git_username'] = "Choose the Github username you which to update from (default: nunong21)";
@@ -61,6 +65,9 @@ $_['label']['products_clients'] = "Products and clients";
 $_['label']['document_settings'] = "Document Settings";
 $_['label']['shipping'] = "Shipping";
 $_['label']['orders'] = "Orders";
+$_['label']['tools'] = "Ferramentas";
+$_['label']['none'] = "Nenhuma";
+$_['label']['import_product_since'] = "Importar artigos desde";
 
 
 $_['label']['document'] = "Document";
@@ -96,6 +103,8 @@ $_['label']['products_tax_exemption'] = "Tax exemption";
 $_['label']['shipping_tax_exemption'] = "Shipping tax exemption";
 $_['label']['let_opencart_decide'] = "Let opencart decide";
 $_['label']['products_prefix'] = "Ref. Prefix";
+$_['label']['import_products'] = "Importar artigos";
+$_['label']['import_tax_class'] = "Tax class dos artigos importados";
 $_['label']['products_at_category'] = "AT Category";
 $_['label']['measure_unit'] = "Measurement unit";
 
@@ -105,6 +114,7 @@ $_['label']['products_description_moloni'] = "Incluir resumo na ficha de artigo"
 $_['label']['remove_extra_tax'] = "Remover IVA nas taxas extra";
 $_['label']['remove_extra_tax_shipping'] = "Remover IVA nos portes";
 $_['label']['moloni_options_reference'] = "Use references on options";
+$_['label']['replace_white_space'] = "Substituir espaço por underscore";
 
 $_['label']['order_since'] = "Show orders since";
 $_['label']['order_auto'] = "Create order when paid";
