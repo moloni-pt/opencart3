@@ -139,4 +139,26 @@ class connection
 
         return $result_array;
     }
+
+    public function getMoloniImage($image)
+    {
+        if (!file_exists('../image/catalog/moloni')) {
+            if (!mkdir($concurrentDirectory = '../image/catalog/moloni', 0777, true) && !is_dir($concurrentDirectory)) {
+                throw new \RuntimeException(sprintf('Pasta "%s" não foi criada', $concurrentDirectory));
+            }
+        }
+
+        $imageName = explode('/', $image, 3);
+        if (!file_exists('../image/catalog/moloni/' . $imageName[2])) {
+            $ch = curl_init('https://www.moloni.pt/_imagens/?macro=&img=' . $image);
+            $fp = fopen('../image/catalog/moloni/' . $imageName[2], 'wb');
+            curl_setopt($ch, CURLOPT_FILE, $fp);
+            curl_setopt($ch, CURLOPT_HEADER, 0);
+            curl_exec($ch);
+            curl_close($ch);
+            fclose($fp);
+        }
+
+        return 'catalog/moloni/' . $imageName[2];
+    }
 }

@@ -187,6 +187,102 @@ class ControllerExtensionModuleMoloni extends Controller
         }
     }
 
+    public function importProducts()
+    {
+        $this->start();
+        if ($this->allowed()) {
+            $offset = 0;
+            $this->data['artigos_importados'][0] = 0;
+            $lastmodified = isset($this->settings['import_product_since']) ? $this->settings['import_product_since'] : 0;
+            $this->load->model('catalog/product');
+            $this->load->model('catalog/category');
+            $this->load->model('localisation/stock_status');
+            $value['filter_name'] = 'Importados Moloni';
+            $moloniCategory = $this->model_catalog_category->getCategories($value);
+            if(empty($moloniCategory)){
+                $data['parent_id'] = 0;
+                $data['column'] = 1;
+                $data['sort_order'] = 0;
+                $data['status'] = 1;
+                $data['category_store'][0] = $this->store_id;
+                $data['category_description'][$this->config->get('config_language_id')]['name'] = 'Importados Moloni';
+                $data['category_description'][$this->config->get('config_language_id')]['meta_title'] = 'Importados Moloni';
+                $data['category_description'][$this->config->get('config_language_id')]['description'] = 'Importados Moloni';
+                $data['category_description'][$this->config->get('config_language_id')]['meta_description'] = '';
+                $data['category_description'][$this->config->get('config_language_id')]['meta_keyword'] = '';
+                $moloniCategoryId = $this->model_catalog_category->addCategory($data);
+            } else {
+                $moloniCategoryId = $moloniCategory[0]['category_id'];
+            }
+
+            do{
+                $allProducts = $this->moloni->products->getModifiedSince(false, $offset, $lastmodified);
+                $remainingProducts = (count($allProducts) == 50);
+
+                foreach($allProducts as $artigo){
+                    if(empty($this->ocdb->getProductsByReference($artigo['reference'])) && $artigo['composition_type'] == 0){
+                        if(!empty($artigo['image'])){
+                            $newProduct['image'] = $newProduct['product_image'][0]['image'] = $this->moloni->connection->getMoloniImage($artigo['image']);
+                            $newProduct['product_image'][0]['sort_order'] = 0;
+                        }
+                        $newProduct['model'] = $artigo['reference'];
+                        $newProduct['sku'] = $artigo['reference'];
+                        $newProduct['upc'] = '';
+                        $newProduct['jan'] = '';
+                        $newProduct['isbn'] = '';
+                        $newProduct['mpn'] = '';
+                        $newProduct['location'] = '';
+                        $newProduct['ean'] = $artigo['ean'];
+                        $newProduct['quantity'] = $artigo['stock'];
+                        $newProduct['minimum'] = $artigo['minimum_stock'];
+                        $newProduct['subtract'] = 1;
+                        $newProduct['stock_status_id'] = (!empty($this->model_localisation_stock_status->getStockStatuses())) ? (($this->model_localisation_stock_status->getStockStatuses())[0]['stock_status_id']) : 0;
+                        $newProduct['tax_class_id'] = isset($this->settings['import_tax_class']) ? $this->settings['import_tax_class'] : 0;
+                        $newProduct['product_store'][0] = $this->store_id;
+                        $newProduct['date_available'] = date('Y-m-d');
+                        $newProduct['manufacturer_id'] = 0;
+                        $newProduct['shipping'] = 1;
+                        $newProduct['price'] = $artigo['price'];
+                        $newProduct['points'] = 0;
+                        $newProduct['weight'] = 0;
+                        $newProduct['weight_class_id'] = $this->config->get('config_weight_class_id');
+                        $newProduct['length'] = 0;
+                        $newProduct['width'] = 0;
+                        $newProduct['height'] = 0;
+                        $newProduct['length_class_id'] = $this->config->get('config_length_class_id');
+                        $newProduct['status'] = 1;
+                        $newProduct['sort_order'] = 0;
+                        $newProduct['product_description'][$this->config->get('config_language_id')]['name'] = $artigo['name'];
+                        $newProduct['product_description'][$this->config->get('config_language_id')]['meta_title'] = $artigo['name'];
+                        $newProduct['product_description'][$this->config->get('config_language_id')]['description'] = $artigo['summary'];
+                        $newProduct['product_description'][$this->config->get('config_language_id')]['tag'] = '';
+                        $newProduct['product_description'][$this->config->get('config_language_id')]['meta_description'] = '';
+                        $newProduct['product_description'][$this->config->get('config_language_id')]['meta_keyword'] = '';
+                        $newProduct['product_category'][0] = $moloniCategoryId;
+                        $this->model_catalog_product->addProduct($newProduct);
+
+                        unset($newProduct);
+
+                        $this->data['artigos_importados'][0]++;
+                        $this->data['artigos_importados'][1][] = $artigo['reference'];
+                    }
+                }
+
+                $offset += 50;
+            } while ($remainingProducts);
+
+            $this->messages['success'] = array(
+                'title' => 'Sucesso',
+                'message' => 'Os seus artigos foram importados com sucesso',
+            );
+        }
+
+        $this->data['content'] = $this->getSettingsData();
+        $this->page = 'settings';
+        $this->loadDefaults();
+        $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+    }
+
     private function allowed()
     {
         if ($this->moloni->logged) {
@@ -537,7 +633,11 @@ class ControllerExtensionModuleMoloni extends Controller
                 $moloni_reference = $oc_product['sku'];
             }
 
-            $moloni_reference = mb_substr(str_replace(' ', '_', $reference_prefix . $moloni_reference . $option_reference_sufix), 0, 28);
+            if(isset($this->settings['replace_white_space']) && empty($this->settings['replace_white_space'])){
+                $moloni_reference = mb_substr($reference_prefix . $moloni_reference . $option_reference_sufix, 0, 28);
+            } else {
+                $moloni_reference = mb_substr(str_replace(' ', '_', $reference_prefix . $moloni_reference . $option_reference_sufix), 0, 28);
+            }
 
             $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
 
@@ -740,6 +840,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $url['logout'] = $this->url->link('extension/module/moloni', array('action' => 'logout', 'user_token' => $this->session->data['user_token']), true);
         $url['settings']['save'] = $this->url->link('extension/module/moloni/settings', array('store_id' => (isset($this->request->get['store_id']) ? $this->request->get['store_id'] : 0), 'action' => 'save', 'user_token' => $this->session->data['user_token']), true);
         $url['settings']['cancel'] = $this->url->link('extension/module/moloni/settings', array('user_token' => $this->session->data['user_token']), true);
+        $url['import_products'] = $this->url->link('extension/module/moloni/importProducts', array('user_token' => $this->session->data['user_token']), true);
         return $url;
     }
 
@@ -869,6 +970,10 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->load->model('localisation/order_status');
 
         $data['settings_values']['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
+
+        $this->load->model('localisation/tax_class');
+
+        $data['settings_values']['tax_classes'] = $this->model_localisation_tax_class->getTaxClasses();
 
         return $data;
     }

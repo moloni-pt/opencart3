@@ -20,8 +20,25 @@
             {{ debug_console }}
         {% endif %}
 
-        {% if error_warnings %}
+        {% if error_warnings or messages %}
             {{ errors_template }}
+        {% endif %}
+
+        {% if artigos_importados %}
+            <div class='moloni-debug-holder'>
+                <div class="alert alert-info alert-dismissible" data-toggle="collapse" data-target="#moloni-artigos-importados" aria-expanded="false" aria-controls="collapseExample">
+                    <i class="fa fa-info-circle"></i> Foram importados {{artigos_importados[0]}} artigos
+                </div>
+                <div id='moloni-artigos-importados' class="collapse moloni-debug-window">
+                    <div class='log-holder' id="log-holder" >
+                        {% for reference in artigos_importados[1]%}
+                            <div class="item">
+                                <p><strong>Artigo importado(referência):</strong> {{reference}}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
         {% endif %}
 
         <div class="panel panel-default">
@@ -36,6 +53,7 @@
                         <li class="active"><a href="#tab-document" data-toggle="tab">{{label.document}}</a></li>
                         <li><a href="#tab-products" data-toggle="tab">{{label.products_clients}}</a></li>
                         <li><a href="#tab-orders" data-toggle="tab">{{label.orders}}</a></li>
+                        <li><a href="#tab-tools" data-toggle="tab">{{label.tools}}</a></li>
                         <li><a href="#tab-developer" data-toggle="tab">{{label.developers}}</a></li>
                     </ul>
 
@@ -336,6 +354,17 @@
                                         </div>
                                     </div>
 
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.replace_white_space|escape('html') }}">{{label.replace_white_space}}</span></label>
+                                        <div class="col-sm-10">
+                                            <label class="radio-inline"><input type="radio" name="moloni[replace_white_space]" value="1" {{ options.replace_white_space == "1" ? 'checked="checked"' : ""}}>
+                                                {{label.yes}}
+                                            </label>
+                                            <label class="radio-inline"><input type="radio" name="moloni[replace_white_space]" value="0" {{ options.replace_white_space == "0" ? 'checked="checked"' : ""}}>
+                                                {{label.no}}
+                                            </label>
+                                        </div>
+                                    </div>
 
                                 </fieldset>
                             </div>
@@ -384,6 +413,43 @@
                                             <button type="button" onclick="$(this).parent().find(':checkbox').prop('checked', true);" class="btn btn-link">Select All</button>
                                             /
                                             <button type="button" onclick="$(this).parent().find(':checkbox').prop('checked', false);" class="btn btn-link">Unselect All</button>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
+
+                            <div class="tab-pane" id="tab-tools">
+                                <fieldset>
+                                    <legend>{{label.tools}}</legend>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label" for="import_tax_class"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.import_tax_class|escape('html') }}">{{ label.import_tax_class }}</span></label>
+                                        <div class="col-sm-2">
+                                            <select name="moloni[import_tax_class]" id="import_tax_class" class="form-control">
+                                                <option value="0" {{ options.import_tax_class == 0 ? 'selected="selected"' : ""}}>{{label.none}}</option>
+                                                {% for tax_class in content.settings_values.tax_classes %}
+                                                    <option value="{{ tax_class.tax_class_id }}" {{ tax_class.tax_class_id == options.import_tax_class ? 'selected="selected"' : ""}}>{{ tax_class.title }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label" for="input-date-available"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.import_product_since|escape('html') }}">{{ label.import_product_since }}</span></label>
+                                        <div class="col-sm-3">
+                                            <div class="input-group date">
+                                                <input type="text" name="moloni[import_product_since]" value="{{ options.import_product_since }}" data-date-format="YYYY-MM-DD" id="input-date-available" class="form-control" />
+                                                <span class="input-group-btn">
+                                                    <button class="btn btn-default" type="button"><i class="fa fa-calendar"></i></button>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.import_products|escape('html') }}">{{label.import_products}}</span></label>
+                                        <div class="col-sm-10">
+                                            <a href="{{ url.import_products }}" data-toggle="tooltip" title="Import products" class="btn btn-primary">Import products</a>
                                         </div>
                                     </div>
                                 </fieldset>
