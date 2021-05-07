@@ -237,7 +237,8 @@ class ControllerExtensionModuleMoloni extends Controller
                         $newProduct['quantity'] = $artigo['stock'];
                         $newProduct['minimum'] = $artigo['minimum_stock'];
                         $newProduct['subtract'] = 1;
-                        $newProduct['stock_status_id'] = (!empty($this->model_localisation_stock_status->getStockStatuses())) ? (($this->model_localisation_stock_status->getStockStatuses())[0]['stock_status_id']) : 0;
+                        $stockStatuses = $this->model_localisation_stock_status->getStockStatuses();
+                        $newProduct['stock_status_id'] = (!empty($stockStatuses) && is_array($stockStatuses)) ? ($stockStatuses[0]['stock_status_id']) : 0;
                         $newProduct['tax_class_id'] = isset($this->settings['import_tax_class']) ? $this->settings['import_tax_class'] : 0;
                         $newProduct['product_store'][0] = $this->store_id;
                         $newProduct['date_available'] = date('Y-m-d');
