@@ -79,4 +79,14 @@ class products
 
         return $this->moloni->connection->curl("products/getModifiedSince", $values);
     }
+
+    public function getProductCategoryTree($product_id, $company_id = false)
+    {
+        $values = array(
+            "company_id" => ($company_id ? $company_id : $this->moloni->company_id),
+            'product_id' => $product_id
+        );
+
+        return $this->moloni->connection->curl("products/getCategoryTree", $values);
+    }
 }

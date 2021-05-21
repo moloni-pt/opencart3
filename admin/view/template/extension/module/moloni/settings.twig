@@ -41,6 +41,23 @@
             </div>
         {% endif %}
 
+        {% if artigos_atualizados %}
+            <div class='moloni-debug-holder'>
+                <div class="alert alert-info alert-dismissible" data-toggle="collapse" data-target="#moloni-artigos-atualizados" aria-expanded="false" aria-controls="collapseExample">
+                    <i class="fa fa-info-circle"></i> Foram atualizados {{artigos_atualizados[0]}} artigos
+                </div>
+                <div id='moloni-artigos-atualizados' class="collapse moloni-debug-window">
+                    <div class='log-holder' id="log-holder" >
+                        {% for reference in artigos_atualizados[1]%}
+                            <div class="item">
+                                <p><strong>Artigo atualizado(referência):</strong> {{reference}}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
         <div class="panel panel-default">
             <div class="panel-heading">
                 <h3 class="panel-title"><i class="fa fa-pencil"></i>Editar configurações do plugin</h3>
@@ -435,10 +452,10 @@
                                     </div>
 
                                     <div class="form-group">
-                                        <label class="col-sm-2 control-label" for="input-date-available"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.import_product_since|escape('html') }}">{{ label.import_product_since }}</span></label>
+                                        <label class="col-sm-2 control-label" for="import_product_since_date"><span data-toggle="tooltip" data-html="true" title="{{ tooltip.import_product_since|escape('html') }}">{{ label.import_product_since }}</span></label>
                                         <div class="col-sm-3">
                                             <div class="input-group date">
-                                                <input type="text" name="moloni[import_product_since]" value="{{ options.import_product_since }}" data-date-format="YYYY-MM-DD" id="input-date-available" class="form-control" />
+                                                <input type="text" name="moloni[import_product_since]" value="{{ options.import_product_since }}" data-date-format="YYYY-MM-DD" id="import_product_since_date" class="form-control" />
                                                 <span class="input-group-btn">
                                                     <button class="btn btn-default" type="button"><i class="fa fa-calendar"></i></button>
                                                 </span>
@@ -447,9 +464,41 @@
                                     </div>
 
                                     <div class="form-group">
+                                        <label class="col-sm-2 control-label">{{label.update_import_products}}</label>
+                                        <div class="col-sm-10">
+                                            <div class="well well-sm" style="height: 150px; overflow: auto;">
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" name="moloni[update_import_products_name]" id="update_import_products_name" value="1" checked>
+                                                        {{label.update_import_products_name}}
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" name="moloni[update_import_products_stock]" id="update_import_products_stock" value="1" checked>
+                                                        {{label.update_import_products_stock}}
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" name="moloni[update_import_products_price]" id="update_import_products_price" value="1" checked>
+                                                        {{label.update_import_products_price}}
+                                                    </label>
+                                                </div>
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox" name="moloni[update_import_products_image]" id="update_import_products_image" value="1" checked>
+                                                        {{label.update_import_products_image}}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
                                         <label class="col-sm-2 control-label"><span data-toggle="tooltip" title="" data-original-title="{{ tooltip.import_products|escape('html') }}">{{label.import_products}}</span></label>
                                         <div class="col-sm-10">
-                                            <a href="{{ url.import_products }}" data-toggle="tooltip" title="Import products" class="btn btn-primary">Import products</a>
+                                            <button type="submit" id="btnImportMoloni" form="moloni-tools-hidden" data-toggle="tooltip" title="Import products" class="btn btn-primary">Import products</button>
                                         </div>
                                     </div>
                                 </fieldset>
@@ -492,12 +541,16 @@
                                         </div>
                                     </div>
                             </div>
-
                             </fieldset>
                         </div>
-
-
-                </div>
+                </form>
+                <form action="{{ url.import_products }}" method="post" enctype="multipart/form-data" id="moloni-tools-hidden">
+                    <input type="hidden" name="moloni[import_tax_class_hidden]" value="" id="import_tax_class_hidden"/>
+                    <input type="hidden" name="moloni[import_product_since_date_hidden]" value="" id="import_product_since_date_hidden"/>
+                    <input type="hidden" name="moloni[update_import_products_name_hidden]" value="" id="update_import_products_name_hidden"/>
+                    <input type="hidden" name="moloni[update_import_products_stock_hidden]" value="" id="update_import_products_stock_hidden"/>
+                    <input type="hidden" name="moloni[update_import_products_price_hidden]" value="" id="update_import_products_price_hidden"/>
+                    <input type="hidden" name="moloni[update_import_products_image_hidden]" value="" id="update_import_products_image_hidden"/>
                 </form>
             </div>
         </div>
@@ -508,6 +561,15 @@
         $('.date').datetimepicker({
             language: '{{ datepicker }}',
             pickTime: false
+        });
+
+        $("#btnImportMoloni").click(function() {
+            $("#import_product_since_date_hidden").val(document.getElementById('import_product_since_date').value);
+            $("#import_tax_class_hidden").val($("#import_tax_class").val());
+            document.getElementById('update_import_products_name_hidden').value = $("#update_import_products_name").is(":checked") ? 1 : 0 ;
+            document.getElementById('update_import_products_stock_hidden').value = $("#update_import_products_stock").is(":checked") ? 1 : 0 ;
+            document.getElementById('update_import_products_price_hidden').value = $("#update_import_products_price").is(":checked") ? 1 : 0 ;
+            document.getElementById('update_import_products_image_hidden').value = $("#update_import_products_image").is(":checked") ? 1 : 0 ;
         });
     </script>
     {{ footer }}
