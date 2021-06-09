@@ -16,6 +16,16 @@ $_['create_moloni_document'] = "Send to moloni";
 $_['orders_list'] = "Orders list";
 $_['documents_lists'] = "Documents list";
 
+$_['products_import_success'] = "Import performed successfully";
+$_['no_products_found'] = "No products found";
+$_['success'] = "Success";
+$_['alert'] = "Alert";
+
+$_['notification']['imported_n_products'] = "Imported %s products";
+$_['notification']['updated_n_products'] = "Updated %s products";
+$_['notification']['imported_product_reference'] = "Product imported (reference):";
+$_['notification']['updated_product_reference'] = "Product updated (reference):";
+
 $_['tooltip']['document_set'] = 'Select the document set you want to use for this store.';
 $_['tooltip']['document_type'] = 'You can convert the document to another type directly in Moloni client area.';
 $_['tooltip']['document_status'] = "Choose the state of the document. Don't worry, you can close it after or it will only be closed if the totals are the same.";
@@ -151,5 +161,3 @@ $_['label']['debug_console'] = "Debug console";
 $_['label']['git_username'] = "Git username";
 $_['label']['git_repository'] = "Git repository";
 $_['label']['git_branch'] = "Git branch";
-
-?>

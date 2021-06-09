@@ -14,6 +14,17 @@ $_['moloni_reference'] = 'Moloni Ref.';
 $_['create_moloni_document'] = "Enviar para o moloni";
 
 $_['orders_list'] = "Lista de encomendas";
+$_['documents_lists'] = "Lista de documentos";
+
+$_['products_import_success'] = "Importação efetuada com sucesso";
+$_['no_products_found'] = "Nenhum produto encontrado";
+$_['success'] = "Sucesso";
+$_['alert'] = "Alerta";
+
+$_['notification']['imported_n_products'] = "Foram importados %s produtos";
+$_['notification']['updated_n_products'] = "Foram atualizados %s produtos";
+$_['notification']['imported_product_reference'] = "Artigo importado (referência):";
+$_['notification']['updated_product_reference'] = "Artigo atualizado (referência):";
 
 $_['tooltip']['document_set'] = 'Selecciona a série de documentos que queres usar ao emitir um documento.';
 $_['tooltip']['document_type'] = 'Podes depois converter o documento directamente na tua conta moloni.';
@@ -139,5 +150,3 @@ $_['label']['debug_console'] = "Debug console";
 $_['label']['git_username'] = "Git username";
 $_['label']['git_repository'] = "Git repository";
 $_['label']['git_branch'] = "Git branch";
-
-?>
