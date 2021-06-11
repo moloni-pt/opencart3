@@ -24,16 +24,16 @@
             {{ errors_template }}
         {% endif %}
 
-        {% if artigos_importados %}
+        {% if artigos_importados and artigos_importados.count > 0 %}
             <div class='moloni-debug-holder'>
                 <div class="alert alert-info alert-dismissible" data-toggle="collapse" data-target="#moloni-artigos-importados" aria-expanded="false" aria-controls="collapseExample">
-                    <i class="fa fa-info-circle"></i> Foram importados {{artigos_importados[0]}} artigos
+                    <i class="fa fa-info-circle"></i> {{notification.imported_n_products|format(artigos_importados.count)}}
                 </div>
                 <div id='moloni-artigos-importados' class="collapse moloni-debug-window">
                     <div class='log-holder' id="log-holder" >
-                        {% for reference in artigos_importados[1]%}
+                        {% for reference in artigos_importados.references%}
                             <div class="item">
-                                <p><strong>Artigo importado(referência):</strong> {{reference}}</p>
+                                <p><strong>{{notification.imported_product_reference}}</strong> {{reference}}</p>
                             </div>
                         {% endfor %}
                     </div>
@@ -41,16 +41,16 @@
             </div>
         {% endif %}
 
-        {% if artigos_atualizados %}
+        {% if artigos_atualizados and artigos_atualizados.count > 0 %}
             <div class='moloni-debug-holder'>
                 <div class="alert alert-info alert-dismissible" data-toggle="collapse" data-target="#moloni-artigos-atualizados" aria-expanded="false" aria-controls="collapseExample">
-                    <i class="fa fa-info-circle"></i> Foram atualizados {{artigos_atualizados[0]}} artigos
+                    <i class="fa fa-info-circle"></i> {{notification.updated_n_products|format(artigos_atualizados.count)}}
                 </div>
                 <div id='moloni-artigos-atualizados' class="collapse moloni-debug-window">
                     <div class='log-holder' id="log-holder" >
-                        {% for reference in artigos_atualizados[1]%}
+                        {% for reference in artigos_atualizados.references%}
                             <div class="item">
-                                <p><strong>Artigo atualizado(referência):</strong> {{reference}}</p>
+                                <p><strong>{{notification.updated_product_reference}}</strong> {{reference}}</p>
                             </div>
                         {% endfor %}
                     </div>
