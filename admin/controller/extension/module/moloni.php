@@ -777,7 +777,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     }
 
                     $option_name_sufix .= ' ' . $option['value'];
-                    $option_reference_sufix .= ($option_reference_sufix_aux) ? $option_reference_sufix_aux : $option['product_option_value_id'];
+                    $option_reference_sufix .= ($option_reference_sufix_aux) ?: $option['product_option_value_id'];
                 }
             }
 
@@ -850,7 +850,9 @@ class ControllerExtensionModuleMoloni extends Controller
                 if(isset($this->settings['products_description_moloni']) && empty($this->settings['products_description_moloni'])){
                     unset($values['summary']);
                 }
-                $inserted = $this->moloni->products->insert($values);
+
+                $inserted = $this->moloni->products->save($values);
+
                 if (isset($inserted['product_id'])) {
                     $values['product_id'] = $inserted['product_id'];
                 }
@@ -951,7 +953,8 @@ class ControllerExtensionModuleMoloni extends Controller
                     $values['has_stock'] = '0';
                     $values['unit_id'] = $this->settings['measure_unit'];
 
-                    $inserted = $this->moloni->products->insert($values);
+                    $inserted = $this->moloni->products->save($values);
+
                     if (isset($inserted['product_id'])) {
                         $values['product_id'] = $inserted['product_id'];
                     }
@@ -1315,8 +1318,8 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->addEvent($this->eventGroup . '_options_reference', 'admin/view/catalog/product_form/before', $this->modulePathBase . 'optionsReferenceCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_edit', 'admin/model/catalog/product/editProduct/after', $this->modulePathBase . 'eventProductCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_add', 'admin/model/catalog/product/addProduct/after', $this->modulePathBase . 'eventProductCheck');
-        $this->model_setting_event->addEvent($this->eventGroup . '_order_edit_check_paid', 'catalog/model/checkout/order/addOrderHistory/after', 'extension/module/moloni/eventCreateDocument');
-        $this->model_setting_event->addEvent($this->eventGroup . '_order_add_check_paid', 'catalog/model/checkout/order/addOrder/after', 'extension/module/moloni/eventCreateDocument');
+        $this->model_setting_event->addEvent($this->eventGroup . '_order_edit_check_paid', 'catalog/model/checkout/order/addOrderHistory/after', $this->modulePathBase . 'eventCreateDocument');
+        $this->model_setting_event->addEvent($this->eventGroup . '_order_add_check_paid', 'catalog/model/checkout/order/addOrder/after', $this->modulePathBase . 'eventCreateDocument');
     }
 
     public function uninstall()
@@ -1410,35 +1413,182 @@ class ControllerExtensionModuleMoloni extends Controller
     }
 
     /**
-     * @param $evenRoute
-     * @param $data
+     * Event called when a product is saved in Opencart
+     *
+     * @param string $evenRoute
+     * @param array $data
+     *
+     * @return void
+     *
      * @throws Exception
      */
     public function eventProductCheck($evenRoute, &$data)
     {
         $this->start();
 
-        error_log('Cenas');
-
         if ($this->moloni->logged) {
             if (isset($data[1])) {
                 $product = $data[1];
-
-                if (isset($product['product_option']) && isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference'] == true) {
-                    foreach ($product['product_option'] as $product_option) {
-                        if ($product_option['type'] === 'select') {
-                            foreach ($product_option['product_option_value'] as $product_option_value) {
-                                if (isset($product_option_value['moloni_reference'])) {
-                                    $this->ocdb->updateOptionMoloniReference($product_option_value['moloni_reference'], (int)$product_option_value['product_option_value_id']);
+                if (isset($product['product_option'])) {
+                    if (isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference'] == true) {
+                        foreach ($product['product_option'] as $product_option) {
+                            if ($product_option['type'] === 'select') {
+                                foreach ($product_option['product_option_value'] as $product_option_value) {
+                                    if (isset($product_option_value['moloni_reference'])) {
+                                        $this->ocdb->updateOptionMoloniReference($product_option_value['moloni_reference'], (int)$product_option_value['product_option_value_id']);
+                                    }
                                 }
                             }
                         }
                     }
+
+                    $this->eventProductHandler($product);
+                }
+            }
+        }
+    }
+
+    /**
+     * Creates or updates an product in Moloni based on Opencart product
+     *
+     * @param array $opencartProduct Opencart product
+     *
+     * @return void
+     *
+     * @throws Exception
+     */
+    private function eventProductHandler($opencartProduct)
+    {
+        if (empty($opencartProduct) || !is_array($opencartProduct)) {
+            return;
+        }
+
+        $this->load->model('setting/setting');
+        $this->load->model('localisation/geo_zone');
+        $this->load->model('catalog/category');
+
+        $this->moloni_taxes = $this->moloni->taxes->getAll();
+
+        $referencePrefix = isset($this->settings['products_prefix']) && !empty($this->settings['products_prefix']) ? $this->settings['products_prefix'] : '';
+
+        if (!empty($opencartProduct['sku'])) {
+            $moloni_reference = $opencartProduct['sku'];
+        } else if (!empty($opencartProduct['model'])) {
+            $moloni_reference = $opencartProduct['model'];
+        } else {
+            $moloni_reference = $opencartProduct['product_id'];
+        }
+
+        if (isset($this->settings['replace_white_space']) && empty($this->settings['replace_white_space'])) {
+            $moloni_reference = mb_substr($referencePrefix . $moloni_reference, 0, 28);
+        } else {
+            $moloni_reference = mb_substr(str_replace(' ', '_', $referencePrefix . $moloni_reference), 0, 28);
+        }
+
+        $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
+
+        if ($moloni_product_exists) {
+            $values['product_id'] = $moloni_product_exists[0]['product_id'];
+        }
+
+        // *Hacks* Use the first description
+        foreach ($opencartProduct['product_description'] as $description) {
+            $opencartProduct['description'] = $description['description'];
+            $opencartProduct['name'] = $description['name'];
+
+            if (true) {
+                break;
+            }
+        }
+
+        $description = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', '', ($opencartProduct['description'])), 0, 250);
+
+        $taxes = $this->eventTaxesHandler($opencartProduct);
+
+        $values['name'] = $opencartProduct['name'];
+        $values['summary'] = $description . (strlen($description) >= 250 ? '...' : '');
+        $values['price'] = $product['price_without_taxes'] = $opencartProduct['price'];
+        $values['unit_id'] = $this->settings['measure_unit'];
+        $values['reference'] = $moloni_reference;
+        $values['ean'] = $opencartProduct['ean'];
+
+        if (!empty($taxes) && is_array($taxes)) {
+            $values['taxes'] = $taxes;
+        } else {
+            $values['exemption_reason'] = $this->settings['products_tax_exemption'];
+        }
+
+        if (!empty($opencartProduct['product_category']) && is_array($opencartProduct['product_category'])) {
+            $category = $this->model_catalog_category->getCategory(end($opencartProduct['product_category']));
+            $values['category_id'] = $this->toolCategoryHandler($category['name']);
+        } else {
+            $values['category_id'] = $this->toolCategoryHandler('Sem categoria');
+        }
+
+        if ($opencartProduct['subtract']) {
+            $values['type'] = '1';
+            $values['has_stock'] = '1';
+            $values['stock'] = $opencartProduct['quantity'];
+            $values['at_product_category'] = $this->settings['products_at_category'];
+        } else {
+            $values['type'] = '2';
+            $values['has_stock'] = '0';
+        }
+
+        $this->moloni->products->save($values);
+    }
+
+    /**
+     * Searches for opencart taxes in Moloni and return them
+     *
+     * @param array $oc_product Opencart Product
+     *
+     * @return array|false
+     */
+    private function eventTaxesHandler($oc_product)
+    {
+        $taxes = false;
+
+        $storeGeoZone = $this->model_setting_setting->getSettingValue('config_geocode', $this->store_id);
+
+        if (empty($storeGeoZone)) {
+            $storeCountryId = $this->model_setting_setting->getSettingValue('config_country_id', $this->store_id);
+            $storeZoneId = $this->model_setting_setting->getSettingValue('config_zone_id', $this->store_id);
+            $storeGeoZone = $this->ocdb->getZoneToGeoZone($storeZoneId, $storeCountryId);
+
+            if (!empty($storeGeoZone) && is_array($storeGeoZone) && isset($storeGeoZone[0]['geo_zone_id'])) {
+                $storeGeoZone = $storeGeoZone[0]['geo_zone_id'];
+            }
+        }
+
+        if ((int)$this->settings['products_tax'] === 0) {
+            $tax_rules = $this->ocdb->getTaxRules($oc_product['tax_class_id']);
+
+            foreach ($tax_rules as $tax_order => $tax_rule) {
+                $oc_tax = $this->ocdb->getTaxRate($tax_rule['tax_rate_id'], $storeGeoZone);
+
+                if (empty($oc_tax)) {
+                    continue;
+                }
+
+                foreach ($this->moloni_taxes as $moloni_tax) {
+                    if ((($oc_tax['type'] === 'P' && $moloni_tax['saft_type'] == 1) || ($oc_tax['type'] === 'F' && $moloni_tax['saft_type'] > 1))
+                        && round($oc_tax['rate'], 5) === round($moloni_tax['value'], 5)) {
+                        $taxes[] = ['tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => $tax_order, 'cumulative' => '1'];
+                        break;
+                    }
+                }
+            }
+        } else {
+            foreach ($this->moloni_taxes as $moloni_tax) {
+                if ((int)$moloni_tax['tax_id'] === (int)$this->settings['products_tax']) {
+                    $taxes[] = ['tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => '0', 'cumulative' => '1'];
+                    break;
                 }
             }
         }
 
-        /* ============ Depois verificamos se ele tem a opção para criar artigos e criamos ============ */
+        return $taxes;
     }
 
     public function toolsPriceHandler($product, $taxes = false, $order = false)
@@ -1456,6 +1606,7 @@ class ControllerExtensionModuleMoloni extends Controller
         } else {
             $values['price_without_taxes'] = $this->currency->convert($product['price'], $this->_myOrder['currency'], 'EUR');
         }
+
         return $values['price_without_taxes'];
     }
 
@@ -1702,5 +1853,4 @@ class ControllerExtensionModuleMoloni extends Controller
 
         return $this->_myOrder['has_exchange'] ? $this->currency->convert($priceExtraTaxShipping, $this->_myOrder['currency'], 'EUR') : $priceExtraTaxShipping;
     }
-
 }
