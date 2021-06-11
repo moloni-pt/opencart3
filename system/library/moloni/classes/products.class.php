@@ -30,7 +30,7 @@ class products
         }
     }
 
-    public function insert($input, $company_id = false)
+    public function save($input, $company_id = false)
     {
         $values["company_id"] = ($company_id ? $company_id : $this->moloni->company_id);
 
@@ -54,13 +54,23 @@ class products
         $values["properties"] = isset($input['properties']) && is_array($input['properties']) ? $input['properties'] : "";
         $values["warehouses"] = isset($input['warehouses']) && is_array($input['warehouses']) ? $input['warehouses'] : "";
 
-        $result = $this->moloni->connection->curl("products/insert", $values);
+        if (isset($input['product_id']) && !empty($input['product_id'])) {
+            $values["product_id"] = $input['product_id'];
+
+            $action = 'products/update';
+        } else {
+            $action = 'products/insert';
+        }
+
+        $result = $this->moloni->connection->curl($action, $values);
+
         if (is_array($result) && isset($result['product_id'])) {
             return $result;
-        } else {
-            $this->moloni->errors->throwError("Erro ao inserir artigo " . $values["reference"] . " - " . $values["name"], $result[0], __CLASS__ . "/" . __FUNCTION__);
-            return false;
         }
+
+        $this->moloni->errors->throwError("Erro ao gravar artigo " . $values["reference"] . " - " . $values["name"], $result[0], __CLASS__ . "/" . __FUNCTION__);
+
+        return false;
     }
 
     public function getModifiedSince($company_id = false, $offset = 0, $lastmodified = 0)

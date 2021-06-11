@@ -289,4 +289,14 @@ class ModelExtensionModuleMoloniOcdb extends Model
 
         $this->db->query($sql);
     }
+
+    public function getZoneToGeoZone ($zoneId, $countryId) {
+        $query = "SELECT * FROM " . DB_PREFIX . "zone_to_geo_zone 
+                    WHERE country_id = '" . (int)$countryId . "'
+                    AND zone_id = '" . (int)$zoneId . "'";
+
+        $result = $this->db->query($query);
+
+        return $result->rows;
+    }
 }
