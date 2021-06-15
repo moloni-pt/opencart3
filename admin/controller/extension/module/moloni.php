@@ -28,6 +28,7 @@ class ControllerExtensionModuleMoloni extends Controller
     private $_myOrder;
     private $messages = [];
     private $hasNegative = false;
+    private $categoriesCache = [];
 
     public function __construct($registry)
     {
@@ -200,7 +201,6 @@ class ControllerExtensionModuleMoloni extends Controller
             $offset = 0;
             $lastModified = 0;
             $failSafe = 10000;
-            $categoriesCache = []; // Format: ['moloni_category_id' => 'opencart_category_id']
 
             if (isset($_POST['moloni']['import_product_since_date_hidden'])) {
                 $lastModified = $_POST['moloni']['import_product_since_date_hidden'];
@@ -219,143 +219,25 @@ class ControllerExtensionModuleMoloni extends Controller
 
                 foreach($moloniProducts as $moloniProduct){
                     $openCartProducts = $this->ocdb->getProductsByReference($moloniProduct['reference']);
-                    $opencartCategoryId = $this->importProductCategories($moloniProduct, $categoriesCache);
 
-                    $newProduct['product_store'][0] = $this->store_id;
-                    $newProduct['product_description'][$this->config->get('config_language_id')]['tag'] = '';
-                    $newProduct['product_description'][$this->config->get('config_language_id')]['meta_description'] = '';
-                    $newProduct['product_description'][$this->config->get('config_language_id')]['meta_keyword'] = '';
-                    $newProduct['product_category'][0] = $opencartCategoryId;
+                    //Only sync simple products
+                    if (empty($openCartProducts) && (int)$moloniProduct['composition_type'] !== 0) {
+                        continue;
+                    }
+
+                    $productToSave = [];
+                    $this->importProduct($productToSave, $moloniProduct, $openCartProducts);
 
                     if(empty($openCartProducts)){
-                        if((int)$moloniProduct['composition_type'] !== 0){
-                            continue;
-                        }
-
-                        if(!empty($moloniProduct['image'])){
-                            $newProduct['image'] = $newProduct['product_image'][0]['image'] = $this->moloni->connection->getMoloniImage($moloniProduct['image']);
-                            $newProduct['product_image'][0]['sort_order'] = 0;
-                        }
-
-                        $newProduct['upc'] = '';
-                        $newProduct['jan'] = '';
-                        $newProduct['isbn'] = '';
-                        $newProduct['mpn'] = '';
-                        $newProduct['location'] = '';
-                        $newProduct['subtract'] = 1;
-                        $newProduct['date_available'] = date('Y-m-d');
-                        $newProduct['manufacturer_id'] = 0;
-                        $newProduct['shipping'] = 1;
-                        $newProduct['points'] = 0;
-                        $newProduct['weight'] = 0;
-                        $newProduct['length'] = 0;
-                        $newProduct['width'] = 0;
-                        $newProduct['height'] = 0;
-                        $newProduct['status'] = 1;
-                        $newProduct['sort_order'] = 0;
-                        $newProduct['model'] = $moloniProduct['reference'];
-                        $newProduct['sku'] = $moloniProduct['reference'];
-                        $newProduct['ean'] = $moloniProduct['ean'];
-                        $newProduct['quantity'] = (int)$moloniProduct['stock'];
-                        $newProduct['minimum'] = (int)$moloniProduct['minimum_stock'];
-
-                        $stockStatuses = $this->model_localisation_stock_status->getStockStatuses();
-
-                        $newProduct['stock_status_id'] = (!empty($stockStatuses) && is_array($stockStatuses)) ? ($stockStatuses[0]['stock_status_id']) : 0;
-                        $newProduct['tax_class_id'] = isset($_POST['moloni']['import_tax_class_hidden']) ? (int)$_POST['moloni']['import_tax_class_hidden'] : 0;
-                        $newProduct['price'] = round($moloniProduct['price'],4);
-                        $newProduct['weight_class_id'] = $this->config->get('config_weight_class_id');
-                        $newProduct['length_class_id'] = $this->config->get('config_length_class_id');
-                        $newProduct['product_description'][$this->config->get('config_language_id')]['name'] = $moloniProduct['name'];
-                        $newProduct['product_description'][$this->config->get('config_language_id')]['meta_title'] = $moloniProduct['name'];
-                        $newProduct['product_description'][$this->config->get('config_language_id')]['description'] = $moloniProduct['summary'];
-
-                        $this->model_catalog_product->addProduct($newProduct);
+                        $this->model_catalog_product->addProduct($productToSave);
 
                         $this->data['artigos_importados']['count']++;
-                        $this->data['artigos_importados']['references'][] = $moloniProduct['reference'];
+                        $this->data['artigos_importados']['references'][] = $productToSave['sku'];
                     } else {
-                        $updateProductImage = null;
-                        $updateProductImageMoloni = null;
-                        $openCartProduct = $openCartProducts[0];
-
-                        $newProduct['upc'] = $openCartProduct['upc'] ?: '';
-                        $newProduct['jan'] = $openCartProduct['jan'] ?: '';
-                        $newProduct['isbn'] = $openCartProduct['isbn'] ?: '';
-                        $newProduct['mpn'] = $openCartProduct['mpn'] ?: '';
-                        $newProduct['location'] = $openCartProduct['location'] ?: 0;
-                        $newProduct['subtract'] = $openCartProduct['subtract'] ?: 1;
-                        $newProduct['date_available'] = $openCartProduct['date_available'] ?: date('Y-m-d');
-                        $newProduct['manufacturer_id'] = $openCartProduct['manufacturer_id'] ?: 0;
-                        $newProduct['shipping'] = $openCartProduct['shipping'] ?: 1;
-                        $newProduct['points'] = $openCartProduct['points'] ?: 0;
-                        $newProduct['weight'] = $openCartProduct['weight'] ?: 0;
-                        $newProduct['length'] = $openCartProduct['length'] ?: 0;
-                        $newProduct['width'] = $openCartProduct['width'] ?: 0;
-                        $newProduct['height'] = $openCartProduct['height'] ?: 0;
-                        $newProduct['status'] = $openCartProduct['status'] ?: 1;
-                        $newProduct['sort_order'] = $openCartProduct['sort_order'] ?: 0;
-                        $newProduct['model'] = $openCartProduct['model'];
-                        $newProduct['sku'] = $openCartProduct['sku'];
-                        $newProduct['ean'] = $openCartProduct['ean'];
-                        $newProduct['minimum'] = $openCartProduct['minimum'];
-                        $newProduct['stock_status_id'] = $openCartProduct['stock_status_id'];
-                        $newProduct['tax_class_id'] = $openCartProduct['tax_class_id'];
-                        $newProduct['weight_class_id'] = $openCartProduct['weight_class_id'];
-                        $newProduct['length_class_id'] = $openCartProduct['length_class_id'];
-                        $newProduct['product_description'][$this->config->get('config_language_id')]['description'] = $openCartProduct['description'];
-
-                        if(!empty($openCartProduct['image'])){
-                            $updateImageName = explode('/', $openCartProduct['image']);
-                            $updateProductImage = end($updateImageName);
-                        }
-
-                        if(!empty($moloniProduct['image'])){
-                            $updateImageNameMoloni = explode('/', $moloniProduct['image'], 3);
-                            $updateProductImageMoloni = end($updateImageNameMoloni);
-                        }
-
-                        if(!empty($moloniProduct['image']) &&
-                            ($updateProductImage !== $updateProductImageMoloni) &&
-                            isset($_POST['moloni']['update_import_products_image_hidden']) &&
-                            $_POST['moloni']['update_import_products_image_hidden']){
-                            $newProduct['image'] = $newProduct['product_image'][0]['image'] = $this->moloni->connection->getMoloniImage($moloniProduct['image']);
-                        } else {
-                            $newProduct['image'] = $newProduct['product_image'][0]['image'] = $openCartProduct['image'];
-                        }
-
-                        $newProduct['product_image'][0]['sort_order'] = 0;
-
-                        if(((float)$openCartProduct['quantity'] !== (float)$moloniProduct['stock']) &&
-                            isset($_POST['moloni']['update_import_products_stock_hidden']) &&
-                            $_POST['moloni']['update_import_products_stock_hidden']){
-                            $newProduct['quantity'] = (int)$moloniProduct['stock'];
-                        } else {
-                            $newProduct['quantity'] = $openCartProduct['quantity'];
-                        }
-
-                        if(isset($_POST['moloni']['update_import_products_price_hidden'])
-                            && $_POST['moloni']['update_import_products_price_hidden'] &&
-                            ((float)$openCartProduct['price'] !== round($moloniProduct['price'],4))){
-                            $newProduct['price'] = round($moloniProduct['price'], 4);
-                        } else {
-                            $newProduct['price'] = $openCartProduct['price'];
-                        }
-
-                        if(($openCartProduct['name'] !== $moloniProduct['name']) &&
-                            isset($_POST['moloni']['update_import_products_name_hidden']) &&
-                            $_POST['moloni']['update_import_products_name_hidden']){
-                            $newProduct['product_description'][$this->config->get('config_language_id')]['name'] = $moloniProduct['name'];
-                            $newProduct['product_description'][$this->config->get('config_language_id')]['meta_title'] = $moloniProduct['name'];
-                        } else {
-                            $newProduct['product_description'][$this->config->get('config_language_id')]['name'] = $openCartProduct['name'];
-                            $newProduct['product_description'][$this->config->get('config_language_id')]['meta_title'] = $openCartProduct['meta_title'];
-                        }
-
-                        $this->model_catalog_product->editProduct($openCartProduct['product_id'], $newProduct);
+                        $this->model_catalog_product->editProduct($productToSave['product_id'], $productToSave);
 
                         $this->data['artigos_atualizados']['count']++;
-                        $this->data['artigos_atualizados']['references'][] = $openCartProduct['model'];
+                        $this->data['artigos_atualizados']['references'][] = $productToSave['sku'];
                     }
                 }
 
@@ -373,24 +255,124 @@ class ControllerExtensionModuleMoloni extends Controller
                     'message' => $this->language->get('products_import_success'),
                 ];
             }
-
         }
 
-        $this->data['content'] = $this->getSettingsData();
         $this->page = 'settings';
+        $this->data['content'] = $this->getSettingsData();
+
         $this->loadDefaults();
+
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
+    }
+
+    /**
+     * Prepares Moloni product to be saved
+     *
+     * @param array $productToSave Product to save
+     * @param array $moloniProduct Moloni product data
+     * @param array $openCartProduct Opencart product data
+     *
+     * @return void
+     */
+    private function importProduct(&$productToSave, $moloniProduct, $openCartProduct)
+    {
+        $opencartCategoryId = $this->importProductCategories($moloniProduct);
+        $languageId = $this->config->get('config_language_id');
+
+        $productToSave['product_store'][0] = $this->store_id;
+        $productToSave['product_category'][0] = $opencartCategoryId;
+
+        if (!empty($openCartProduct)) {
+            // The arg is an array of arrays
+            $openCartProduct = $openCartProduct[0];
+
+            $productToSave['product_id'] = $openCartProduct['product_id'];
+            $productToSave['model'] = $openCartProduct['model'];
+            $productToSave['sku'] = $openCartProduct['sku'];
+            $productToSave['minimum'] = $openCartProduct['minimum'];
+            $productToSave['stock_status_id'] = $openCartProduct['stock_status_id'];
+            $productToSave['tax_class_id'] = $openCartProduct['tax_class_id'];
+            $productToSave['weight_class_id'] = $openCartProduct['weight_class_id'];
+            $productToSave['length_class_id'] = $openCartProduct['length_class_id'];
+
+            if(isset($_POST['moloni']['update_import_products_stock_hidden']) && $_POST['moloni']['update_import_products_stock_hidden']){
+                $productToSave['quantity'] = (float)$moloniProduct['stock'];
+            } else {
+                $productToSave['quantity'] = $openCartProduct['quantity'];
+            }
+
+            if(isset($_POST['moloni']['update_import_products_price_hidden']) && $_POST['moloni']['update_import_products_price_hidden']){
+                $productToSave['price'] = round($moloniProduct['price'], 4);
+            } else {
+                $productToSave['price'] = $openCartProduct['price'];
+            }
+
+            if(isset($_POST['moloni']['update_import_products_name_hidden']) && $_POST['moloni']['update_import_products_name_hidden']){
+                $productToSave['product_description'][$languageId]['name'] = $moloniProduct['name'];
+                $productToSave['product_description'][$languageId]['meta_title'] = $moloniProduct['name'];
+            } else {
+                $productToSave['product_description'][$languageId]['name'] = $openCartProduct['name'];
+                $productToSave['product_description'][$languageId]['meta_title'] = $openCartProduct['meta_title'];
+            }
+
+            $productToSave['product_description'][$languageId]['tag'] = $openCartProduct['tag'];
+            $productToSave['product_description'][$languageId]['meta_description'] = $openCartProduct['meta_description'];
+            $productToSave['product_description'][$languageId]['meta_keyword'] = $openCartProduct['meta_keyword'];
+
+            $this->importProductSecureConnections($productToSave);
+        } else {
+            $stockStatuses = $this->model_localisation_stock_status->getStockStatuses();
+
+            $productToSave['model'] = $moloniProduct['reference'];
+            $productToSave['sku'] = $moloniProduct['reference'];
+            $productToSave['quantity'] = (int)$moloniProduct['stock'];
+            $productToSave['minimum'] = (int)$moloniProduct['minimum_stock'];
+            $productToSave['product_description'][$languageId]['description'] = $moloniProduct['description'];
+            $productToSave['product_description'][$languageId]['tag'] = '';
+            $productToSave['product_description'][$languageId]['meta_description'] = '';
+            $productToSave['product_description'][$languageId]['meta_keyword'] = '';
+            $productToSave['product_description'][$languageId]['name'] = $moloniProduct['name'];
+            $productToSave['product_description'][$languageId]['meta_title'] = $moloniProduct['name'];
+            $productToSave['weight_class_id'] = $this->config->get('config_weight_class_id');
+            $productToSave['length_class_id'] = $this->config->get('config_length_class_id');
+            $productToSave['price'] = round($moloniProduct['price'],4);
+
+            $productToSave['stock_status_id'] = (!empty($stockStatuses) && is_array($stockStatuses)) ? ($stockStatuses[0]['stock_status_id']) : 0;
+            $productToSave['tax_class_id'] = isset($_POST['moloni']['import_tax_class_hidden']) ? (int)$_POST['moloni']['import_tax_class_hidden'] : 0;
+        }
+
+        $productToSave['upc'] = isset($openCartProduct['upc']) ? $openCartProduct['upc'] : '';
+        $productToSave['jan'] = isset($openCartProduct['jan']) ? $openCartProduct['jan'] : '';
+        $productToSave['isbn'] = isset($openCartProduct['isbn']) ? $openCartProduct['isbn'] : '';
+        $productToSave['mpn'] = isset($openCartProduct['mpn']) ? $openCartProduct['mpn'] : '';
+        $productToSave['location'] = isset($openCartProduct['location']) ? $openCartProduct['location'] : 0;
+        $productToSave['subtract'] = isset($openCartProduct['subtract']) ? $openCartProduct['subtract'] : 1;
+        $productToSave['date_available'] = isset($openCartProduct['date_available']) ? $openCartProduct['date_available'] : date('Y-m-d');
+        $productToSave['manufacturer_id'] = isset($openCartProduct['manufacturer_id']) ? $openCartProduct['manufacturer_id'] : 0;
+        $productToSave['shipping'] = isset($openCartProduct['shipping']) ? $openCartProduct['shipping'] : 1;
+        $productToSave['points'] = isset($openCartProduct['points']) ? $openCartProduct['points'] : 0;
+        $productToSave['weight'] = isset($openCartProduct['weight']) ? $openCartProduct['weight'] : 0;
+        $productToSave['length'] = isset($openCartProduct['length']) ? $openCartProduct['length'] : 0;
+        $productToSave['width'] = isset($openCartProduct['width']) ? $openCartProduct['width'] : 0;
+        $productToSave['height'] = isset($openCartProduct['height']) ? $openCartProduct['height'] : 0;
+        $productToSave['status'] = isset($openCartProduct['status']) ? $openCartProduct['status'] : 1;
+        $productToSave['sort_order'] = isset($openCartProduct['sort_order']) ? $openCartProduct['sort_order'] : 0;
+
+        $productToSave['ean'] = $moloniProduct['ean'];
+        $productToSave['product_description'][$languageId]['description'] = $moloniProduct['summary'];
+
+        $this->importProductImage($productToSave, $moloniProduct, $openCartProduct);
+
     }
 
     /**
      * Gets the category tree from a Moloni product and creates it in Opencart
      *
      * @param array $moloniProduct Moloni product values
-     * @param array $categoriesCache Categories cached
      *
      * @return int Opencart category id (Last id from the tree)
      */
-    private function importProductCategories($moloniProduct, &$categoriesCache)
+    private function importProductCategories($moloniProduct)
     {
         $moloniCategories = $this->moloni->products->getProductCategoryTree($moloniProduct['product_id']);
 
@@ -400,9 +382,9 @@ class ControllerExtensionModuleMoloni extends Controller
             $currentCategoryId = null;
 
             // Check cache to get current Moloni category link
-            if (isset($categoriesCache[$moloniCategory['category_id']])) {
-                $currentCategoryId = $categoriesCache[$moloniCategory['category_id']];
-                $parentCategoryId = $categoriesCache[$moloniCategory['category_id']];
+            if (isset($this->categoriesCache[$moloniCategory['category_id']])) {
+                $currentCategoryId = $this->categoriesCache[$moloniCategory['category_id']];
+                $parentCategoryId = $this->categoriesCache[$moloniCategory['category_id']];
 
                 continue;
             }
@@ -435,10 +417,77 @@ class ControllerExtensionModuleMoloni extends Controller
             $parentCategoryId = $currentCategoryId;
 
             // Save results in cache
-            $categoriesCache[$moloniCategory['category_id']] = $currentCategoryId;
+            $this->categoriesCache[$moloniCategory['category_id']] = $currentCategoryId;
         }
 
         return isset($currentCategoryId) ? $currentCategoryId : 0;
+    }
+
+    /**
+     * Imports Moloni image if necessary
+     *
+     * @param array $productToSave Product to save
+     * @param array $moloniProduct Moloni product data
+     * @param array $openCartProduct Opencart product data
+     *
+     * @return void
+     */
+    private function importProductImage(&$productToSave, $moloniProduct, $openCartProduct)
+    {
+        $productToSave['product_image'] = [];
+
+        if (isset($openCartProduct['product_id'])) {
+            $productToSave['product_image'] = $this->model_catalog_product->getProductImages($openCartProduct['product_id']);
+        }
+
+        // Check if user wants to sync Moloni Product image
+        if (!isset($_POST['moloni']['update_import_products_image_hidden']) || !$_POST['moloni']['update_import_products_image_hidden']) {
+            return;
+        }
+
+        $openCartImageName = null;
+        $moloniImageName = null;
+
+        if(isset($openCartProduct['image']) && !empty($openCartProduct['image'])){
+            $openCartImageName = explode('/', $openCartProduct['image']);
+            $openCartImageName = end($openCartImageName);
+        }
+
+        if(isset($moloniProduct['image']) && !empty($moloniProduct['image'])){
+            $moloniImageName = explode('/', $moloniProduct['image'], 3);
+            $moloniImageName = end($moloniImageName);
+        }
+
+        if ($moloniImageName !== null && $moloniImageName !== $openCartImageName) {
+            $productToSave['image'] = $this->moloni->connection->getMoloniImage($moloniProduct['image']);
+
+            $imagesCount = count($productToSave['product_image']);
+
+            $productToSave['product_image'][$imagesCount]['sort_order'] = $imagesCount;
+            $productToSave['product_image'][$imagesCount]['image'] = $productToSave['image'];
+        }
+    }
+
+    /**
+     * Maintain important connections
+     *
+     * @param array $productToSave New product to save
+     *
+     * @return void
+     */
+    private function importProductSecureConnections(&$productToSave)
+    {
+        $productToSave['product_attribute'] = $this->model_catalog_product->getProductAttributes($productToSave['product_id']);
+        $productToSave['product_option'] = $this->model_catalog_product->getProductOptions($productToSave['product_id']);
+        $productToSave['product_recurring'] = $this->model_catalog_product->getRecurrings($productToSave['product_id']);
+        $productToSave['product_discount'] = $this->model_catalog_product->getProductDiscounts($productToSave['product_id']);
+        $productToSave['product_special'] = $this->model_catalog_product->getProductSpecials($productToSave['product_id']);
+        $productToSave['product_download'] = $this->model_catalog_product->getProductDownloads($productToSave['product_id']);
+        $productToSave['product_filter'] = $this->model_catalog_product->getProductFilters($productToSave['product_id']);
+        $productToSave['product_related'] = $this->model_catalog_product->getProductRelated($productToSave['product_id']);
+        $productToSave['product_reward'] = $this->model_catalog_product->getProductRewards($productToSave['product_id']);
+        $productToSave['product_seo_url'] = $this->model_catalog_product->getProductSeoUrls($productToSave['product_id']);
+        $productToSave['product_layout'] = $this->model_catalog_product->getProductLayouts($productToSave['product_id']);
     }
 
     private function allowed()
@@ -1415,8 +1464,8 @@ class ControllerExtensionModuleMoloni extends Controller
     /**
      * Event called when a product is saved in Opencart
      *
-     * @param string $evenRoute
-     * @param array $data
+     * @param string $evenRoute Event route
+     * @param array $data Opencart product
      *
      * @return void
      *
