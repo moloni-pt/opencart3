@@ -467,7 +467,7 @@ class ControllerExtensionModuleMoloni extends Controller
         }
 
         // Check if user wants to sync Moloni Product image
-        if (!isset($_POST['moloni']['update_import_products_image_hidden']) || !$_POST['moloni']['update_import_products_image_hidden']) {
+        if (!empty($openCartProduct) && (!isset($_POST['moloni']['update_import_products_image_hidden']) || !$_POST['moloni']['update_import_products_image_hidden'])) {
             return;
         }
 
