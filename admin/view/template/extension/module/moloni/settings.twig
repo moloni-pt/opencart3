@@ -540,6 +540,19 @@
                                             <input type="text" name="moloni[git_branch]" value="{{ options.git_branch }}" id="input-name" class="form-control" />
                                         </div>
                                     </div>
+
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">
+                                            {{label.download_logs}}
+                                        </label>
+                                        <div class="col-sm-10">
+                                            {% if  content.settings_values.log_url != '' %}
+                                                <a title="{{label.download_logs}}" class="btn btn-primary" href="{{ content.settings_values.log_url }}">{{label.download_logs}}</a>
+                                            {% else %}
+                                                <button class="btn btn-primary" title="{{label.download_logs}}" disabled>{{label.download_logs}}</button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                             </div>
                             </fieldset>
                         </div>
