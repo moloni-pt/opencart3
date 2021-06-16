@@ -230,6 +230,10 @@ class ModelExtensionModuleMoloniOcdb extends Model
                 }
             }
         } else {
+            if (is_array($geo_zone_id)) {
+                $geo_zone_id = 0;
+            }
+
             $sql = "SELECT * FROM " . DB_PREFIX . "tax_rate WHERE tax_rate_id = '" . $tax_rate_id . "' AND geo_zone_id = " . $geo_zone_id . " ";
             $query = $this->db->query($sql);
             $result = $query->row;
