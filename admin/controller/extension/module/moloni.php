@@ -1522,11 +1522,10 @@ class ControllerExtensionModuleMoloni extends Controller
                             }
                         }
                     }
-                    try {
-                        $this->eventProductHandler($product);
-                    } catch (Exception $e) {
-                        $this->toolWriteLog($e);
-                    }
+                }
+
+                if (isset($this->settings['products_auto']) && (int)$this->settings['products_auto'] === 1) {
+                    $this->eventProductHandler($product);
                 }
             }
         }
