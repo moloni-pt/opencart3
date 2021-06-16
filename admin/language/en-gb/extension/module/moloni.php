@@ -161,3 +161,5 @@ $_['label']['debug_console'] = "Debug console";
 $_['label']['git_username'] = "Git username";
 $_['label']['git_repository'] = "Git repository";
 $_['label']['git_branch'] = "Git branch";
+
+$_['label']['download_logs'] = "Download logs";

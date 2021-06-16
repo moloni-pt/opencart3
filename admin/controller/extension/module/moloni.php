@@ -1,6 +1,8 @@
 <?php
 
 /**
+ * Class ControllerExtensionModuleMoloni
+ *
  * @property  moloni $moloni
  * @property  ModelExtensionModuleMoloniOcdb $ocdb
  * @property  Loader $load
@@ -32,8 +34,8 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function __construct($registry)
     {
-
         parent::__construct($registry);
+
         if (isset($this->request->get['update']) &&
             $this->request->get['update'] == true &&
             strpos($this->request->get['route'], 'extension/module/moloni') !== false) {
@@ -91,6 +93,13 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->data['options'] = $this->settings = $this->getMoloniSettings();
     }
 
+    /**
+     * Handles model call
+     *
+     * @return void
+     *
+     * @throws Exception
+     */
     public function modelHandler()
     {
         if (isset($this->modelsRequired) && is_array($this->modelsRequired)) {
@@ -102,6 +111,10 @@ class ControllerExtensionModuleMoloni extends Controller
     }
 
     /**
+     * Orders page
+     *
+     * @return void
+     *
      * @throws Exception
      */
     public function index()
@@ -118,11 +131,16 @@ class ControllerExtensionModuleMoloni extends Controller
     }
 
     /**
+     * Settings page
+     *
+     * @return void
+     *
      * @throws Exception
      */
     public function settings()
     {
         $this->start();
+
         if ($this->allowed()) {
             if ($this->ocdb->getTotalStores() > 0 && !isset($this->request->get['store_id'])) {
                 $this->data['content'] = $this->getStoreListData();
@@ -138,6 +156,10 @@ class ControllerExtensionModuleMoloni extends Controller
     }
 
     /**
+     * Documents page
+     *
+     * @return void
+     *
      * @throws Exception
      */
     public function documents()
@@ -213,36 +235,40 @@ class ControllerExtensionModuleMoloni extends Controller
             $this->data['artigos_importados']['count'] = 0; // Quantos artigos foram importados
             $this->data['artigos_atualizados']['count'] = 0; // Quantos artigos foram atualizados
 
-            do{
-                $moloniProducts = $this->moloni->products->getModifiedSince(false, $offset, $lastModified);
-                $gotThemAll = (count($moloniProducts) === 50);
+            try {
+                do{
+                    $moloniProducts = $this->moloni->products->getModifiedSince(false, $offset, $lastModified);
+                    $gotThemAll = (count($moloniProducts) === 50);
 
-                foreach($moloniProducts as $moloniProduct){
-                    $openCartProducts = $this->ocdb->getProductsByReference($moloniProduct['reference']);
+                    foreach($moloniProducts as $moloniProduct){
+                        $openCartProducts = $this->ocdb->getProductsByReference($moloniProduct['reference']);
 
-                    //Only sync simple products
-                    if (empty($openCartProducts) && (int)$moloniProduct['composition_type'] !== 0) {
-                        continue;
+                        //Only sync simple products
+                        if (empty($openCartProducts) && (int)$moloniProduct['composition_type'] !== 0) {
+                            continue;
+                        }
+
+                        $productToSave = [];
+                        $this->importProduct($productToSave, $moloniProduct, $openCartProducts);
+
+                        if(empty($openCartProducts)){
+                            $this->model_catalog_product->addProduct($productToSave);
+
+                            $this->data['artigos_importados']['count']++;
+                            $this->data['artigos_importados']['references'][] = $productToSave['sku'];
+                        } else {
+                            $this->model_catalog_product->editProduct($productToSave['product_id'], $productToSave);
+
+                            $this->data['artigos_atualizados']['count']++;
+                            $this->data['artigos_atualizados']['references'][] = $productToSave['sku'];
+                        }
                     }
 
-                    $productToSave = [];
-                    $this->importProduct($productToSave, $moloniProduct, $openCartProducts);
-
-                    if(empty($openCartProducts)){
-                        $this->model_catalog_product->addProduct($productToSave);
-
-                        $this->data['artigos_importados']['count']++;
-                        $this->data['artigos_importados']['references'][] = $productToSave['sku'];
-                    } else {
-                        $this->model_catalog_product->editProduct($productToSave['product_id'], $productToSave);
-
-                        $this->data['artigos_atualizados']['count']++;
-                        $this->data['artigos_atualizados']['references'][] = $productToSave['sku'];
-                    }
-                }
-
-                $offset += 50;
-            } while ($gotThemAll && $failSafe > $offset);
+                    $offset += 50;
+                } while ($gotThemAll && $failSafe > $offset);
+            } catch (ErrorException $e){
+                $this->toolWriteLog($e);
+            }
 
             if ($this->data['artigos_importados']['count'] === 0 && $this->data['artigos_atualizados']['count'] === 0) {
                 $this->messages['errors'] = [
@@ -1051,6 +1077,7 @@ class ControllerExtensionModuleMoloni extends Controller
         $url['settings']['save'] = $this->url->link('extension/module/moloni/settings', array('store_id' => (isset($this->request->get['store_id']) ? $this->request->get['store_id'] : 0), 'action' => 'save', 'user_token' => $this->session->data['user_token']), true);
         $url['settings']['cancel'] = $this->url->link('extension/module/moloni/settings', array('user_token' => $this->session->data['user_token']), true);
         $url['import_products'] = $this->url->link('extension/module/moloni/importProducts', array('user_token' => $this->session->data['user_token']), true);
+
         return $url;
     }
 
@@ -1176,7 +1203,6 @@ class ControllerExtensionModuleMoloni extends Controller
             $data['settings_values']['store_locations'][] = array('id' => $store['location_id'], 'name' => $store['name']);
         }
 
-
         $this->load->model('localisation/order_status');
 
         $data['settings_values']['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
@@ -1184,6 +1210,12 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->load->model('localisation/tax_class');
 
         $data['settings_values']['tax_classes'] = $this->model_localisation_tax_class->getTaxClasses();
+
+        if (defined('DIR_LOGS') && file_exists(DIR_LOGS . '/moloni/' .  date('Ymd') . '.log')) {
+            $data['settings_values']['log_url'] = $this->url->link('extension/module/moloni/toolDownloadLog', ['user_token' => $this->session->data['user_token']], true);
+        } else {
+            $data['settings_values']['log_url'] = '';
+        }
 
         return $data;
     }
@@ -1490,8 +1522,11 @@ class ControllerExtensionModuleMoloni extends Controller
                             }
                         }
                     }
-
-                    $this->eventProductHandler($product);
+                    try {
+                        $this->eventProductHandler($product);
+                    } catch (Exception $e) {
+                        $this->toolWriteLog($e);
+                    }
                 }
             }
         }
@@ -1592,7 +1627,7 @@ class ControllerExtensionModuleMoloni extends Controller
      *
      * @param array $oc_product Opencart Product
      *
-     * @return array|false
+     * @return false|array
      */
     private function eventTaxesHandler($oc_product)
     {
@@ -1901,5 +1936,60 @@ class ControllerExtensionModuleMoloni extends Controller
         }
 
         return $this->_myOrder['has_exchange'] ? $this->currency->convert($priceExtraTaxShipping, $this->_myOrder['currency'], 'EUR') : $priceExtraTaxShipping;
+    }
+
+    /**
+     * Writes a log in logs directory
+     *
+     * @param string|array $message Data do store in log
+     *
+     * @return void
+     */
+    private function toolWriteLog($message)
+    {
+        if (!defined('DIR_LOGS')) {
+            return;
+        }
+
+        $directory = DIR_LOGS . 'moloni';
+
+        if (!is_dir($directory) && !mkdir($directory) && !is_dir($directory)) {
+            return;
+        }
+
+        $fileName = date('Ymd') . '.log';
+        $logFile = fopen($directory . '/' . $fileName, 'ab');
+
+        fwrite($logFile, '[' . date('Y-m-d H:i:s') . '] ' . print_r($message, true) . PHP_EOL);
+    }
+
+    /**
+     * Return log url
+     *
+     * @return string
+     */
+    public function toolDownloadLog()
+    {
+        if (!defined('DIR_LOGS')) {
+            return;
+        }
+
+        $path = DIR_LOGS . '/moloni/' .  date('Ymd') . '.log';
+
+        if (!file_exists($path)) {
+            return;
+        }
+
+        header('Content-Description: File Transfer');
+        header('Content-Type: application/octet-stream');
+        header("Cache-Control: no-cache, must-revalidate");
+        header("Expires: 0");
+        header('Content-Disposition: attachment; filename="'.basename($path).'"');
+        header('Content-Length: ' . filesize($path));
+        header('Pragma: public');
+
+        flush();
+
+        readfile($path);
     }
 }

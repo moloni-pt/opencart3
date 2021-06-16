@@ -122,9 +122,9 @@ $_['label']['update_import_products_price'] = "Preço";
 $_['label']['update_import_products_image'] = "Imagem";
 $_['label']['import_tax_class'] = "Tax class dos artigos importados";
 $_['label']['products_at_category'] = "AT Category";
-$_['label']['measure_unit'] = "Measurement unit";
+$_['label']['measure_unit'] = "Unidade de categoria";
 
-$_['label']['products_auto'] = "Create products automatically";
+$_['label']['products_auto'] = "Criar produtos automaticamente";
 $_['label']['products_description_document'] = "Incluir resumo de artigo em documentos";
 $_['label']['products_description_moloni'] = "Incluir resumo na ficha de artigo";
 $_['label']['remove_extra_tax'] = "Remover IVA nas taxas extra";
@@ -150,3 +150,5 @@ $_['label']['debug_console'] = "Debug console";
 $_['label']['git_username'] = "Git username";
 $_['label']['git_repository'] = "Git repository";
 $_['label']['git_branch'] = "Git branch";
+
+$_['label']['download_logs'] = "Descarregar registos";
