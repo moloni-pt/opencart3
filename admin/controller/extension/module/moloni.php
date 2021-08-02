@@ -182,6 +182,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $this->page = 'home';
 
                 $order_id = $this->request->get['order_id'];
+
                 if ($order_id) {
                     $parsed = json_decode($order_id, true);
                     if (is_array($parsed)) {
@@ -189,7 +190,7 @@ class ControllerExtensionModuleMoloni extends Controller
                             $this->createDocumentFromOrder($order_id);
                         }
                     } else {
-                        $this->createDocumentFromOrder($this->request->get['order_id']);
+                        $this->createDocumentFromOrder($order_id);
                     }
                 }
 
@@ -1400,7 +1401,6 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_edit', 'admin/model/catalog/product/editProduct/after', $this->modulePathBase . 'eventProductCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_add', 'admin/model/catalog/product/addProduct/after', $this->modulePathBase . 'eventProductCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_order_edit_check_paid', 'catalog/model/checkout/order/addOrderHistory/after', $this->modulePathBase . 'eventCreateDocument');
-        $this->model_setting_event->addEvent($this->eventGroup . '_order_add_check_paid', 'catalog/model/checkout/order/addOrder/after', $this->modulePathBase . 'eventCreateDocument');
     }
 
     public function uninstall()
@@ -1414,7 +1414,6 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_edit');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_add');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_edit_check_paid');
-        $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_add_check_paid');
     }
 
     public function patch()
