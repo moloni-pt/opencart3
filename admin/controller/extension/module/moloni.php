@@ -312,7 +312,6 @@ class ControllerExtensionModuleMoloni extends Controller
         if (!empty($openCartProduct)) {
             // The arg is an array of arrays
             $openCartProduct = $openCartProduct[0];
-
             $productToSave['product_id'] = $openCartProduct['product_id'];
             $productToSave['model'] = $openCartProduct['model'];
             $productToSave['sku'] = $openCartProduct['sku'];
@@ -321,6 +320,9 @@ class ControllerExtensionModuleMoloni extends Controller
             $productToSave['tax_class_id'] = $openCartProduct['tax_class_id'];
             $productToSave['weight_class_id'] = $openCartProduct['weight_class_id'];
             $productToSave['length_class_id'] = $openCartProduct['length_class_id'];
+
+            $this->importProductSecureConnections($productToSave);
+
 
             if(isset($_POST['moloni']['update_import_products_stock_hidden']) && $_POST['moloni']['update_import_products_stock_hidden']){
                 $productToSave['quantity'] = (float)$moloniProduct['stock'];
@@ -345,8 +347,6 @@ class ControllerExtensionModuleMoloni extends Controller
             $productToSave['product_description'][$languageId]['tag'] = $openCartProduct['tag'];
             $productToSave['product_description'][$languageId]['meta_description'] = $openCartProduct['meta_description'];
             $productToSave['product_description'][$languageId]['meta_keyword'] = $openCartProduct['meta_keyword'];
-
-            $this->importProductSecureConnections($productToSave);
         } else {
             $stockStatuses = $this->model_localisation_stock_status->getStockStatuses();
 
@@ -389,7 +389,6 @@ class ControllerExtensionModuleMoloni extends Controller
         $productToSave['product_description'][$languageId]['description'] = $moloniProduct['summary'];
 
         $this->importProductImage($productToSave, $moloniProduct, $openCartProduct);
-
     }
 
     /**
@@ -505,16 +504,19 @@ class ControllerExtensionModuleMoloni extends Controller
     private function importProductSecureConnections(&$productToSave)
     {
         $productToSave['product_attribute'] = $this->model_catalog_product->getProductAttributes($productToSave['product_id']);
-        $productToSave['product_option'] = $this->model_catalog_product->getProductOptions($productToSave['product_id']);
-        $productToSave['product_recurring'] = $this->model_catalog_product->getRecurrings($productToSave['product_id']);
+        $productToSave['product_description'] = $this->model_catalog_product->getProductDescriptions($productToSave['product_id']);
         $productToSave['product_discount'] = $this->model_catalog_product->getProductDiscounts($productToSave['product_id']);
-        $productToSave['product_special'] = $this->model_catalog_product->getProductSpecials($productToSave['product_id']);
-        $productToSave['product_download'] = $this->model_catalog_product->getProductDownloads($productToSave['product_id']);
         $productToSave['product_filter'] = $this->model_catalog_product->getProductFilters($productToSave['product_id']);
+        $productToSave['product_image'] = $this->model_catalog_product->getProductImages($productToSave['product_id']);
+        $productToSave['product_option'] = $this->model_catalog_product->getProductOptions($productToSave['product_id']);
         $productToSave['product_related'] = $this->model_catalog_product->getProductRelated($productToSave['product_id']);
         $productToSave['product_reward'] = $this->model_catalog_product->getProductRewards($productToSave['product_id']);
-        $productToSave['product_seo_url'] = $this->model_catalog_product->getProductSeoUrls($productToSave['product_id']);
+        $productToSave['product_special'] = $this->model_catalog_product->getProductSpecials($productToSave['product_id']);
+        $productToSave['product_download'] = $this->model_catalog_product->getProductDownloads($productToSave['product_id']);
         $productToSave['product_layout'] = $this->model_catalog_product->getProductLayouts($productToSave['product_id']);
+        $productToSave['product_store'] = $this->model_catalog_product->getProductStores($productToSave['product_id']);
+        $productToSave['product_recurring'] = $this->model_catalog_product->getRecurrings($productToSave['product_id']);
+        $productToSave['product_seo_url'] = $this->model_catalog_product->getProductSeoUrls($productToSave['product_id']);
     }
 
     private function allowed()
