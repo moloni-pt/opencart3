@@ -939,6 +939,7 @@ class ControllerExtensionModuleMoloni extends Controller
             } else if(isset($this->settings['products_description_document']) && empty($this->settings['products_description_document']) && isset($values['summary'])){
                 unset($values['summary']);
             }
+
             return $values;
         }
     }
@@ -1571,6 +1572,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
         if ($moloni_product_exists) {
             $values['product_id'] = $moloni_product_exists[0]['product_id'];
+            $values['summary'] = $moloni_product_exists[0]['summary'];
         }
 
         // *Hacks* Use the first description
@@ -1583,21 +1585,14 @@ class ControllerExtensionModuleMoloni extends Controller
             }
         }
 
-        $description = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', '', ($opencartProduct['description'])), 0, 250);
-
-        $taxes = $this->eventTaxesHandler($opencartProduct);
-
         $values['name'] = $opencartProduct['name'];
-        $values['summary'] = $description . (strlen($description) >= 250 ? '...' : '');
-        $values['price'] = $product['price_without_taxes'] = $opencartProduct['price'];
+        $values['price'] = $opencartProduct['price'];
         $values['unit_id'] = $this->settings['measure_unit'];
         $values['reference'] = $moloni_reference;
         $values['ean'] = $opencartProduct['ean'];
 
-        if (!empty($taxes) && is_array($taxes)) {
-            $values['taxes'] = $taxes;
-        } else {
-            $values['exemption_reason'] = $this->settings['products_tax_exemption'];
+        if(isset($this->settings['products_description_moloni']) && !empty($this->settings['products_description_moloni'])){
+            $values['summary'] = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', '', ($opencartProduct['description'])), 0, 250);
         }
 
         if (!empty($opencartProduct['product_category']) && is_array($opencartProduct['product_category'])) {
@@ -1615,6 +1610,14 @@ class ControllerExtensionModuleMoloni extends Controller
         } else {
             $values['type'] = '2';
             $values['has_stock'] = '0';
+        }
+
+        $taxes = $this->eventTaxesHandler($opencartProduct);
+
+        if (!empty($taxes) && is_array($taxes)) {
+            $values['taxes'] = $taxes;
+        } else {
+            $values['exemption_reason'] = $this->settings['products_tax_exemption'];
         }
 
         $this->moloni->products->save($values);
