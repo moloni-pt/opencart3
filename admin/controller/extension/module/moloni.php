@@ -182,6 +182,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $this->page = 'home';
 
                 $order_id = $this->request->get['order_id'];
+
                 if ($order_id) {
                     $parsed = json_decode($order_id, true);
                     if (is_array($parsed)) {
@@ -189,7 +190,7 @@ class ControllerExtensionModuleMoloni extends Controller
                             $this->createDocumentFromOrder($order_id);
                         }
                     } else {
-                        $this->createDocumentFromOrder($this->request->get['order_id']);
+                        $this->createDocumentFromOrder($order_id);
                     }
                 }
 
@@ -311,7 +312,6 @@ class ControllerExtensionModuleMoloni extends Controller
         if (!empty($openCartProduct)) {
             // The arg is an array of arrays
             $openCartProduct = $openCartProduct[0];
-
             $productToSave['product_id'] = $openCartProduct['product_id'];
             $productToSave['model'] = $openCartProduct['model'];
             $productToSave['sku'] = $openCartProduct['sku'];
@@ -320,6 +320,9 @@ class ControllerExtensionModuleMoloni extends Controller
             $productToSave['tax_class_id'] = $openCartProduct['tax_class_id'];
             $productToSave['weight_class_id'] = $openCartProduct['weight_class_id'];
             $productToSave['length_class_id'] = $openCartProduct['length_class_id'];
+
+            $this->importProductSecureConnections($productToSave);
+
 
             if(isset($_POST['moloni']['update_import_products_stock_hidden']) && $_POST['moloni']['update_import_products_stock_hidden']){
                 $productToSave['quantity'] = (float)$moloniProduct['stock'];
@@ -344,8 +347,6 @@ class ControllerExtensionModuleMoloni extends Controller
             $productToSave['product_description'][$languageId]['tag'] = $openCartProduct['tag'];
             $productToSave['product_description'][$languageId]['meta_description'] = $openCartProduct['meta_description'];
             $productToSave['product_description'][$languageId]['meta_keyword'] = $openCartProduct['meta_keyword'];
-
-            $this->importProductSecureConnections($productToSave);
         } else {
             $stockStatuses = $this->model_localisation_stock_status->getStockStatuses();
 
@@ -388,7 +389,6 @@ class ControllerExtensionModuleMoloni extends Controller
         $productToSave['product_description'][$languageId]['description'] = $moloniProduct['summary'];
 
         $this->importProductImage($productToSave, $moloniProduct, $openCartProduct);
-
     }
 
     /**
@@ -504,16 +504,19 @@ class ControllerExtensionModuleMoloni extends Controller
     private function importProductSecureConnections(&$productToSave)
     {
         $productToSave['product_attribute'] = $this->model_catalog_product->getProductAttributes($productToSave['product_id']);
-        $productToSave['product_option'] = $this->model_catalog_product->getProductOptions($productToSave['product_id']);
-        $productToSave['product_recurring'] = $this->model_catalog_product->getRecurrings($productToSave['product_id']);
+        $productToSave['product_description'] = $this->model_catalog_product->getProductDescriptions($productToSave['product_id']);
         $productToSave['product_discount'] = $this->model_catalog_product->getProductDiscounts($productToSave['product_id']);
-        $productToSave['product_special'] = $this->model_catalog_product->getProductSpecials($productToSave['product_id']);
-        $productToSave['product_download'] = $this->model_catalog_product->getProductDownloads($productToSave['product_id']);
         $productToSave['product_filter'] = $this->model_catalog_product->getProductFilters($productToSave['product_id']);
+        $productToSave['product_image'] = $this->model_catalog_product->getProductImages($productToSave['product_id']);
+        $productToSave['product_option'] = $this->model_catalog_product->getProductOptions($productToSave['product_id']);
         $productToSave['product_related'] = $this->model_catalog_product->getProductRelated($productToSave['product_id']);
         $productToSave['product_reward'] = $this->model_catalog_product->getProductRewards($productToSave['product_id']);
-        $productToSave['product_seo_url'] = $this->model_catalog_product->getProductSeoUrls($productToSave['product_id']);
+        $productToSave['product_special'] = $this->model_catalog_product->getProductSpecials($productToSave['product_id']);
+        $productToSave['product_download'] = $this->model_catalog_product->getProductDownloads($productToSave['product_id']);
         $productToSave['product_layout'] = $this->model_catalog_product->getProductLayouts($productToSave['product_id']);
+        $productToSave['product_store'] = $this->model_catalog_product->getProductStores($productToSave['product_id']);
+        $productToSave['product_recurring'] = $this->model_catalog_product->getRecurrings($productToSave['product_id']);
+        $productToSave['product_seo_url'] = $this->model_catalog_product->getProductSeoUrls($productToSave['product_id']);
     }
 
     private function allowed()
@@ -938,6 +941,7 @@ class ControllerExtensionModuleMoloni extends Controller
             } else if(isset($this->settings['products_description_document']) && empty($this->settings['products_description_document']) && isset($values['summary'])){
                 unset($values['summary']);
             }
+
             return $values;
         }
     }
@@ -1400,7 +1404,6 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_edit', 'admin/model/catalog/product/editProduct/after', $this->modulePathBase . 'eventProductCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_product_check_add', 'admin/model/catalog/product/addProduct/after', $this->modulePathBase . 'eventProductCheck');
         $this->model_setting_event->addEvent($this->eventGroup . '_order_edit_check_paid', 'catalog/model/checkout/order/addOrderHistory/after', $this->modulePathBase . 'eventCreateDocument');
-        $this->model_setting_event->addEvent($this->eventGroup . '_order_add_check_paid', 'catalog/model/checkout/order/addOrder/after', $this->modulePathBase . 'eventCreateDocument');
     }
 
     public function uninstall()
@@ -1414,7 +1417,6 @@ class ControllerExtensionModuleMoloni extends Controller
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_edit');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_product_check_add');
         $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_edit_check_paid');
-        $this->model_setting_event->deleteEventByCode($this->eventGroup . '_order_add_check_paid');
     }
 
     public function patch()
@@ -1572,6 +1574,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
         if ($moloni_product_exists) {
             $values['product_id'] = $moloni_product_exists[0]['product_id'];
+            $values['summary'] = $moloni_product_exists[0]['summary'];
         }
 
         // *Hacks* Use the first description
@@ -1584,21 +1587,14 @@ class ControllerExtensionModuleMoloni extends Controller
             }
         }
 
-        $description = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', '', ($opencartProduct['description'])), 0, 250);
-
-        $taxes = $this->eventTaxesHandler($opencartProduct);
-
         $values['name'] = $opencartProduct['name'];
-        $values['summary'] = $description . (strlen($description) >= 250 ? '...' : '');
-        $values['price'] = $product['price_without_taxes'] = $opencartProduct['price'];
+        $values['price'] = $opencartProduct['price'];
         $values['unit_id'] = $this->settings['measure_unit'];
         $values['reference'] = $moloni_reference;
         $values['ean'] = $opencartProduct['ean'];
 
-        if (!empty($taxes) && is_array($taxes)) {
-            $values['taxes'] = $taxes;
-        } else {
-            $values['exemption_reason'] = $this->settings['products_tax_exemption'];
+        if(isset($this->settings['products_description_moloni']) && !empty($this->settings['products_description_moloni'])){
+            $values['summary'] = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', '', ($opencartProduct['description'])), 0, 250);
         }
 
         if (!empty($opencartProduct['product_category']) && is_array($opencartProduct['product_category'])) {
@@ -1616,6 +1612,14 @@ class ControllerExtensionModuleMoloni extends Controller
         } else {
             $values['type'] = '2';
             $values['has_stock'] = '0';
+        }
+
+        $taxes = $this->eventTaxesHandler($opencartProduct);
+
+        if (!empty($taxes) && is_array($taxes)) {
+            $values['taxes'] = $taxes;
+        } else {
+            $values['exemption_reason'] = $this->settings['products_tax_exemption'];
         }
 
         $this->moloni->products->save($values);
