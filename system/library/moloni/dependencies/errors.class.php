@@ -1,20 +1,21 @@
 <?php
-/* Moloni
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 namespace moloni;
+
+use moloni;
 
 class errors
 {
+    /**
+     * @var moloni
+     */
+    protected $moloni;
 
     private $error_log = array();
 
-    public function __construct(\moloni $moloni)
+    public function __construct(moloni $moloni)
     {
         $this->moloni = $moloni;
-        return true;
     }
 
     public function throwError($title, $message, $where, $received = false, $sent = false)
@@ -49,8 +50,7 @@ class errors
                 case "first" :
                     return $this->error_log[0];
                 case "last" :
-                    $aux = end($this->error_log);
-                    return $aux;
+                    return end($this->error_log);
                 case "all":
                 default:
                     return $this->error_log;
@@ -94,7 +94,7 @@ class errors
             case "2 price 0 null null 0" :
                 $string = "Um dos artigos tem o preço igual a 0";
                 break;
-            
+
             case "2 category_id 1 0" :
                 $string = "Um dos artigos não tem uma categoria definida.";
                 break;

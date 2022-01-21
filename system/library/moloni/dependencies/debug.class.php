@@ -1,26 +1,37 @@
 <?php
-/* Moloni
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 namespace moloni;
+
+use moloni;
 
 class debug
 {
+    /**
+     * @var moloni
+     */
+    protected $moloni;
 
     public $active = true;
     private $debug_logs = array();
 
-    function __construct(\moloni $moloni)
+    public function __construct(moloni $moloni)
     {
         $this->moloni = $moloni;
-        return true;
     }
 
     public function __set($name, $value)
     {
         $this->{$name} = $value;
+    }
+
+    public function __get($name)
+    {
+        return $this->{$name};
+    }
+
+    public function __isset($name)
+    {
+        return property_exists($this, $name);
     }
 
     public function addLog($url, $sent, $received)
@@ -45,8 +56,7 @@ class debug
                 case "first" :
                     return $this->debug_logs[0];
                 case "last" :
-                    $aux = end($this->debug_logs);
-                    return $aux;
+                    return end($this->debug_logs);
                 case "all":
                 default:
                     return $this->debug_logs;

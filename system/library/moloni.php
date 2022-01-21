@@ -1,14 +1,11 @@
 <?php
-/* Moloni -
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 use moloni\connection;
+use moloni\errors;
 
 /**
  * @property connection connection
+ * @property errors $errors
  */
 class moloni
 {
@@ -100,7 +97,7 @@ class moloni
         try {
             require_once $fullPath;
             $this->{$name} = new $class_name($this);
-        } catch(Exception $exception) {
+        } catch (Exception $exception) {
             #throw new \RuntimeException('Error loading moloni dependency from ' . $fullPath);
         }
     }

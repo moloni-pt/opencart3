@@ -177,7 +177,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function invoice()
     {
         $this->start();
-        if((isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni' && isset($this->settings['order_auto']) && $this->settings['order_auto']) || (!isset($this->request->get['evento']) || empty($this->request->get['evento']))){
+        if ((isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni' && isset($this->settings['order_auto']) && $this->settings['order_auto']) || (!isset($this->request->get['evento']) || empty($this->request->get['evento']))) {
             if ($this->allowed()) {
                 $this->page = 'home';
 
@@ -198,9 +198,9 @@ class ControllerExtensionModuleMoloni extends Controller
             }
 
             $this->loadDefaults();
-            if(isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni'){
+            if (isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni') {
                 $json['error'] = isset($this->data['messages']['errors']) ? implode(" - ", $this->data['messages']['errors'][0]) : NULL;
-                $json['success'] = isset($this->data['messages']['success']) ? implode(" - ",$this->data['messages']['success'][0]) : NULL;
+                $json['success'] = isset($this->data['messages']['success']) ? implode(" - ", $this->data['messages']['success'][0]) : NULL;
                 $this->response->setOutput(json_encode($json));
             } else {
                 $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
@@ -237,11 +237,11 @@ class ControllerExtensionModuleMoloni extends Controller
             $this->data['artigos_atualizados']['count'] = 0; // Quantos artigos foram atualizados
 
             try {
-                do{
+                do {
                     $moloniProducts = $this->moloni->products->getModifiedSince(false, $offset, $lastModified);
                     $gotThemAll = (count($moloniProducts) === 50);
 
-                    foreach($moloniProducts as $moloniProduct){
+                    foreach ($moloniProducts as $moloniProduct) {
                         $openCartProducts = $this->ocdb->getProductsByReference($moloniProduct['reference']);
 
                         //Only sync simple products
@@ -252,7 +252,7 @@ class ControllerExtensionModuleMoloni extends Controller
                         $productToSave = [];
                         $this->importProduct($productToSave, $moloniProduct, $openCartProducts);
 
-                        if(empty($openCartProducts)){
+                        if (empty($openCartProducts)) {
                             $this->model_catalog_product->addProduct($productToSave);
 
                             $this->data['artigos_importados']['count']++;
@@ -267,7 +267,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
                     $offset += 50;
                 } while ($gotThemAll && $failSafe > $offset);
-            } catch (ErrorException $e){
+            } catch (ErrorException $e) {
                 $this->toolWriteLog($e);
             }
 
@@ -324,19 +324,19 @@ class ControllerExtensionModuleMoloni extends Controller
             $this->importProductSecureConnections($productToSave);
 
 
-            if(isset($_POST['moloni']['update_import_products_stock_hidden']) && $_POST['moloni']['update_import_products_stock_hidden']){
+            if (isset($_POST['moloni']['update_import_products_stock_hidden']) && $_POST['moloni']['update_import_products_stock_hidden']) {
                 $productToSave['quantity'] = (float)$moloniProduct['stock'];
             } else {
                 $productToSave['quantity'] = $openCartProduct['quantity'];
             }
 
-            if(isset($_POST['moloni']['update_import_products_price_hidden']) && $_POST['moloni']['update_import_products_price_hidden']){
+            if (isset($_POST['moloni']['update_import_products_price_hidden']) && $_POST['moloni']['update_import_products_price_hidden']) {
                 $productToSave['price'] = round($moloniProduct['price'], 4);
             } else {
                 $productToSave['price'] = $openCartProduct['price'];
             }
 
-            if(isset($_POST['moloni']['update_import_products_name_hidden']) && $_POST['moloni']['update_import_products_name_hidden']){
+            if (isset($_POST['moloni']['update_import_products_name_hidden']) && $_POST['moloni']['update_import_products_name_hidden']) {
                 $productToSave['product_description'][$languageId]['name'] = $moloniProduct['name'];
                 $productToSave['product_description'][$languageId]['meta_title'] = $moloniProduct['name'];
             } else {
@@ -362,7 +362,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $productToSave['product_description'][$languageId]['meta_title'] = $moloniProduct['name'];
             $productToSave['weight_class_id'] = $this->config->get('config_weight_class_id');
             $productToSave['length_class_id'] = $this->config->get('config_length_class_id');
-            $productToSave['price'] = round($moloniProduct['price'],4);
+            $productToSave['price'] = round($moloniProduct['price'], 4);
 
             $productToSave['stock_status_id'] = (!empty($stockStatuses) && is_array($stockStatuses)) ? ($stockStatuses[0]['stock_status_id']) : 0;
             $productToSave['tax_class_id'] = isset($_POST['moloni']['import_tax_class_hidden']) ? (int)$_POST['moloni']['import_tax_class_hidden'] : 0;
@@ -474,12 +474,12 @@ class ControllerExtensionModuleMoloni extends Controller
         $openCartImageName = null;
         $moloniImageName = null;
 
-        if(isset($openCartProduct['image']) && !empty($openCartProduct['image'])){
+        if (isset($openCartProduct['image']) && !empty($openCartProduct['image'])) {
             $openCartImageName = explode('/', $openCartProduct['image']);
             $openCartImageName = end($openCartImageName);
         }
 
-        if(isset($moloniProduct['image']) && !empty($moloniProduct['image'])){
+        if (isset($moloniProduct['image']) && !empty($moloniProduct['image'])) {
             $moloniImageName = explode('/', $moloniProduct['image'], 3);
             $moloniImageName = end($moloniImageName);
         }
@@ -524,10 +524,10 @@ class ControllerExtensionModuleMoloni extends Controller
         if ($this->moloni->logged) {
             if ($this->moloni->company_id) {
                 return true;
-            } else {
-                $this->getCompaniesAll();
-                $this->page = 'companies';
             }
+
+            $this->getCompaniesAll();
+            $this->page = 'companies';
         } else {
             $this->page = 'login';
         }
@@ -659,7 +659,7 @@ class ControllerExtensionModuleMoloni extends Controller
                                     'fatal' => 0
                                 );
                             }
-                        } elseif ($this->hasNegative){
+                        } elseif ($this->hasNegative) {
                             $this->messages['errors'] = array(
                                 'title' => 'Documento inserido em rascunho pois tem preços a negativo',
                                 'message' => 'Documento possui promoções ou taxas a negativo',
@@ -682,7 +682,7 @@ class ControllerExtensionModuleMoloni extends Controller
                             $document_update['document_id'] = $document_details['document_id'];
                             $document_update['status'] = '1';
 
-                            if(isset($this->settings['client_email']) && $this->settings['client_email']){
+                            if (isset($this->settings['client_email']) && $this->settings['client_email']) {
                                 $document_update['send_email'] = [];
                                 $document_update['send_email'][] = [
                                     'email' => $order['email'],
@@ -736,7 +736,7 @@ class ControllerExtensionModuleMoloni extends Controller
             $this->messages['errors'] = array(
                 'title' => 'Erro',
                 'message' => 'O documento já tinha sido gerado',
-                'link' => "<a href='" . $moloni_url = $this->url->link('extension/module/moloni/invoice', array('order_id' => $order['order_id'], 'force' => 'true', 'user_token' => $this->session->data['user_token']), true) . "'>Gerar novamente</a>"
+                'link' => "<a href='" . $this->url->link('extension/module/moloni/invoice', array('order_id' => $order['order_id'], 'force' => 'true', 'user_token' => $this->session->data['user_token']), true) . "'>Gerar novamente</a>"
             );
         }
     }
@@ -799,11 +799,11 @@ class ControllerExtensionModuleMoloni extends Controller
         }
 
         $moloni_customer['country_id'] = $this->toolCountryHandler($order['payment_iso_code_2']);
-        if((int)$moloni_customer['country_id'] === 1){
+        if ((int)$moloni_customer['country_id'] === 1) {
             $moloni_customer['language_id'] = 1;
         } else {
             $country_spanish = array('MX', 'CO', 'ES', 'AR', 'PE', 'VE', 'CL', 'EC', 'GT', 'CU', 'BO', 'DO', 'HN', 'PY', 'SV', 'NI', 'CR', 'PA', 'UY', 'PR', 'GQ');
-            $moloni_customer['language_id'] = in_array($order['payment_iso_code_2'], $country_spanish)? 3 : 2;
+            $moloni_customer['language_id'] = in_array($order['payment_iso_code_2'], $country_spanish) ? 3 : 2;
         }
 
         $moloni_customer['copies'] = $this->company['copies'];
@@ -869,7 +869,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $moloni_reference = $oc_product['sku'];
             }
 
-            if(isset($this->settings['replace_white_space']) && empty($this->settings['replace_white_space'])){
+            if (isset($this->settings['replace_white_space']) && empty($this->settings['replace_white_space'])) {
                 $moloni_reference = mb_substr($reference_prefix . $moloni_reference . $option_reference_sufix, 0, 28);
             } else {
                 $moloni_reference = mb_substr(str_replace(' ', '_', $reference_prefix . $moloni_reference . $option_reference_sufix), 0, 28);
@@ -925,7 +925,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     $values['has_stock'] = '0';
                 }
 
-                if(isset($this->settings['products_description_moloni']) && empty($this->settings['products_description_moloni'])){
+                if (isset($this->settings['products_description_moloni']) && empty($this->settings['products_description_moloni'])) {
                     unset($values['summary']);
                 }
 
@@ -936,9 +936,9 @@ class ControllerExtensionModuleMoloni extends Controller
                 }
             }
 
-            if(isset($this->settings['products_description_document']) && !empty($this->settings['products_description_document']) && !isset($values['summary'])){
+            if (isset($this->settings['products_description_document']) && !empty($this->settings['products_description_document']) && !isset($values['summary'])) {
                 $values['summary'] = $description . (strlen($description) >= 250 ? '...' : '');
-            } else if(isset($this->settings['products_description_document']) && empty($this->settings['products_description_document']) && isset($values['summary'])){
+            } else if (isset($this->settings['products_description_document']) && empty($this->settings['products_description_document']) && isset($values['summary'])) {
                 unset($values['summary']);
             }
 
@@ -951,11 +951,11 @@ class ControllerExtensionModuleMoloni extends Controller
         $products = [];
 
         foreach ($totals as $total) {
-            if (!in_array($total['code'],['total','sub_total','tax'])) {
+            if (!in_array($total['code'], ['total', 'sub_total', 'tax'])) {
 
                 $values = [];
 
-                if((float)$total['value'] < 0){
+                if ((float)$total['value'] < 0) {
                     $this->hasNegative = true;
                     continue;
                 }
@@ -978,7 +978,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 if ($this->settings['shipping_tax'] == '0') {
                     $shipping_method = explode(".", $this->current_order['shipping_code']);
                     $shipping_code_tax_id = $this->config->get('shipping_' . $shipping_method[0] . '_tax_class_id');
-                    if(!empty($shipping_code_tax_id)){
+                    if (!empty($shipping_code_tax_id)) {
                         $tax_rules = $this->ocdb->getTaxRules($shipping_code_tax_id);
                         foreach ($tax_rules as $tax_order => $tax_rule) {
                             $geo_zone = ($tax_rule['based'] == 'shipping') ? $this->ocdb->getClientGeoZone($this->current_order['shipping_country_id'], $this->current_order['shipping_zone_id']) : $this->ocdb->getClientGeoZone($this->current_order['payment_country_id'], $this->current_order['payment_zone_id']);
@@ -993,10 +993,10 @@ class ControllerExtensionModuleMoloni extends Controller
                                 if ((($oc_tax['type'] === 'P' && $moloni_tax['saft_type'] == 1) || ($oc_tax['type'] === 'F' && $moloni_tax['saft_type'] > 1))
                                     && (($this->company['country_id'] != 1) || ($this->company['country_id'] == 1 && empty($values['taxes']))) &&
                                     (float)round($oc_tax['rate'], 5) === (float)round($moloni_tax['value'], 5)) {
-                                    if($total['code'] == 'shipping'){
+                                    if ($total['code'] == 'shipping') {
                                         $values['price'] = $this->toolRemoveExtraTaxShipping($total['value'], $moloni_tax['value']);
                                     } else {
-                                        $values['price']= $this->toolRemoveExtraTax($total['value'], $moloni_tax['value']);
+                                        $values['price'] = $this->toolRemoveExtraTax($total['value'], $moloni_tax['value']);
                                     }
                                     $values['taxes'][] = array('tax_id' => $moloni_tax['tax_id'], 'value' => $moloni_tax['value'], 'order' => $tax_order, 'cumulative' => '1');
                                     break;
@@ -1007,7 +1007,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 } else {
                     foreach ($this->moloni_taxes as $moloni_tax) {
                         if ($moloni_tax['tax_id'] == $this->settings['shipping_tax']) {
-                            if($total['code'] == 'shipping'){
+                            if ($total['code'] == 'shipping') {
                                 $values['price'] = $this->toolRemoveExtraTaxShipping($total['value'], $moloni_tax['value']);
                             } else {
                                 $values['price'] = $this->toolRemoveExtraTax($total['value'], $moloni_tax['value']);
@@ -1018,7 +1018,7 @@ class ControllerExtensionModuleMoloni extends Controller
                     }
                 }
 
-                if(!isset($values['taxes']) || (isset($values['taxes']) && empty($values['taxes']))){
+                if (!isset($values['taxes']) || (isset($values['taxes']) && empty($values['taxes']))) {
                     $values['price'] = $this->_myOrder['has_exchange'] ? $this->currency->convert($total['value'], $this->_myOrder['currency'], 'EUR') : $total['value'];
                     $values['exemption_reason'] = $this->settings['shipping_tax_exemption'];
                 }
@@ -1215,7 +1215,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $data['settings_values']['tax_classes'] = $this->model_localisation_tax_class->getTaxClasses();
 
-        if (defined('DIR_LOGS') && file_exists(DIR_LOGS . '/moloni/' .  date('Ymd') . '.log')) {
+        if (defined('DIR_LOGS') && file_exists(DIR_LOGS . '/moloni/' . date('Ymd') . '.log')) {
             $data['settings_values']['log_url'] = $this->url->link('extension/module/moloni/toolDownloadLog', ['user_token' => $this->session->data['user_token']], true);
         } else {
             $data['settings_values']['log_url'] = '';
@@ -1392,6 +1392,9 @@ class ControllerExtensionModuleMoloni extends Controller
         return $result;
     }
 
+    /**
+     * @throws Exception
+     */
     public function install()
     {
 
@@ -1421,9 +1424,6 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function patch()
     {
-        if ($this->config->get('moloni_status') == 1) {
-
-        }
     }
 
     public function injectAdminMenuItem($eventRoute, &$data)
@@ -1509,29 +1509,38 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $this->start();
 
-        if ($this->moloni->logged) {
-            if (isset($data[1])) {
-                $product = $data[1];
-                if (isset($product['product_option'])) {
-                    if (isset($this->settings['moloni_options_reference']) && $this->settings['moloni_options_reference'] == true) {
-                        foreach ($product['product_option'] as $product_option) {
-                            if ($product_option['type'] === 'select') {
-                                foreach ($product_option['product_option_value'] as $product_option_value) {
-                                    if (isset($product_option_value['moloni_reference'])) {
-                                        $this->ocdb->updateOptionMoloniReference($product_option_value['moloni_reference'], (int)$product_option_value['product_option_value_id']);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        if (!$this->moloni->logged) {
+            return;
+        }
 
-                if (isset($this->settings['products_auto']) && (int)$this->settings['products_auto'] === 1) {
-                    $this->eventProductHandler($product);
+        $product = [];
+
+        if (is_array($data)) {
+            // We need to serch for the right index with the product
+            foreach ($data as $datum) {
+                if (isset($datum['sku'])) {
+                    $product = $datum;
                 }
             }
         }
+
+        if (isset($product['product_option'], $this->settings['moloni_options_reference']) && (int)$this->settings['moloni_options_reference'] === 1) {
+            foreach ($product['product_option'] as $product_option) {
+                if ($product_option['type'] === 'select') {
+                    foreach ($product_option['product_option_value'] as $product_option_value) {
+                        if (isset($product_option_value['moloni_reference'])) {
+                            $this->ocdb->updateOptionMoloniReference($product_option_value['moloni_reference'], (int)$product_option_value['product_option_value_id']);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (isset($this->settings['products_auto']) && (int)$this->settings['products_auto'] === 1) {
+            $this->eventProductHandler($product);
+        }
     }
+
 
     /**
      * Creates or updates an product in Moloni based on Opencart product
@@ -1544,6 +1553,8 @@ class ControllerExtensionModuleMoloni extends Controller
      */
     private function eventProductHandler($opencartProduct)
     {
+
+
         if (empty($opencartProduct) || !is_array($opencartProduct)) {
             return;
         }
@@ -1557,24 +1568,24 @@ class ControllerExtensionModuleMoloni extends Controller
         $referencePrefix = isset($this->settings['products_prefix']) && !empty($this->settings['products_prefix']) ? $this->settings['products_prefix'] : '';
 
         if (!empty($opencartProduct['sku'])) {
-            $moloni_reference = $opencartProduct['sku'];
+            $moloniReference = $opencartProduct['sku'];
         } else if (!empty($opencartProduct['model'])) {
-            $moloni_reference = $opencartProduct['model'];
+            $moloniReference = $opencartProduct['model'];
         } else {
-            $moloni_reference = $opencartProduct['product_id'];
+            $moloniReference = $opencartProduct['product_id'];
         }
 
         if (isset($this->settings['replace_white_space']) && empty($this->settings['replace_white_space'])) {
-            $moloni_reference = mb_substr($referencePrefix . $moloni_reference, 0, 28);
+            $moloniReference = mb_substr($referencePrefix . $moloniReference, 0, 28);
         } else {
-            $moloni_reference = mb_substr(str_replace(' ', '_', $referencePrefix . $moloni_reference), 0, 28);
+            $moloniReference = mb_substr(str_replace(' ', '_', $referencePrefix . $moloniReference), 0, 28);
         }
 
-        $moloni_product_exists = $this->moloni->products->getByReference($moloni_reference);
+        $productsExists = $this->moloni->products->getByReference($moloniReference);
 
-        if ($moloni_product_exists) {
-            $values['product_id'] = $moloni_product_exists[0]['product_id'];
-            $values['summary'] = $moloni_product_exists[0]['summary'];
+        if ($productsExists) {
+            $values['product_id'] = $productsExists[0]['product_id'];
+            $values['summary'] = $productsExists[0]['summary'];
         }
 
         // *Hacks* Use the first description
@@ -1590,10 +1601,10 @@ class ControllerExtensionModuleMoloni extends Controller
         $values['name'] = $opencartProduct['name'];
         $values['price'] = $opencartProduct['price'];
         $values['unit_id'] = $this->settings['measure_unit'];
-        $values['reference'] = $moloni_reference;
+        $values['reference'] = $moloniReference;
         $values['ean'] = $opencartProduct['ean'];
 
-        if(isset($this->settings['products_description_moloni']) && !empty($this->settings['products_description_moloni'])){
+        if (isset($this->settings['products_description_moloni']) && !empty($this->settings['products_description_moloni'])) {
             $values['summary'] = mb_substr(preg_replace('/&lt;([\s\S]*?)&gt;/s', '', ($opencartProduct['description'])), 0, 250);
         }
 
@@ -1622,7 +1633,11 @@ class ControllerExtensionModuleMoloni extends Controller
             $values['exemption_reason'] = $this->settings['products_tax_exemption'];
         }
 
-        $this->moloni->products->save($values);
+        $savedProduct = $this->moloni->products->save($values);
+        if (!$savedProduct) {
+            print_r($this->moloni->errors->getError());
+            exit;
+        }
     }
 
     /**
@@ -1810,8 +1825,8 @@ class ControllerExtensionModuleMoloni extends Controller
     {
         $nameMethod = preg_replace('/\(([^\)]*)\)/', '', $name, 1);
 
-        while(ctype_space(substr($nameMethod, -1))){
-            $nameMethod = substr($nameMethod, 0,-1);
+        while (ctype_space(substr($nameMethod, -1))) {
+            $nameMethod = substr($nameMethod, 0, -1);
         }
 
         if (!$methods) {
@@ -1921,7 +1936,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function toolRemoveExtraTax($total_value, $moloni_tax_value)
     {
-        if(isset($this->settings['remove_extra_tax']) && empty($this->settings['remove_extra_tax'])){
+        if (isset($this->settings['remove_extra_tax']) && empty($this->settings['remove_extra_tax'])) {
             $priceExtraTax = (float)($total_value);
         } else {
             $priceExtraTax = $total_value / (float)(1 . '.' . $moloni_tax_value);
@@ -1932,7 +1947,7 @@ class ControllerExtensionModuleMoloni extends Controller
 
     public function toolRemoveExtraTaxShipping($total_value, $moloni_tax_value)
     {
-        if(isset($this->settings['remove_extra_tax_shipping']) && empty($this->settings['remove_extra_tax_shipping'])){
+        if (isset($this->settings['remove_extra_tax_shipping']) && empty($this->settings['remove_extra_tax_shipping'])) {
             $priceExtraTaxShipping = (float)($total_value);
         } else {
             $priceExtraTaxShipping = $total_value / (float)(1 . '.' . $moloni_tax_value);
@@ -1977,7 +1992,7 @@ class ControllerExtensionModuleMoloni extends Controller
             return;
         }
 
-        $path = DIR_LOGS . '/moloni/' .  date('Ymd') . '.log';
+        $path = DIR_LOGS . '/moloni/' . date('Ymd') . '.log';
 
         if (!file_exists($path)) {
             return;
@@ -1987,7 +2002,7 @@ class ControllerExtensionModuleMoloni extends Controller
         header('Content-Type: application/octet-stream');
         header("Cache-Control: no-cache, must-revalidate");
         header("Expires: 0");
-        header('Content-Disposition: attachment; filename="'.basename($path).'"');
+        header('Content-Disposition: attachment; filename="' . basename($path) . '"');
         header('Content-Length: ' . filesize($path));
         header('Pragma: public');
 

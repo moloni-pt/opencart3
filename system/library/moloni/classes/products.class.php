@@ -4,12 +4,19 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 namespace moloni;
+
+use moloni;
 
 class products
 {
+    /**
+     * @var moloni
+     */
+    protected $moloni;
 
-    public function __construct(\moloni $moloni)
+    public function __construct(moloni $moloni)
     {
         $this->moloni = $moloni;
     }
@@ -17,7 +24,7 @@ class products
     public function getByReference($moloni_reference, $exact = true, $company_id = false)
     {
         $values = array(
-            "company_id" => ($company_id ? $company_id : $this->moloni->company_id),
+            "company_id" => ($company_id ?: $this->moloni->company_id),
             "reference" => $moloni_reference,
             "exact" => $exact ? "1" : "0"
         );
@@ -25,14 +32,14 @@ class products
         $result = $this->moloni->connection->curl("products/getByReference", $values);
         if (is_array($result) && isset($result[0]['product_id'])) {
             return $result;
-        } else {
-            return false;
         }
+
+        return false;
     }
 
     public function save($input, $company_id = false)
     {
-        $values["company_id"] = ($company_id ? $company_id : $this->moloni->company_id);
+        $values["company_id"] = ($company_id ?: $this->moloni->company_id);
 
         $values["category_id"] = $input['category_id'];
         $values["type"] = $input['type'];
@@ -50,9 +57,18 @@ class products
         $values["exemption_reason"] = isset($input['exemption_reason']) ? $input['exemption_reason'] : "";
 
         $values["taxes"] = isset($input['taxes']) && is_array($input['taxes']) ? $input['taxes'] : "";
-        $values["suppliers"] = isset($input['suppliers']) && is_array($input['suppliers']) ? $input['suppliers'] : "";
-        $values["properties"] = isset($input['properties']) && is_array($input['properties']) ? $input['properties'] : "";
-        $values["warehouses"] = isset($input['warehouses']) && is_array($input['warehouses']) ? $input['warehouses'] : "";
+
+        if (!empty($input['suppliers']) && is_array($input['suppliers'])) {
+            $values["suppliers"] = $input['suppliers'];
+        }
+
+        if (!empty($input['properties']) && is_array($input['properties'])) {
+            $values["properties"] = $input['properties'];
+        }
+
+        if (!empty($input['warehouses']) && is_array($input['warehouses'])) {
+            $values["warehouses"] = $input['warehouses'];
+        }
 
         if (isset($input['product_id']) && !empty($input['product_id'])) {
             $values["product_id"] = $input['product_id'];
@@ -75,17 +91,17 @@ class products
 
     public function getModifiedSince($company_id = false, $offset = 0, $lastmodified = 0)
     {
-        if(empty($lastmodified)){
+        if (empty($lastmodified)) {
             $lastmodifiedGMT = date("Y-m-d 01:00:00", strtotime("-7 days"));
         } else {
             $lastmodifiedGMT = date("Y-m-d 01:00:00", strtotime($lastmodified));
         }
 
-        $values = array(
-            "company_id" => ($company_id ? $company_id : $this->moloni->company_id),
+        $values = [
+            "company_id" => ($company_id ?: $this->moloni->company_id),
             "offset" => $offset,
             'lastmodified' => $lastmodifiedGMT
-        );
+        ];
 
         return $this->moloni->connection->curl("products/getModifiedSince", $values);
     }
@@ -93,7 +109,7 @@ class products
     public function getProductCategoryTree($product_id, $company_id = false)
     {
         $values = array(
-            "company_id" => ($company_id ? $company_id : $this->moloni->company_id),
+            "company_id" => ($company_id ?: $this->moloni->company_id),
             'product_id' => $product_id
         );
 
