@@ -70,8 +70,8 @@ class customers
 
         $result = $this->moloni->connection->curl('customers/getByNumber', $values);
 
-        if (is_array($result) && isset($result['number'])) {
-            return $result;
+        if (is_array($result) && isset($result[0]['number'])) {
+            return $result[0];
         }
 
         return [];
