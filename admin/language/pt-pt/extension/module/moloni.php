@@ -143,6 +143,7 @@ $_['label']['order_table_order_date'] = "Date";
 $_['label']['order_table_order_total'] = "Total";
 $_['label']['order_table_order_actions'] = "Actions";
 $_['label']['order_table_number'] = "Number";
+$_['label']['order_table_body_wait'] = "Aguarde, a obter dados";
 
 $_['label']['developers'] = "Developers";
 $_['label']['debug_console'] = "Debug console";

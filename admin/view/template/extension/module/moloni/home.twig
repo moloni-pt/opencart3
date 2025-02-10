@@ -32,35 +32,27 @@
             <div class="panel-body">
                 <div class="table-responsive">
 
-                    <table id="moloni_orders" class="display" cellspacing="0" width="100%">
+                    <table id="moloni_orders" class="dataTable display dataTable--slimed panel" cellspacing="0" width="100%">
                         <thead>
                         <tr>
-                            <th></th>
+                            <th class="no-sort" style='width: 30px'>
+                                <input type="checkbox" class='select-all'>
+                            </th>
                             <th>{{ label.order_table_number }}</th>
                             <th>{{ label.order_table_customer_info }}</th>
-                            <th>{{ label.order_table_order_status }}</th>
                             <th>{{ label.order_table_store_name }}</th>
                             <th>{{ label.order_table_order_date }}</th>
+                            <th>{{ label.order_table_order_status }}</th>
                             <th>{{ label.order_table_order_total }}</th>
                             <th>{{ label.order_table_order_actions }}</th>
                         </tr>
                         </thead>
                         <tbody>
-
-                        {% for order in content.orders_list[0] %}
-                            <tr order_id="{{ order.order_id }}">
-                                <td></td>
-                                <td>{{ order.order_id }}</td>
-                                <td>{{ order.firstname }} {{ order.lastname }}</td>
-                                <td>{{ order.order_status }}</td>
-                                <td>{{ order.store_name }}</td>
-                                <td>{{ order.date_added }}</td>
-                                <td>{{ order.total_formated }}</td>
-                                <td>
-                                    <a href="{{order.moloni_create}}" target="" data-toggle="tooltip" title="" class="btn btn-primary" data-original-title="{{create_moloni_document}}"><i class="fa fa-check-square"></i></a>
-                                </td>
-                            </tr>
-                        {% endfor %}
+                        <tr>
+                            <td colspan="100%" class="dataTables_empty">
+                                {{ label.order_table_body_wait }}
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -74,52 +66,9 @@
 
 </div>
 
-<link href="view/stylesheet/moloni/moloni-sheet.css" rel="stylesheet" />
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.10.16/sl-1.2.4/datatables.min.css"/>
-<script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.10.16/sl-1.2.4/datatables.min.js"></script>
-
-
 <script>
     $(document).ready(function() {
-        var orders_table = $('#moloni_orders').DataTable({
-            columnDefs: [{
-                orderable: false,
-                className: 'select-checkbox',
-                targets: 0
-            }],
-            select: {
-                style: 'multi',
-                selector: 'td:first-child'
-            },
-            order: [[1, 'asc']]
-
-        });
-
-        $("#create-multiple-invoice").click(function() {
-            if ($('.selected').lenght == 0) {
-                alert("Não tem encomendas seleccionadas");
-            } else {
-                var orders = [];
-                $('.selected').each(function(i, order) {
-                    orders.push(parseInt(order.attributes.order_id.value));
-                });
-                window.location.replace("{{ content.order_url_base|replace({'&amp;': "&"}) }}" + JSON.stringify(orders));
-            }
-        });
-
-        $("#mark-as-sent").click(function() {
-            if ($('.selected').lenght == 0) {
-                alert("Não tem encomendas seleccionadas");
-            } else {
-                var orders = [];
-                $('.selected').each(function(i, order) {
-                    orders.push(parseInt(order.attributes.order_id.value));
-                });
-                window.location.replace("{{ content.order_url_base|replace({'&amp;': "&"}) }}" + JSON.stringify(orders) + "&action=delete");
-            }
-        });
-        //orders_table.rows().select();
-        //orders_table.rows().deselect();
+        pt.moloni.PendingOrders.init("{{ content.order_get_more|replace({'&amp;': "&"}) }}", "{{ content.order_url_base|replace({'&amp;': "&"}) }}");
     });
 </script>
 

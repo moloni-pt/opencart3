@@ -1,4 +1,5 @@
 /.idea
+/.dev/node_modules/
 /index.php
 /catalog/model/
 /catalog/language/
@@ -180,7 +181,6 @@
 /admin/controller/extension/module/pp_braintree_button.php
 /admin/controller/extension/module/amazon_pay.php
 /admin/view/image/
-/admin/view/javascript/
 /admin/view/template/customer/
 /admin/view/template/design/
 /admin/view/template/common/

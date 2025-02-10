@@ -32,17 +32,20 @@ class ControllerExtensionModuleMoloni extends Controller
     private $hasNegative = false;
     private $categoriesCache = [];
 
+    /**
+     * @throws Exception
+     */
     public function __construct($registry)
     {
         parent::__construct($registry);
 
         if (isset($this->request->get['update']) &&
-            $this->request->get['update'] == true &&
+            $this->request->get['update'] &&
             strpos($this->request->get['route'], 'extension/module/moloni') !== false) {
             $this->update();
         }
 
-        $this->modelhandler();
+        $this->modelHandler();
     }
 
     /**
@@ -110,6 +113,14 @@ class ControllerExtensionModuleMoloni extends Controller
         }
     }
 
+    public function scriptHandler()
+    {
+        $this->document->addScript('view/javascript/moloni/compiled.min.js');
+        $this->document->addStyle('view/stylesheet/moloni/compiled.min.css');
+    }
+
+    /**             Pages              */
+
     /**
      * Orders page
      *
@@ -120,13 +131,15 @@ class ControllerExtensionModuleMoloni extends Controller
     public function index()
     {
         $this->start();
+        $this->scriptHandler();
         $this->versionCheck();
+
         if ($this->allowed()) {
             $this->page = 'home';
             $this->data['content'] = $this->getIndexData();
         }
-        $this->loadDefaults();
 
+        $this->loadDefaults();
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
     }
 
@@ -140,6 +153,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function settings()
     {
         $this->start();
+        $this->scriptHandler();
 
         if ($this->allowed()) {
             if ($this->ocdb->getTotalStores() > 0 && !isset($this->request->get['store_id'])) {
@@ -165,6 +179,8 @@ class ControllerExtensionModuleMoloni extends Controller
     public function documents()
     {
         $this->start();
+        $this->scriptHandler();
+
         if ($this->allowed()) {
             $this->page = 'documents';
             $this->data['content'] = $this->getDocumentsData();
@@ -177,6 +193,8 @@ class ControllerExtensionModuleMoloni extends Controller
     public function invoice()
     {
         $this->start();
+        $this->scriptHandler();
+
         if((isset($this->request->get['evento']) && $this->request->get['evento'] == 'moloni' && isset($this->settings['order_auto']) && $this->settings['order_auto']) || (!isset($this->request->get['evento']) || empty($this->request->get['evento']))){
             if ($this->allowed()) {
                 $this->page = 'home';
@@ -207,6 +225,7 @@ class ControllerExtensionModuleMoloni extends Controller
             }
         } else {
             $json['success'] = 'Success: You have modified orders!';
+
             $this->response->setOutput(json_encode($json));
         }
     }
@@ -219,6 +238,7 @@ class ControllerExtensionModuleMoloni extends Controller
     public function importProducts()
     {
         $this->start();
+        $this->scriptHandler();
 
         if ($this->allowed()) {
             $offset = 0;
@@ -291,6 +311,20 @@ class ControllerExtensionModuleMoloni extends Controller
 
         $this->response->setOutput($this->load->view($this->modulePathView . $this->page, $this->data));
     }
+
+    /**             Ajax requests              */
+
+    public function getOrders()
+    {
+        $json = [];
+
+        $data['orders_list'][0] = $this->ocdb->getOrdersAll(@$this->settings['order_statuses'], @$this->settings['order_since']);
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**             Privates              */
 
     /**
      * Prepares Moloni product to be saved
@@ -1143,9 +1177,8 @@ class ControllerExtensionModuleMoloni extends Controller
 
     private function getIndexData()
     {
-        $data['orders_list'] = array();
-        $data['orders_list'][0] = $this->ocdb->getOrdersAll(@$this->settings['order_statuses'], @$this->settings['order_since']);
-        $data['order_url_base'] = $this->url->link('extension/module/moloni/invoice', array('user_token' => $this->session->data['user_token'], 'order_id' => ''));
+        $data['order_get_more'] = $this->url->link('extension/module/moloni/getOrders', ['user_token' => $this->session->data['user_token']]);
+        $data['order_url_base'] = $this->url->link('extension/module/moloni/invoice', ['user_token' => $this->session->data['user_token'], 'order_id' => '']);
 
         return $data;
     }
