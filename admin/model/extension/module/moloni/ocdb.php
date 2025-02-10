@@ -143,6 +143,7 @@ class ModelExtensionModuleMoloniOcdb extends Model
         }
 
         $sql .= " ORDER BY o.order_id DESC";
+        $sql .= " LIMIT 100";
 
         $query = $this->db->query($sql);
         $result = $query->rows;
