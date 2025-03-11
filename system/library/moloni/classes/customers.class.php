@@ -52,11 +52,14 @@ class customers
         $values['company_id'] = $company_id ? $company_id : $this->moloni->company_id;
 
         $result = $this->moloni->connection->curl('customers/getLastNumber', $values);
+
         if (is_array($result) && isset($result['number'])) {
             return $result;
         }
 
-        return '1';
+        return [
+            'number' => 1
+        ];
     }
 
     public function getNextNumber($company_id = false)
@@ -65,11 +68,14 @@ class customers
         $values['company_id'] = $company_id ? $company_id : $this->moloni->company_id;
 
         $result = $this->moloni->connection->curl('customers/getNextNumber', $values);
+
         if (is_array($result) && isset($result['number'])) {
             return $result;
         }
 
-        return '1';
+        return [
+            'number' => 1
+        ];
     }
 
     public function insert($input, $company_id = false)
