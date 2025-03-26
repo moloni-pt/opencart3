@@ -64,6 +64,8 @@ class customers
         $values = [
             'number' => "$number%",
             'company_id' => $this->moloni->company_id,
+            'order_by_field' => 'customer_id',
+            'order_by_ordering' => 'desc',
             'qty' => 1,
             'exact' => 1,
         ];
