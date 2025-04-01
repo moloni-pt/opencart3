@@ -62,6 +62,26 @@ class customers
         ];
     }
 
+    public function getByNumber($number = '')
+    {
+        $values = [
+            'number' => "$number%",
+            'company_id' => $this->moloni->company_id,
+            'order_by_field' => 'customer_id',
+            'order_by_ordering' => 'desc',
+            'qty' => 1,
+            'exact' => 1,
+        ];
+
+        $result = $this->moloni->connection->curl('customers/getByNumber', $values);
+
+        if (is_array($result) && isset($result[0]['number'])) {
+            return $result[0];
+        }
+
+        return [];
+    }
+
     public function getNextNumber($company_id = false)
     {
         $values = array();

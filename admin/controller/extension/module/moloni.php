@@ -824,7 +824,7 @@ class ControllerExtensionModuleMoloni extends Controller
                 $customer_id = $moloni_customer_exists['customer_id'];
             }
         } else {
-            $moloni_customer['number'] = $this->toolNumberCreator($order);
+            $moloni_customer['number'] = $this->toolNumberCreator();
             $moloni_customer['vat'] = $order['vat_number'];
             $result = $this->moloni->customers->insert($moloni_customer);
             $customer_id = isset($result['customer_id']) ? $result['customer_id'] : false;
@@ -1143,9 +1143,12 @@ class ControllerExtensionModuleMoloni extends Controller
 
     private function getIndexData()
     {
-        $data['orders_list'] = array();
-        $data['orders_list'][0] = $this->ocdb->getOrdersAll(@$this->settings['order_statuses'], @$this->settings['order_since']);
-        $data['order_url_base'] = $this->url->link('extension/module/moloni/invoice', array('user_token' => $this->session->data['user_token'], 'order_id' => ''));
+        $data['orders_list'] = [];
+        $data['orders_list'][0] = $this->ocdb->getOrdersAll(
+            isset($this->settings['order_statuses']) ? $this->settings['order_statuses'] : false,
+            isset($this->settings['order_since']) ? $this->settings['order_since'] : false
+        );
+        $data['order_url_base'] = $this->url->link('extension/module/moloni/invoice', ['user_token' => $this->session->data['user_token'], 'order_id' => '']);
 
         return $data;
     }
@@ -1888,9 +1891,25 @@ class ControllerExtensionModuleMoloni extends Controller
         return '0';
     }
 
-    public function toolNumberCreator($order)
+    public function toolNumberCreator()
     {
-        $result = $this->moloni->customers->getNextNumber();
+        $referencePrefix = isset($this->settings['client_prefix']) && !empty($this->settings['client_prefix']) ? $this->settings['client_prefix'] : '';
+        $referencePrefix = trim($referencePrefix);
+
+        if (empty($referencePrefix)) {
+            $result = $this->moloni->customers->getNextNumber();
+        } else {
+            $result = $this->moloni->customers->getByNumber($referencePrefix);
+
+            if (empty($result)) {
+                return $referencePrefix . '1';
+            }
+
+            $number = substr($result['number'], strlen($referencePrefix));
+
+            return $referencePrefix . ((int)$number + 1);
+        }
+
         return $result['number'];
     }
 
