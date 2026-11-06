@@ -1032,7 +1032,8 @@ class ControllerExtensionModuleMoloni extends Controller
                     $values['has_stock'] = '0';
                     $values['unit_id'] = $this->settings['measure_unit'];
 
-                    $inserted = $this->moloni->products->save($values);
+                    // Moloni locks product names once they have documents, so always create with the fixed generic name, not this order's total title.
+                    $inserted = $this->moloni->products->save(array_merge($values, ['name' => $moloni_reference]));
 
                     if (isset($inserted['product_id'])) {
                         $values['product_id'] = $inserted['product_id'];
